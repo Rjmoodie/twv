@@ -1,4 +1,13 @@
-project_id = "dkxqmiamrnphjoaznpuo"
+# TW Ventures runs its own Supabase project. Fill this in with TW's project ref
+# once it exists, and never with somatech's.
+#
+# This previously read "dkxqmiamrnphjoaznpuo" — somatech's production project,
+# inherited with the chassis copy. Every CLI command run from this repo
+# (`supabase db push`, `functions deploy`, `db reset`) targeted somatech's live
+# database. The build plan says to use a fresh project and warns off the
+# configured MCP connection for the same reason; this file was the third way in
+# and was not covered by either warning.
+project_id = "TW_PROJECT_REF_NOT_SET"
 
 [api]
 enabled = true
@@ -15,12 +24,6 @@ port = 54322
 shadow_port = 54320
 major_version = 15
 
-[functions.process-donation]
-verify_jwt = false
-
-[functions.confirm-donation]
-verify_jwt = false
-
 # Both are called by parties that have no user session: Resend's webhook
 # delivery, and a mailbox provider's one-click unsubscribe POST. Each
 # authorizes itself -- the webhook by Svix signature, the unsubscribe by a
@@ -32,13 +35,8 @@ verify_jwt = false
 [functions.email-unsubscribe]
 verify_jwt = false
 
-# Browser OAuth callback has no Supabase session. The function validates a
-# one-time, hashed, user-bound state for GET and validates the user JWT itself
-# for POST / authorize.
-[functions.schwab-oauth]
-verify_jwt = false
-
-# pg_cron authenticates worker invocations with SCHWAB_SYNC_SECRET. Manual
-# requests are independently authenticated and ownership-checked in function.
-[functions.schwab-sync]
-verify_jwt = false
+# NOTE: stripe-webhook, plaid-link, plaid-sync and dispatch-notifications have
+# no block here, so they inherit verify_jwt = true. Stripe and the cron dispatcher
+# call without a Supabase session, so check how those are configured in the
+# project dashboard before the first deploy — a webhook that 401s fails silently
+# from the caller's side.

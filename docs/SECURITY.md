@@ -1,217 +1,156 @@
-# 🔒 Security Configuration Guide
+# Security
 
-## 🚨 **Critical Security Steps**
+Practices for the TW Ventures platform, and the specific traps this codebase
+inherited.
 
-### **1. Create Environment Variables File**
+## Before anything else: which project are you pointed at?
 
-Create a `.env` file in your `somatech` directory with the following content:
+This repo was copied from somatech, and the copy brought somatech's Supabase
+project ref with it. That has been cleared, but the lesson stands — there are
+**three** independent ways to accidentally operate on the wrong database:
 
-```bash
-# Supabase Configuration
-VITE_SUPABASE_URL=https://dkxqmiamrnphjoaznpuo.supabase.co
-VITE_SUPABASE_ANON_KEY=SUPABASE_ANON_KEY_REDACTED
+| Path | Guard |
+|---|---|
+| `supabase/config.toml` → `project_id` | Now `TW_PROJECT_REF_NOT_SET`; fill in with TW's ref only |
+| The configured Supabase MCP connection | Points at a different project — never apply TW migrations through it |
+| `.env` → `VITE_SUPABASE_URL` | Must be TW's project; check before any `db push` |
 
-# Stripe Configuration (Get these from your Stripe Dashboard)
-STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
-STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-
-# Mapbox (property maps and deal sourcing)
-MAPBOX_TOKEN=your_mapbox_token_here
-
-# FRED / St. Louis Fed (rates panel)
-FRED_API_KEY=your_fred_api_key_here
-```
-
-### **2. Supabase Security Advisor Review**
-
-Visit your Supabase Security Advisor:
-**🔗 https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/settings/security**
-
-Common warnings you might see:
-
-#### **A. Function Search Path Mutable**
-- **Issue**: Functions with mutable search_path can be exploited
-- **Fix**: Set `search_path` to empty string in function definitions
-- **Example**:
-  ```sql
-  CREATE OR REPLACE FUNCTION my_function()
-  RETURNS void
-  LANGUAGE plpgsql
-  SECURITY DEFINER
-  SET search_path = ''
-  AS $$
-  BEGIN
-    -- function body
-  END;
-  $$;
-  ```
-
-#### **B. Extension in Public Schema**
-- **Issue**: Extensions in public schema can be security risk
-- **Fix**: Move extensions to dedicated schema
-- **Example**:
-  ```sql
-  CREATE SCHEMA extensions;
-  ALTER EXTENSION supabase-dbdev SET SCHEMA extensions;
-  ```
-
-#### **C. Missing RLS Policies**
-- **Issue**: Tables without RLS allow unrestricted access
-- **Fix**: Enable RLS and create appropriate policies
-- **Example**:
-  ```sql
-  ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-  
-  CREATE POLICY "Users can view own profile" ON user_profiles
-    FOR SELECT USING (auth.uid() = id);
-  ```
-
-### **3. Database Security Setup**
-
-Run the subscription system migration to create secure tables:
+Before running any destructive CLI command, confirm the target:
 
 ```bash
-# Option 1: Use the SQL file directly in Supabase SQL Editor
-# Go to: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/sql
-# Copy and paste the contents of create-subscription-tables.sql
-
-# Option 2: Use the setup script
-node setup-subscription-db.js
+supabase projects list      # which projects can this token reach?
+supabase status             # what is this directory linked to?
 ```
 
-### **4. API Key Security**
+`supabase db reset` against the wrong project destroys it. There is no undo.
 
-#### **✅ DO:**
-- Use anon key for client-side operations
-- Store service role key in environment variables only
-- Use HTTPS for all communications
-- Regularly rotate API keys
+## Secrets
 
-#### **❌ DON'T:**
-- Never expose service role key in client code
-- Never commit API keys to version control
-- Never use service role key in frontend applications
+**Do:**
+- Keep `.env` local and gitignored — it already is
+- Put server-side secrets in Supabase edge function secrets, never in `.env`
+- Use the anon key in the browser and rely on RLS to protect data
+- Rotate anything that has ever been committed, even briefly
 
-### **5. Row Level Security (RLS) Implementation**
+**Don't:**
+- Commit `.env`, service role keys, or a database URL
+- Paste a project ref or key into documentation — this file used to carry
+  somatech's, which is how the wrong-project problem propagated
+- Ship the service role key to the browser under any circumstance
 
-Once your tables are created, implement RLS policies:
+`.env.example` documents every key and what breaks without it.
+
+## Row Level Security
+
+Every table holding user or client data gets RLS enabled and explicit policies.
+A table without RLS is readable by anyone holding the anon key, which is
+everyone.
+
+The build plan makes `project_members` the access spine — nearly every
+investor and fee-client read resolves through it. Write policies that way from
+the first migration rather than per-table ad hoc rules:
 
 ```sql
--- Enable RLS on all user data tables
-ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE subscription_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE discord_sync_logs ENABLE ROW LEVEL SECURITY;
-ALTER TABLE lms_access ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 
--- Create policies for user access
-CREATE POLICY "Users can view own profile" ON user_profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update own profile" ON user_profiles
-  FOR UPDATE USING (auth.uid() = id);
-
-CREATE POLICY "Users can view own subscription history" ON subscription_history
-  FOR SELECT USING (auth.uid() = user_id);
-
--- Service role policies for admin operations
-CREATE POLICY "Service role can manage all profiles" ON user_profiles
-  FOR ALL USING (auth.role() = 'service_role');
+-- Membership is the grant. One join, one place to audit.
+CREATE POLICY "Members read their projects" ON projects
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM project_members
+      WHERE project_members.project_id = projects.id
+        AND project_members.user_id = auth.uid()
+    )
+  );
 ```
 
-## 🔍 **Security Monitoring**
+Two rules that are painful to retrofit, so apply them from the start:
 
-### **Regular Security Checks:**
+- **A PM is not an Admin.** A project manager running a job must not see the
+  equity structure behind it. Separate the roles before the tables exist —
+  changing this later means rewriting every policy.
+- **`documents.visibility` is not optional.** An LP operating agreement, a fee
+  client's lien waiver, and an internal job-cost sheet cannot share a bucket.
 
-1. **Weekly**:
-   - Review Supabase Security Advisor
-   - Check for new security warnings
-   - Monitor failed authentication attempts
+## Database function hygiene
 
-2. **Monthly**:
-   - Rotate API keys
-   - Review user access logs
-   - Update security policies
+Two findings the Supabase Security Advisor raises that are worth pre-empting:
 
-3. **Quarterly**:
-   - Full security audit
-   - Review and update RLS policies
-   - Test incident response procedures
+**Mutable search_path.** A `SECURITY DEFINER` function without a pinned
+`search_path` can be hijacked by a caller who creates a shadowing object:
 
-### **Security Dashboard Links:**
+```sql
+CREATE OR REPLACE FUNCTION my_function()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''          -- pin it, always
+AS $$
+BEGIN
+  -- fully qualify every reference: public.my_table, not my_table
+END;
+$$;
+```
 
-- **Security Advisor**: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/settings/security
-- **RLS Policies**: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/auth/policies
-- **API Keys**: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/settings/api
-- **Database Settings**: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/settings/database
-- **Auth Settings**: https://supabase.com/dashboard/project/dkxqmiamrnphjoaznpuo/auth/settings
+**Extensions in the public schema.** Move them:
 
-## 🚨 **Emergency Security Procedures**
+```sql
+CREATE SCHEMA IF NOT EXISTS extensions;
+ALTER EXTENSION postgis SET SCHEMA extensions;
+```
 
-### **If API Keys are Compromised:**
+Run the Security Advisor in the project dashboard after each migration batch —
+Project Settings → Security.
 
-1. **Immediate Actions**:
-   - Rotate all compromised keys in Supabase dashboard
-   - Update environment variables
-   - Review access logs for suspicious activity
+## Edge function authentication
 
-2. **Investigation**:
-   - Check for unauthorized data access
-   - Review recent user activities
-   - Monitor for unusual patterns
+Functions verify the caller's Supabase JWT by default. Turning that off is
+occasionally correct and always needs a stated reason in `config.toml`, because
+the next reader cannot tell an intentional exception from an oversight.
 
-3. **Recovery**:
-   - Update all client applications
-   - Notify users if necessary
-   - Implement additional monitoring
+Current exceptions, both justified in the file:
 
-### **If Database is Compromised:**
+- `resend-webhook` — authenticates by Svix signature
+- `email-unsubscribe` — authenticates by a server-issued one-time token
 
-1. **Immediate Actions**:
-   - Change all database passwords
-   - Review and update RLS policies
-   - Check for unauthorized data modifications
+Anything called by a third party with no user session (Stripe's webhook, a cron
+trigger) needs this considered explicitly. A function that 401s a webhook fails
+silently from the caller's side.
 
-2. **Investigation**:
-   - Review database logs
-   - Check for data exfiltration
-   - Identify attack vectors
+## Outbound mail
 
-3. **Recovery**:
-   - Restore from clean backup if necessary
-   - Implement additional security measures
-   - Update incident response procedures
+`supabase/functions/_shared/email-brand.ts` classifies every message as
+transactional, marketing, or internal, and **throws** rather than warns when the
+class and the material disagree. That is deliberate: under CAN-SPAM the class,
+not the caller, decides what the footer must legally carry. Marketing mail
+requires a working opt-out and a physical postal address; transactional mail
+must not offer an unsubscribe link.
 
-## 📋 **Security Checklist**
+Change the brand block, not the variant logic, and keep its tests passing.
 
-### **Initial Setup**
-- [ ] Create `.env` file with all required variables
-- [ ] Review Supabase Security Advisor
-- [ ] Create subscription system database tables
-- [ ] Implement RLS policies
-- [ ] Test security configurations
+## If a key is compromised
 
-### **Ongoing Security**
-- [ ] Regular security reviews
-- [ ] API key rotation
-- [ ] Monitor access logs
-- [ ] Update security policies
-- [ ] Test incident response
+1. Rotate it at the provider immediately — Supabase, Stripe, Mapbox
+2. Update the Supabase edge function secrets and the Vercel environment
+3. Redeploy so the new value is in the bundle (Vite inlines `VITE_*` at build
+   time — a rotated key does nothing until you rebuild)
+4. Review the provider's access logs for the exposure window
+5. If the service role key leaked, treat the database as compromised: audit
+   recent writes before assuming it was unused
 
-### **Production Deployment**
-- [ ] Use production API keys
-- [ ] Enable all security features
-- [ ] Set up monitoring and alerting
-- [ ] Implement backup procedures
-- [ ] Create incident response plan
+## Checklist
 
-## 🆘 **Support and Resources**
+**Before the first deploy**
+- [ ] `config.toml` `project_id` is TW's, not somatech's
+- [ ] RLS enabled on every table holding user or client data
+- [ ] PM and Admin separated in the role model
+- [ ] `documents.visibility` modelled in the first migration that adds documents
+- [ ] Security Advisor reviewed with no unresolved errors
+- [ ] Edge function `verify_jwt` exceptions each carry a stated reason
+- [ ] No secret in git history
 
-- **Supabase Security Docs**: https://supabase.com/docs/guides/auth/row-level-security
-- **Security Best Practices**: https://supabase.com/docs/guides/platform/security
-- **Community Support**: https://github.com/supabase/supabase/discussions
-- **Security Issues**: security@supabase.com
-
----
-
-**Remember**: Security is an ongoing process, not a one-time setup. Regular reviews and updates are essential for maintaining a secure application.
+**Ongoing**
+- [ ] Security Advisor after each migration batch
+- [ ] `npm run security:audit` in CI
+- [ ] Rotate keys on staff changes
+- [ ] Review RLS policies whenever a new counterparty type is added
