@@ -548,7 +548,7 @@ export default function FinancialCalendar() {
   const todayD  = new Date(today + 'T00:00:00');
 
   const saved = useMemo(() => {
-    try { return JSON.parse(localStorage.getItem('somatech-calendar-preferences') ?? '{}') as Record<string, string | boolean>; }
+    try { return JSON.parse(localStorage.getItem('tw-calendar-preferences') ?? '{}') as Record<string, string | boolean>; }
     catch { return {}; }
   }, []);
   const [view,         setView]         = useState<CalView>(saved.view === 'week' || saved.view === 'agenda' ? saved.view : 'month');
@@ -569,7 +569,7 @@ export default function FinancialCalendar() {
   const [weekAnchor, setWeekAnchor] = useState(startOfWeek(today));
 
   useEffect(() => {
-    try { localStorage.setItem('somatech-calendar-preferences', JSON.stringify({ view, source: sourceFilter, status: statusFilter, filtersOpen, highImpact: highImpactOnly, exactDates: exactDatesOnly })); }
+    try { localStorage.setItem('tw-calendar-preferences', JSON.stringify({ view, source: sourceFilter, status: statusFilter, filtersOpen, highImpact: highImpactOnly, exactDates: exactDatesOnly })); }
     catch { /* Storage may be unavailable in hardened/private browser contexts. */ }
   }, [view, sourceFilter, statusFilter, filtersOpen, highImpactOnly, exactDatesOnly]);
 

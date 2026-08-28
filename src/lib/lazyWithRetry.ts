@@ -12,7 +12,7 @@ import { lazy, type ComponentType } from 'react';
  * error instead of an infinite refresh loop.
  */
 
-const RELOAD_STATE_KEY = 'somatech:chunk-reload';
+const RELOAD_STATE_KEY = 'tw:chunk-reload';
 const RELOAD_GUARD_MS = 60_000;
 
 export const isChunkLoadError = (error: unknown): boolean => {

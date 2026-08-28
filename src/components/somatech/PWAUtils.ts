@@ -215,9 +215,16 @@ export class PWAInstaller {
   }
 }
 
-// Offline Storage
+/**
+ * Offline storage. Currently unreferenced — nothing imports this class.
+ *
+ * Renaming an IndexedDB database does not migrate it: the old database is
+ * orphaned in the browser and a new empty one is created. That is only safe
+ * here *because* nothing uses this yet. If it ever ships, treat the name and
+ * version as fixed and migrate through `onupgradeneeded` instead.
+ */
 export class OfflineStorage {
-  private dbName = 'SomaTechOffline';
+  private dbName = 'TWVenturesOffline';
   private version = 1;
   private db: IDBDatabase | null = null;
 
@@ -234,12 +241,9 @@ export class OfflineStorage {
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
         
-        // Create stores for offline data
-        if (!db.objectStoreNames.contains('watchlist')) {
-          const watchlistStore = db.createObjectStore('watchlist', { keyPath: 'id' });
-          watchlistStore.createIndex('ticker', 'ticker', { unique: false });
-        }
-        
+        // Create stores for offline data. The 'watchlist' store went with the
+        // non-real-estate cut; deals and project data replace it when this is
+        // actually wired up.
         if (!db.objectStoreNames.contains('analyses')) {
           const analysesStore = db.createObjectStore('analyses', { keyPath: 'id' });
           analysesStore.createIndex('timestamp', 'timestamp', { unique: false });

@@ -53,7 +53,7 @@ const isRoutableModule = (moduleId: string | null): moduleId is string =>
 const getInitialModule = () => {
   const urlModule = new URLSearchParams(window.location.search).get('module');
   if (isRoutableModule(urlModule)) return urlModule;
-  const storedModule = sessionStorage.getItem('somatech-active-module');
+  const storedModule = sessionStorage.getItem('tw-active-module');
   return isRoutableModule(storedModule) ? storedModule : 'dashboard';
 };
 
@@ -73,7 +73,7 @@ const SomaTech = () => {
     const destination = navHistory[navHistory.length - 2];
     setNavHistory(prev => prev.slice(0, -1));
     setActiveModule(destination);
-    sessionStorage.setItem('somatech-active-module', destination);
+    sessionStorage.setItem('tw-active-module', destination);
     const nextSearchParams = new URLSearchParams(searchParams);
     if (destination === 'dashboard') nextSearchParams.delete('module');
     else nextSearchParams.set('module', destination);
@@ -114,7 +114,7 @@ const SomaTech = () => {
   const [splashDone, setSplashDone] = useState(
     () => {
       try {
-        return window.sessionStorage.getItem('somatech-splash-seen') === '1';
+        return window.sessionStorage.getItem('tw-splash-seen') === '1';
       } catch {
         return false;
       }
@@ -130,7 +130,7 @@ const SomaTech = () => {
 
     const finishSplash = () => {
       try {
-        window.sessionStorage.setItem('somatech-splash-seen', '1');
+        window.sessionStorage.setItem('tw-splash-seen', '1');
       } catch {
         // Storage may be unavailable in restricted browsing contexts.
       }
@@ -210,13 +210,13 @@ const SomaTech = () => {
       setNavHistory(['dashboard']);
       setSearchParams({}, { replace: true });
     };
-    window.addEventListener('somatech:signed-out', handleSignedOut);
-    return () => window.removeEventListener('somatech:signed-out', handleSignedOut);
+    window.addEventListener('tw:signed-out', handleSignedOut);
+    return () => window.removeEventListener('tw:signed-out', handleSignedOut);
   }, [setSearchParams]);
 
   // Persist active module to sessionStorage whenever it changes
   useEffect(() => {
-    sessionStorage.setItem('somatech-active-module', activeModule);
+    sessionStorage.setItem('tw-active-module', activeModule);
   }, [activeModule]);
 
   const moduleAccessContext = useMemo(() => ({
@@ -399,7 +399,7 @@ const SomaTech = () => {
     setNavHistory(prev =>
       prev[prev.length - 1] === target ? prev : [...prev.slice(-9), target]
     );
-    sessionStorage.setItem('somatech-active-module', target);
+    sessionStorage.setItem('tw-active-module', target);
     const nextSearchParams = new URLSearchParams(searchParams);
     if (target === 'dashboard') nextSearchParams.delete('module');
     else nextSearchParams.set('module', target);

@@ -3,7 +3,16 @@ import { Cookie, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-const CONSENT_KEY = 'somatech-cookie-consent';
+/**
+ * Exported because sign-out must not wipe it.
+ *
+ * AuthProvider clears localStorage on sign-out and keeps an allowlist of keys
+ * that survive. This key belongs on that list — it records that a person made a
+ * choice, and clearing it re-prompts them. That allowlist used to repeat the
+ * string literal, so renaming the key here would silently have started wiping
+ * consent on every sign-out. Import it there instead of retyping it.
+ */
+export const CONSENT_KEY = 'tw-cookie-consent';
 const CONSENT_VERSION = '1'; // bump when policy changes to re-prompt
 
 type ConsentState = 'accepted' | 'declined' | null;

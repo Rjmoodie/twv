@@ -53,7 +53,7 @@ async function exportUserData(userId: string): Promise<void> {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `somatech-data-${new Date().toISOString().split('T')[0]}.json`;
+  a.download = `tw-ventures-data-${new Date().toISOString().split('T')[0]}.json`;
   a.click();
   URL.revokeObjectURL(url);
 }

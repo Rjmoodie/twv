@@ -5,7 +5,7 @@ export interface PendingAction {
   message?: string;
 }
 
-const KEY = 'somatech-pending-action';
+const KEY = 'tw-pending-action';
 
 // localStorage survives email-confirmation redirects (new tab → back to app).
 // sessionStorage was previously used but lost intent across tabs/redirects.

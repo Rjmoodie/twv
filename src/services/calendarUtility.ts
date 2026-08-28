@@ -38,7 +38,7 @@ export function eventsToIcs(events: FinancialEvent[], calendarName = 'SomaTech C
   return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SomaTech//Financial Calendar//EN', `X-WR-CALNAME:${escapeIcs(calendarName)}`, 'CALSCALE:GREGORIAN', body, 'END:VCALENDAR', ''].join('\r\n');
 }
 
-export function downloadCalendar(events: FinancialEvent[], fileName = 'somatech-calendar.ics') {
+export function downloadCalendar(events: FinancialEvent[], fileName = 'tw-calendar.ics') {
   const url = URL.createObjectURL(new Blob([eventsToIcs(events)], { type: 'text/calendar;charset=utf-8' }));
   const link = document.createElement('a');
   link.href = url;

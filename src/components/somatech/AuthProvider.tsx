@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { User } from '@supabase/supabase-js';
 import type { Tables } from '@/integrations/supabase/types';
 import { disablePushDeviceLocally } from './PWAUtils';
+import { CONSENT_KEY } from './CookieConsent';
 import { SubscriptionService } from '@/services/subscription';
 import { UserProfile } from '@/types/subscription';
 
@@ -54,7 +55,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
     try {
       window.sessionStorage.clear();
 
-      const anonymousSafeKeys = new Set(['theme', 'somatech-cookie-consent']);
+      const anonymousSafeKeys = new Set<string>(['theme', CONSENT_KEY]);
       const keysToRemove: string[] = [];
       for (let index = 0; index < window.localStorage.length; index++) {
         const key = window.localStorage.key(index);
@@ -67,7 +68,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
       console.warn('Could not clear signed-out browser state:', error);
     }
 
-    window.dispatchEvent(new CustomEvent('somatech:signed-out'));
+    window.dispatchEvent(new CustomEvent('tw:signed-out'));
   }, [queryClient]);
 
   const loadProfile = useCallback(async (userId: string) => {

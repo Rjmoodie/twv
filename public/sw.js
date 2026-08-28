@@ -1,12 +1,12 @@
 self.addEventListener('push', event => {
-  let payload = { title: 'SomaTech', body: 'You have a new update.', url: '/' };
+  let payload = { title: 'TW Ventures', body: 'You have a new update.', url: '/' };
   try { payload = { ...payload, ...event.data.json() }; } catch (_) {}
   event.waitUntil(self.registration.showNotification(payload.title, {
     body: payload.body,
     icon: '/logo-192.png',
     badge: '/logo-192.png',
     data: { url: payload.url || '/' },
-    tag: payload.tag || 'somatech-update',
+    tag: payload.tag || 'tw-update',
   }));
 });
 self.addEventListener('notificationclick', event => {

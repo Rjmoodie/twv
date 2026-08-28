@@ -78,7 +78,7 @@ export function recentEvents(): ReadonlyArray<{ event: AnalyticsEvent; props: An
 
 // ─── Session id ──────────────────────────────────────────────────────────────
 
-const SESSION_KEY = 'somatech-analytics-session';
+const SESSION_KEY = 'tw-analytics-session';
 let cachedSessionId: string | null = null;
 
 function getSessionId(): string {
