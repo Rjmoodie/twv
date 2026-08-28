@@ -1,0 +1,653 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Keyboard height — set dynamically by useNativeApp on iOS Capacitor.
+       Defaults to 0px so CSS consumers always get a valid value. */
+    --keyboard-height: 0px;
+
+    /* ─────────────────────────────────────────────
+       Premium Light Theme — calm fintech SaaS
+    ───────────────────────────────────────────── */
+
+    /* Canvas */
+    --background: 220 40% 98%;
+    --foreground: 224 28% 10%;
+
+    /* Surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 224 28% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 28% 10%;
+
+    /* Brand primary — cobalt #2563EB */
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 221 83% 46%;
+    --primary-muted: 221 100% 95%;
+
+    /* Secondary — neutral surface */
+    --secondary: 220 24% 95%;
+    --secondary-foreground: 224 28% 12%;
+    --secondary-hover: 220 20% 91%;
+
+    /* Muted */
+    --muted: 220 24% 95%;
+    --muted-foreground: 220 11% 43%;
+
+    /* Accent — teal-green #00B894 (gain/positive) */
+    --accent: 168 100% 36%;
+    --accent-foreground: 0 0% 100%;
+    --accent-hover: 168 100% 30%;
+    --accent-muted: 168 80% 93%;
+
+    /* Gold — warm amber #C9942A (premium / scarcity) */
+    --gold: 40 65% 48%;
+    --gold-foreground: 0 0% 100%;
+    --gold-muted: 40 80% 94%;
+
+    /* Coach / AI — violet #7C3AED */
+    --coach: 262 83% 58%;
+    --coach-foreground: 0 0% 100%;
+    --coach-muted: 262 80% 95%;
+
+    /* Semantic */
+    --destructive: 0 78% 56%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 168 100% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 52%;
+
+    /* Structure */
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 221 83% 53%;
+    --radius: 0.875rem;
+
+    /* Premium surface system */
+    --surface-raised: 0 0% 100%;
+    --surface-subtle: 220 36% 97%;
+    --surface-glass: 0 0% 100% / 0.76;
+
+    /* Charts */
+    --chart-1: 168 100% 36%;
+    --chart-2: 221 83% 53%;
+    --chart-3: 40 65% 48%;
+    --chart-4: 262 83% 58%;
+    --chart-5: 0 78% 56%;
+
+    /* App background */
+    --app-bg:
+      radial-gradient(ellipse at 10% 0%, hsl(221 83% 90% / 0.7), transparent 40rem),
+      radial-gradient(ellipse at 85% 0%, hsl(168 80% 88% / 0.45), transparent 32rem),
+      radial-gradient(ellipse at 50% 100%, hsl(262 83% 92% / 0.25), transparent 36rem),
+      linear-gradient(180deg, hsl(220 33% 97%), hsl(220 25% 95%));
+  }
+
+  .dark {
+    /* ─────────────────────────────────────────────
+       Premium Dark Theme — deep, low-glare, modern
+    ───────────────────────────────────────────── */
+
+    /* Canvas */
+    --background: 228 33% 6%;
+    --foreground: 220 24% 96%;
+
+    /* Surfaces */
+    --card: 224 24% 9%;
+    --card-foreground: 220 24% 96%;
+    --popover: 224 24% 9%;
+    --popover-foreground: 220 24% 96%;
+
+    /* Brand primary — cobalt, light-shifted for dark bg */
+    --primary: 221 87% 67%;
+    --primary-foreground: 228 33% 6%;
+    --primary-hover: 221 87% 73%;
+    --primary-muted: 221 55% 18%;
+
+    /* Secondary */
+    --secondary: 224 20% 14%;
+    --secondary-foreground: 220 24% 96%;
+    --secondary-hover: 224 20% 18%;
+
+    /* Muted */
+    --muted: 224 20% 14%;
+    --muted-foreground: 218 14% 62%;
+
+    /* Accent — teal-green */
+    --accent: 168 80% 42%;
+    --accent-foreground: 228 33% 6%;
+    --accent-hover: 168 80% 49%;
+    --accent-muted: 168 55% 14%;
+
+    /* Gold */
+    --gold: 40 70% 58%;
+    --gold-foreground: 228 33% 6%;
+    --gold-muted: 40 45% 18%;
+
+    /* Coach / AI — violet */
+    --coach: 262 80% 68%;
+    --coach-foreground: 228 33% 6%;
+    --coach-muted: 262 50% 20%;
+
+    /* Semantic */
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 220 24% 96%;
+    --success: 168 80% 42%;
+    --success-foreground: 228 33% 6%;
+    --warning: 38 92% 56%;
+
+    /* Structure */
+    --border: 228 18% 17%;
+    --input: 228 18% 17%;
+    --ring: 221 87% 67%;
+
+    /* Premium surface system */
+    --surface-raised: 228 22% 11%;
+    --surface-subtle: 228 28% 7%;
+    --surface-glass: 228 24% 9% / 0.72;
+
+    /* Charts */
+    --chart-1: 168 80% 48%;
+    --chart-2: 221 87% 67%;
+    --chart-3: 40 70% 58%;
+    --chart-4: 262 80% 68%;
+    --chart-5: 0 70% 60%;
+
+    /* App background */
+    --app-bg:
+      radial-gradient(circle at 20% -10%, hsl(221 87% 22% / 0.5), transparent 34rem),
+      radial-gradient(circle at 90% 0%, hsl(168 60% 16% / 0.35), transparent 30rem),
+      linear-gradient(180deg, hsl(228 33% 6%), hsl(228 38% 4%));
+  }
+
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* overflow: clip is stronger than hidden — it clips fixed-position children too.
+       overflow: hidden on html/body does NOT clip fixed elements, which is why
+       translate-x-full panels (e.g. coach panel) still created horizontal scroll. */
+    overflow-x: clip;
+    -webkit-text-size-adjust: 100%;
+    /* Fill the WKWebView canvas before React mounts so the native background
+       never bleeds through, including the safe-area region under the status bar. */
+    background-color: hsl(var(--background));
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+    max-width: 100%;
+    background-image: var(--app-bg);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* #root must also be width-capped — if it's wider than 100vw and overflow
+     bubbles up, it creates page-level horizontal scroll. */
+  #root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
+  /* Edge-to-edge modules (e.g. financial-coach) own their internal scroll.
+     On mobile the fixed bottom nav (h-16 + safe-area) sits over the content,
+     so we pad the bottom of main to push the input above it.
+     On desktop (lg+) there is no bottom nav, so no extra padding. */
+  .edge-to-edge-main {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  }
+  @media (min-width: 1024px) {
+    .edge-to-edge-main {
+      padding-bottom: 0;
+    }
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: none;
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 5px hsl(var(--ring) / 0.26);
+    border-radius: var(--radius);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  /* ─────────────────────────────────────────────
+     Layout shell helpers
+  ───────────────────────────────────────────── */
+
+  .app-shell {
+    min-height: 100vh;
+    background-image: var(--app-bg);
+  }
+
+  .app-glass {
+    background: hsl(var(--surface-glass));
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.72);
+  }
+
+  .app-divider {
+    @apply border-border/70;
+  }
+
+  /* ─────────────────────────────────────────────
+     Cards
+  ───────────────────────────────────────────── */
+
+  .app-card {
+    @apply rounded-2xl border border-border/70 bg-card text-card-foreground;
+    box-shadow:
+      0 1px 2px hsl(224 30% 12% / 0.04),
+      0 12px 32px hsl(224 30% 12% / 0.06);
+  }
+
+  .app-card-hover {
+    transition:
+      transform 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 180ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .app-card-hover:hover {
+    transform: translateY(-2px);
+    border-color: hsl(var(--primary) / 0.18);
+    box-shadow:
+      0 2px 6px hsl(224 30% 12% / 0.06),
+      0 20px 48px hsl(224 30% 12% / 0.11);
+  }
+
+  .premium-card,
+  .card-elegant {
+    @apply rounded-2xl border border-border/70 bg-card text-card-foreground;
+    box-shadow:
+      0 1px 2px hsl(224 30% 12% / 0.04),
+      0 14px 36px hsl(224 30% 12% / 0.07);
+  }
+
+  .premium-card:hover,
+  .card-elegant:hover {
+    border-color: hsl(var(--primary) / 0.18);
+    box-shadow:
+      0 2px 6px hsl(224 30% 12% / 0.06),
+      0 22px 52px hsl(224 30% 12% / 0.12);
+  }
+
+  .metric-card {
+    @apply rounded-2xl border border-border/70 bg-card p-5;
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.45),
+      0 12px 36px hsl(224 30% 12% / 0.07);
+  }
+
+  .dark .metric-card {
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.04),
+      0 18px 48px hsl(0 0% 0% / 0.3);
+  }
+
+  /* ─────────────────────────────────────────────
+     Buttons
+  ───────────────────────────────────────────── */
+
+  .btn-primary,
+  .btn-fintech-primary,
+  .btn-apple {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold;
+    @apply bg-primary text-primary-foreground;
+    box-shadow:
+      0 1px 2px hsl(var(--primary) / 0.24),
+      0 10px 24px hsl(var(--primary) / 0.22);
+    transition:
+      transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-primary:hover,
+  .btn-fintech-primary:hover,
+  .btn-apple:hover {
+    background: hsl(var(--primary-hover));
+    transform: translateY(-1px);
+    box-shadow:
+      0 2px 4px hsl(var(--primary) / 0.28),
+      0 16px 34px hsl(var(--primary) / 0.3);
+  }
+
+  .btn-primary:active,
+  .btn-fintech-primary:active,
+  .btn-apple:active {
+    transform: translateY(0);
+    box-shadow:
+      0 1px 2px hsl(var(--primary) / 0.22),
+      0 8px 18px hsl(var(--primary) / 0.2);
+  }
+
+  .btn-primary:disabled,
+  .btn-fintech-primary:disabled,
+  .btn-apple:disabled {
+    @apply cursor-not-allowed opacity-50;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .btn-secondary,
+  .btn-fintech-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold;
+    @apply border border-border/80 bg-card text-foreground;
+    box-shadow: 0 1px 2px hsl(224 30% 12% / 0.05);
+    transition:
+      transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-secondary:hover,
+  .btn-fintech-secondary:hover {
+    @apply bg-muted;
+    transform: translateY(-1px);
+    border-color: hsl(var(--border));
+    box-shadow: 0 10px 24px hsl(224 30% 12% / 0.08);
+  }
+
+  .btn-secondary:active,
+  .btn-fintech-secondary:active {
+    transform: translateY(0);
+  }
+
+  .btn-fintech-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .btn-fintech-ghost:hover {
+    @apply bg-muted/70 text-foreground;
+    transform: translateY(-1px);
+  }
+
+  .btn-fintech-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl text-muted-foreground;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      transform 150ms ease;
+  }
+
+  .btn-fintech-icon:hover {
+    @apply bg-muted/70 text-foreground;
+    transform: translateY(-1px);
+  }
+
+  /* ─────────────────────────────────────────────
+     Navigation
+  ───────────────────────────────────────────── */
+
+  .nav-item,
+  .nav-item-premium {
+    @apply flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-muted-foreground;
+    transition:
+      background-color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      color 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      transform 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .nav-item:hover,
+  .nav-item-premium:hover {
+    @apply bg-muted/70 text-foreground;
+    transform: translateX(1px);
+  }
+
+  .nav-item[aria-current],
+  .nav-item-premium[data-active="true"] {
+    @apply bg-primary/10 text-primary;
+    box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.1);
+  }
+
+  .nav-item-premium:disabled,
+  .nav-item-premium[aria-disabled="true"] {
+    @apply cursor-not-allowed opacity-50;
+    transform: none;
+  }
+
+  .nav-icon-premium {
+    @apply h-4 w-4 shrink-0;
+  }
+
+  .nav-label-premium {
+    @apply text-sm leading-snug;
+  }
+
+  .nav-section-label {
+    @apply px-3 pb-2 pt-4 text-[0.68rem] font-bold uppercase tracking-[0.16em] text-muted-foreground/60;
+  }
+
+  /* ─────────────────────────────────────────────
+     Forms
+  ───────────────────────────────────────────── */
+
+  .input-premium {
+    @apply rounded-xl border border-input bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground;
+    box-shadow: 0 1px 2px hsl(224 30% 12% / 0.04);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  .input-premium:hover {
+    border-color: hsl(var(--border));
+  }
+
+  .input-premium:focus {
+    border-color: hsl(var(--ring) / 0.65);
+    box-shadow: 0 0 0 4px hsl(var(--ring) / 0.14);
+  }
+
+  /* ─────────────────────────────────────────────
+     Interactive helpers
+  ───────────────────────────────────────────── */
+
+  .interactive-element {
+    transition:
+      transform 160ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 160ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .interactive-element:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 28px hsl(224 30% 12% / 0.09);
+  }
+
+  .text-balance-premium {
+    text-wrap: balance;
+  }
+
+  .page-title {
+    @apply font-display text-2xl font-semibold tracking-tight text-foreground md:text-3xl;
+  }
+
+  .page-subtitle {
+    @apply mt-1 max-w-2xl text-sm leading-6 text-muted-foreground;
+  }
+
+  /* ─────────────────────────────────────────────
+     Typography helpers
+  ───────────────────────────────────────────── */
+
+  .heading-tight {
+    letter-spacing: -0.02em;
+  }
+
+  .label-wide {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 600;
+  }
+
+  /* ─────────────────────────────────────────────
+     Hover lift — tactile card/button feel
+  ───────────────────────────────────────────── */
+
+  .hover-lift {
+    transition:
+      transform 200ms cubic-bezier(0.4, 0, 0.2, 1),
+      box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 4px 8px hsl(228 30% 8% / 0.08),
+      0 24px 56px hsl(228 30% 8% / 0.14);
+  }
+
+  /* ─────────────────────────────────────────────
+     Gold accent — premium / pro signals
+  ───────────────────────────────────────────── */
+
+  .badge-gold {
+    background: hsl(var(--gold-muted));
+    color: hsl(var(--gold));
+    border: 1px solid hsl(var(--gold) / 0.25);
+    @apply rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .dark .badge-gold {
+    background: hsl(var(--gold-muted));
+    color: hsl(var(--gold));
+  }
+
+  /* ─────────────────────────────────────────────
+     Coach / AI indicator — violet differentiation
+  ───────────────────────────────────────────── */
+
+  .coach-badge {
+    background: hsl(var(--coach-muted));
+    color: hsl(var(--coach));
+    border: 1px solid hsl(var(--coach) / 0.25);
+    @apply rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .coach-ring {
+    box-shadow: 0 0 0 3px hsl(var(--coach) / 0.2);
+  }
+
+  /* ─────────────────────────────────────────────
+     Shimmer — loading / skeleton skeleton
+  ───────────────────────────────────────────── */
+
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      hsl(0 0% 100% / 0.06) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.8s ease-in-out infinite;
+    transform: translateX(-100%);
+  }
+
+  /* ─────────────────────────────────────────────
+     Aura pulse — subtle breathing glow for AI elements
+  ───────────────────────────────────────────── */
+
+  .aura-pulse {
+    animation: auraPulse 3s ease-in-out infinite;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Mobile input hygiene: prevent iOS auto-zoom
+───────────────────────────────────────────── */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+@media (min-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: inherit !important;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   Premium scrollbar
+───────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.36);
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* ── Keyboard-aware layout ───────────────────────────────────────────────────
+   useNativeApp sets --keyboard-height and adds .keyboard-open to <body>.
+   On mobile only: lift the bottom sheet dialog and hide the bottom nav.       */
+/* Keyboard lift is handled per-dialog via inline style (see AuthDialog.tsx) */
+
+.keyboard-open #bottom-nav {
+  opacity: 0;
+  pointer-events: none;
+}

@@ -1,0 +1,15 @@
+[Unit]
+Description=Discord Options Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/discord-bot
+ExecStart=/opt/discord-bot/venv/bin/python discord-options-bot.py
+Restart=always
+RestartSec=10
+Environment=PATH=/usr/bin:/usr/local/bin
+
+[Install]
+WantedBy=multi-user.target

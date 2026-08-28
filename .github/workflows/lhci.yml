@@ -1,0 +1,20 @@
+name: lighthouse
+on: [pull_request]
+jobs:
+  lhci:
+    runs-on: ubuntu-latest
+    env:
+      VITE_SUPABASE_URL: https://placeholder.supabase.co
+      VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: npm run build
+      - run: |
+          npm run preview -- --host 0.0.0.0 --port 8081 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          npx wait-on --timeout 60000 http://127.0.0.1:8081
+          npx @lhci/cli autorun --collect.url=http://127.0.0.1:8081

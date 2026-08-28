@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /reset-password
+Sitemap: https://somatech.pro/sitemap.xml

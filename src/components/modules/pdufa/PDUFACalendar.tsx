@@ -1,0 +1,40 @@
+import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Activity, Building2, CalendarClock, ExternalLink, FileCheck2, FlaskConical, RefreshCw, Search } from 'lucide-react';
+import { marketCalendarAPI } from '@/services/api/market-calendar-api';
+import { countdown, daysBetween, formatEventDate, isUpcomingTarget, selectPdufaEvents, todayInNewYork, type PDUFAMode } from './pdufaCalendarFilters';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+
+export const PDUFACalendar = () => {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [mode, setMode] = useState<PDUFAMode>('upcoming');
+  const query = useQuery({ queryKey: ['market-calendar', 'pdufa'], queryFn: () => marketCalendarAPI.regulatory(), staleTime: 30 * 60_000, retry: 1 });
+  const items = useMemo(() => query.data?.items ?? [], [query.data?.items]);
+  const today = todayInNewYork();
+  const visible = useMemo(() => selectPdufaEvents(items, { mode, search, today }), [items, mode, search, today]);
+  const programs = new Set(visible.map(item => item.drug)).size;
+  const sponsors = new Set(visible.map(item => item.company)).size;
+  const nextTarget = items.filter(item => isUpcomingTarget(item, today)).map(item => item.eventDate).sort()[0];
+  const futureHealth = query.data?.health?.future as { status?: string; itemCount?: number; upcomingCount?: number; exactDateCount?: number; primarySourceCount?: number; horizonEnd?: string; asOf?: string } | undefined;
+  const forceRefresh = () => queryClient.fetchQuery({ queryKey: ['market-calendar', 'pdufa'], queryFn: () => marketCalendarAPI.regulatory(true), staleTime: 0 });
+  if (query.isLoading) return <div className="flex min-h-[420px] items-center justify-center gap-3 text-muted-foreground"><RefreshCw className="h-5 w-5 animate-spin" />Loading PDUFA calendar…</div>;
+  const stats = [['Events', visible.length, Activity], ['Programs', programs, FileCheck2], ['Sponsors', sponsors, Building2], ['Next decision', nextTarget ? countdown(daysBetween(today, nextTarget)) : '—', CalendarClock]] as const;
+  return <div className="mx-auto w-full max-w-7xl space-y-5 p-4 md:p-6">
+    <section className="rounded-3xl border bg-gradient-to-br from-card via-card to-emerald-500/5 p-5 md:p-7"><div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div className="space-y-2"><div className="flex flex-wrap gap-2"><Badge className="gap-1.5"><FileCheck2 className="h-3 w-3" />Source-linked dates</Badge>{futureHealth?.status === 'healthy' && <Badge variant="outline">{futureHealth.upcomingCount ?? futureHealth.itemCount} upcoming · {futureHealth.itemCount} tracked</Badge>}{query.data?.cached && <Badge variant="secondary">Cached snapshot</Badge>}{query.data?.stale && <Badge variant="destructive">Refresh delayed</Badge>}</div><h1 className="text-2xl font-semibold tracking-tight md:text-3xl">PDUFA & Regulatory Actions</h1><p className="max-w-3xl text-sm text-muted-foreground">Upcoming sponsor-announced target dates from pdufa.bio are combined with completed official Drugs@FDA actions. Every event links to its supporting source; target dates can change or receive an early decision.</p>{futureHealth?.horizonEnd && <p className="text-xs text-muted-foreground">Forward coverage through {formatEventDate(futureHealth.horizonEnd, false)} · {futureHealth.exactDateCount ?? 0} exact dates · {futureHealth.primarySourceCount ?? 0} direct primary links · source as of {futureHealth.asOf ?? 'unavailable'}</p>}</div><div className="flex flex-col items-start gap-2 text-xs text-muted-foreground lg:items-end"><a href={query.data?.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-primary hover:underline">{query.data?.source ?? 'PDUFA calendar sources'}<ExternalLink className="h-3 w-3" /></a><span>Verified {query.data?.fetchedAt ? new Date(query.data.fetchedAt).toLocaleString() : 'unavailable'}</span><Button size="sm" variant="outline" className="gap-2" onClick={() => void forceRefresh().catch(() => undefined)} disabled={query.isFetching}><RefreshCw className={`h-3.5 w-3.5 ${query.isFetching ? 'animate-spin' : ''}`} />Refresh</Button></div></div></section>
+    {(query.error || query.data?.warning) && <Alert variant={query.error ? 'destructive' : 'default'}><AlertDescription>{query.error instanceof Error ? query.error.message : query.data?.warning}</AlertDescription></Alert>}
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">{stats.map(([label, value, Icon]) => <Card key={label}><CardContent className="flex items-center justify-between p-4"><div><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-xl font-semibold tabular-nums">{value}</p></div><Icon className="h-5 w-5 text-emerald-500" /></CardContent></Card>)}</div>
+    <div className="flex flex-col gap-3 rounded-2xl border bg-card p-3 sm:flex-row sm:items-center"><div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search ticker, sponsor, drug, indication or status" className="pl-9" /></div><div className="flex rounded-xl bg-muted p-1">{([['upcoming', 'Upcoming'], ['all', 'All'], ['history', 'Completed']] as const).map(([value, label]) => <Button key={value} size="sm" variant={mode === value ? 'default' : 'ghost'} onClick={() => setMode(value)}>{label}</Button>)}</div></div>
+    <section className="overflow-hidden rounded-2xl border bg-card"><div className="hidden grid-cols-[130px_1.2fr_1fr_1fr_90px] gap-4 border-b bg-muted/40 px-4 py-3 text-xs font-medium text-muted-foreground md:grid"><span>Date</span><span>Drug / application</span><span>Sponsor</span><span>Status</span><span /></div>{visible.length === 0 ? <div className="p-12 text-center"><FlaskConical className="mx-auto mb-3 h-8 w-8 text-muted-foreground" /><h2 className="font-medium">{mode === 'upcoming' ? 'No upcoming target dates' : 'No matching events'}</h2><p className="mt-1 text-sm text-muted-foreground">{search ? 'Clear the search to see every tracked event.' : mode === 'upcoming' ? 'Switch to All to review completed FDA actions.' : 'Try a different view or refresh the feed.'}</p></div> : <div className="divide-y">{visible.map(item => {
+      const official = item.sourceType === 'official_action';
+      const approximate = item.datePrecision === 'approximate';
+      const offset = daysBetween(today, item.eventDate);
+      return <article key={item.id} className="grid gap-3 px-4 py-4 hover:bg-muted/20 md:grid-cols-[130px_1.2fr_1fr_1fr_90px] md:items-center"><div><p className="font-medium">{formatEventDate(item.eventDate, approximate)}</p><p className="text-xs text-muted-foreground">{official ? 'FDA action' : approximate ? 'Target window' : `PDUFA target · ${countdown(offset)}`}</p></div><div className="min-w-0"><p className="truncate font-medium">{item.ticker && <span className="mr-2 text-primary">{item.ticker}</span>}{item.drug}</p><p className="truncate text-xs text-muted-foreground">{[item.applicationNumber, item.indication].filter(Boolean).join(' · ')}</p></div><p className="text-sm">{item.company}</p><Badge variant="outline" className="w-fit max-w-full truncate">{item.status}</Badge><a href={item.sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">Source<ExternalLink className="h-3 w-3" /></a></article>;
+    })}</div>}</section>
+    <p className="text-xs text-muted-foreground">Future target-date data provided by <a className="text-primary hover:underline" href="https://www.pdufa.bio" target="_blank" rel="noreferrer">pdufa.bio</a> from company filings and announcements. Completed actions are verified separately through FDA Drugs@FDA. Target dates are not investment advice.</p>
+  </div>;
+};

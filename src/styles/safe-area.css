@@ -1,0 +1,72 @@
+/* iOS Safe Area Helper Classes */
+
+/* Optional: slightly stronger text shadow for legibility on bright media */
+.overlay-text-soft {
+  text-shadow: 0 1px 3px rgba(0,0,0,.45);
+}
+
+/* Safe area inset utilities */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-all {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Mobile-specific safe area handling */
+@media (max-width: 768px) {
+  .mobile-safe-top {
+    padding-top: max(env(safe-area-inset-top), 20px);
+  }
+  
+  .mobile-safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  }
+}
+
+/* iOS-specific viewport handling */
+@supports (padding: max(0px)) {
+  .ios-safe-top {
+    padding-top: max(env(safe-area-inset-top), 20px);
+  }
+  
+  .ios-safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 20px);
+  }
+}
+
+/* Ensure proper touch targets on mobile */
+@media (max-width: 768px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

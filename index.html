@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <!-- Capacitor / mobile viewport — no scaling, respects safe areas -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>TW Ventures</title>
+  <meta name="description" content="Real estate development and construction management — acquisition through stabilization." />
+  <meta name="author" content="TW Ventures LLC" />
+
+  <!-- PWA / manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/logo.png" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+  <!-- iOS home screen -->
+  <link rel="apple-touch-icon" href="/logo-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TW Ventures" />
+
+  <!-- Android / Chrome -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0A0C14" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F5F7FA" media="(prefers-color-scheme: light)" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="TW Ventures" />
+  <meta property="og:description" content="Real estate development and construction management." />
+  <meta property="og:image" content="/logo.png" />
+  <meta property="og:type" content="website" />
+  
+  <!-- Apply theme before React mounts to avoid flash and fix status bar race condition -->
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (stored === 'dark' || (!stored && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <!-- Premium Typography - Apple-inspired font pairing -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <div id="root"></div>
+  <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

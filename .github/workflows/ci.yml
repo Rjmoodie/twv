@@ -1,0 +1,80 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [22.x, 24.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run type checking
+      run: npm run typecheck
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run tests
+      run: npm run test
+      
+    # CI verifies the bundle COMPILES; it does not produce the deployed artifact
+    # (Vercel's GitHub integration builds and deploys with real env vars).
+    # The escape hatch keeps the production env guard meaningful on Vercel while
+    # letting CI build without holding real credentials.
+    - name: Build application
+      run: npm run build
+      env:
+        ALLOW_MISSING_SUPABASE: "1"
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files
+        path: dist/
+        retention-days: 1
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Audit production dependencies
+      run: npm run security:audit
+
+    - name: Report development dependency advisories
+      continue-on-error: true
+      run: npm run security:audit:all
+      
+    - name: Check for secrets
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: master
+        head: HEAD
+        extra_args: --debug --only-verified
+
+# Deployment is handled by Vercel's GitHub integration (push to master → build →
+# production). The previous `deploy:` job here used amondnet/vercel-action gated
+# on refs/heads/main — a branch that does not exist — so it never ran once.
+# Removed rather than fixed, to avoid two systems deploying the same commit.

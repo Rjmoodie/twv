@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700;800&family=IBM+Plex+Serif:wght@400;600;700&display=swap');
+
+body {
+  font-family: 'IBM Plex Sans', 'Inter', Arial, sans-serif;
+  color: #1a202c;
+}
+.heading-stern {
+  font-family: 'IBM Plex Serif', 'IBM Plex Sans', serif;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #111827;
+}
+.subheading-stern {
+  font-family: 'IBM Plex Sans', 'Inter', Arial, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #1a202c;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

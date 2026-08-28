@@ -1,0 +1,44 @@
+project_id = "dkxqmiamrnphjoaznpuo"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[functions.process-donation]
+verify_jwt = false
+
+[functions.confirm-donation]
+verify_jwt = false
+
+# Both are called by parties that have no user session: Resend's webhook
+# delivery, and a mailbox provider's one-click unsubscribe POST. Each
+# authorizes itself -- the webhook by Svix signature, the unsubscribe by a
+# server-issued bearer token -- so platform JWT verification would only block
+# the legitimate caller.
+[functions.resend-webhook]
+verify_jwt = false
+
+[functions.email-unsubscribe]
+verify_jwt = false
+
+# Browser OAuth callback has no Supabase session. The function validates a
+# one-time, hashed, user-bound state for GET and validates the user JWT itself
+# for POST / authorize.
+[functions.schwab-oauth]
+verify_jwt = false
+
+# pg_cron authenticates worker invocations with SCHWAB_SYNC_SECRET. Manual
+# requests are independently authenticated and ownership-checked in function.
+[functions.schwab-sync]
+verify_jwt = false

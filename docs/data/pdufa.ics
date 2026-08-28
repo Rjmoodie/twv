@@ -1,0 +1,74 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:ics.py - http://git.io/lLljaA
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lilly-launches-court-herstm-help-more-girls-get-game
+DTSTART:20250809T000000Z
+SUMMARY:Lilly launches "The Court Is Hers™" to help more girls get in the game
+UID:eeb2cd8f-cd56-42c3-9934-f8b08e39682e@eeb2.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lilly-launches-court-herstm-help-more-girls-get-game
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/statement-americas-leading-role-biopharmaceutical-innovation
+DTSTART:20250814T000000Z
+SUMMARY:Statement: America’s leading role in biopharmaceutical innovation
+UID:6b85b344-f41a-4db5-bdb0-e267076d131e@6b85.org
+URL:https://investor.lilly.com/news-releases/news-release-details/statement-americas-leading-role-biopharmaceutical-innovation
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: pdufa\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lillys-olomorasib-receives-us-fdas-breakthrough-therapy
+DTSTART:20250904T000000Z
+SUMMARY:Lilly's olomorasib receives U.S. FDA's Breakthrough Therapy designation for the treatment of certain newly diagnosed metastatic KRAS G12C-mutant lung cancers
+UID:ee18c422-12b8-480a-86b2-b82ac50b9ed6@ee18.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lillys-olomorasib-receives-us-fdas-breakthrough-therapy
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lillys-oral-glp-1-orforglipron-successful-third-phase-3-trial
+DTSTART:20250826T000000Z
+SUMMARY:Lilly's oral GLP-1\, orforglipron\, is successful in third Phase 3 trial\, triggering global regulatory submissions this year for the treatment of obesity
+UID:d6f70f7b-b5e3-4208-9f7a-6d35c8a6a898@d6f7.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lillys-oral-glp-1-orforglipron-successful-third-phase-3-trial
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/anne-white-retire-executive-vice-president-and-president-lilly
+DTSTART:20250820T000000Z
+SUMMARY:Anne White to Retire as Executive Vice President and President\, Lilly Neuroscience
+UID:4e0f971c-9096-428f-8455-90c1e6223686@4e0f.org
+URL:https://investor.lilly.com/news-releases/news-release-details/anne-white-retire-executive-vice-president-and-president-lilly
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lillys-oral-glp-1-orforglipron-delivers-weight-loss-average-273
+DTSTART:20250807T000000Z
+SUMMARY:Lilly's oral GLP-1\, orforglipron\, delivers weight loss of up to an average of 27.3 lbs in first of two pivotal Phase 3 trials in adults with obesity
+UID:5eed80d4-1e9f-4ccf-8723-fbc56e054550@5eed.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lillys-oral-glp-1-orforglipron-delivers-weight-loss-average-273
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lillys-verzenior-abemaciclib-increases-overall-survival-hr-her2
+DTSTART:20250827T000000Z
+SUMMARY:Lilly's Verzenio® (abemaciclib) increases overall survival in HR+\, HER2-\, high-risk early breast cancer with two years of therapy
+UID:d605b332-78af-4b37-bb36-10293a065191@d605.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lillys-verzenior-abemaciclib-increases-overall-survival-hr-her2
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lilly-reports-second-quarter-2025-financial-results-and-raises
+DTSTART:20250807T000000Z
+SUMMARY:Lilly reports second-quarter 2025 financial results and raises guidance
+UID:da910c7c-c5d4-4cc1-b4bf-1df2e0b7585d@da91.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lilly-reports-second-quarter-2025-financial-results-and-raises
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lilly-participate-morgan-stanley-23rd-annual-global-healthcare
+DTSTART:20250825T000000Z
+SUMMARY:Lilly to participate in Morgan Stanley 23rd Annual Global Healthcare Conference
+UID:7c787eac-e770-43a2-9cdb-70190edd818e@7c78.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lilly-participate-morgan-stanley-23rd-annual-global-healthcare
+END:VEVENT
+BEGIN:VEVENT
+DESCRIPTION:Source: company_rss\nConfidence: 0.60\nDecision Type: other\nTicker: LLY\nURL: https://investor.lilly.com/news-releases/news-release-details/lilly-participate-wells-fargo-20th-annual-healthcare-conference
+DTSTART:20250822T000000Z
+SUMMARY:Lilly to participate in Wells Fargo 20th Annual Healthcare Conference
+UID:5192c106-a65a-464a-8774-86dad317f6a1@5192.org
+URL:https://investor.lilly.com/news-releases/news-release-details/lilly-participate-wells-fargo-20th-annual-healthcare-conference
+END:VEVENT
+END:VCALENDAR
