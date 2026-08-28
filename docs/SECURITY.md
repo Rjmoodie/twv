@@ -16,14 +16,11 @@ STRIPE_SECRET_KEY=sk_test_your_stripe_secret_key_here
 STRIPE_PUBLIC_KEY=pk_test_your_stripe_public_key_here
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
 
-# Discord Bot Configuration
-DISCORD_BOT_TOKEN=your_discord_bot_token_here
-DISCORD_CLIENT_ID=your_discord_client_id_here
-DISCORD_SERVER_ID=your_discord_server_id_here
-DISCORD_BOT_SECRET=your_discord_bot_secret_here
+# Mapbox (property maps and deal sourcing)
+MAPBOX_TOKEN=your_mapbox_token_here
 
-# Alpha Vantage API (for stock data)
-ALPHA_VANTAGE_API_KEY=your_alpha_vantage_api_key_here
+# FRED / St. Louis Fed (rates panel)
+FRED_API_KEY=your_fred_api_key_here
 ```
 
 ### **2. Supabase Security Advisor Review**

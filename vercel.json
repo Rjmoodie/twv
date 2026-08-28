@@ -7,12 +7,6 @@
 
 
   "rewrites": [
-    { "source": "/research", "destination": "/api/research-index" },
-    { "source": "/research/:slug", "destination": "/api/research?slug=:slug" },
-    { "source": "/stocks/:ticker", "destination": "/api/research-list?ticker=:ticker" },
-    { "source": "/authors/:handle", "destination": "/api/research-list?handle=:handle" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/research.xml", "destination": "/api/research-feed" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
 

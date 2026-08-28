@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 Disallow: /reset-password
-Sitemap: https://somatech.pro/sitemap.xml
+
+# No Sitemap directive on purpose.
+#
+# The sitemap was served by api/sitemap.ts, which indexed the community stock
+# research pages. Those were removed with the non-real-estate cut, and the app
+# is now a single-page bundle behind auth — there is nothing to enumerate.
+# Phase 6 adds the public marketing site; the sitemap comes back with it.
