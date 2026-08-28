@@ -27,8 +27,6 @@ import { NavigationWrapper } from '@/components/somatech/navigation/NavigationWr
 import type { FinancialEvent, EventCategory, EventType } from '@/services/financialCalendarService';
 import { marketCalendarAPI } from '@/services/api/market-calendar-api';
 import { toast } from '@/hooks/use-toast';
-import { useWatchlistOperations } from './watchlist/useWatchlistOperations';
-import { usePortfolio } from '@/contexts/PortfolioContext';
 import { addCalendarDays, calendarDayInTimeZone, formatCalendarDay, startOfWeek } from '@/lib/calendarDate';
 import { downloadCalendar } from '@/services/calendarUtility';
 import { scheduleCalendarReminder, type ReminderChannels } from '@/services/calendarReminderService';
@@ -522,8 +520,6 @@ type CalView = 'month' | 'week' | 'agenda';
 
 export default function FinancialCalendar() {
   const { user } = useAuth();
-  const { portfolios } = usePortfolio();
-  const { data: watchlist = [] } = useWatchlistOperations(user?.id);
   const { data: personalEvents = [], isLoading: personalEventsLoading } = useCalendarEvents(user?.id);
   const earningsQuery = useQuery({
     queryKey: ['financial-calendar', 'market', 'earnings'],
@@ -577,10 +573,10 @@ export default function FinancialCalendar() {
     catch { /* Storage may be unavailable in hardened/private browser contexts. */ }
   }, [view, sourceFilter, statusFilter, filtersOpen, highImpactOnly, exactDatesOnly]);
 
-  const relevantTickers = useMemo(() => new Set([
-    ...watchlist.map((item) => item.ticker),
-    ...portfolios.flatMap((portfolio) => portfolio.holdings ?? []).map((holding) => holding.ticker),
-  ].filter(Boolean).map((ticker) => String(ticker).toUpperCase())), [watchlist, portfolios]);
+  // Held-position relevance came from the watchlist and portfolio modules, both
+  // removed with the non-real-estate cut. The "relevant" filter stays wired but
+  // matches nothing until this is repointed at the deal pipeline in Phase 2.
+  const relevantTickers = useMemo(() => new Set<string>(), []);
 
   const marketEvents = useMemo<FinancialEvent[]>(() => {
     const timestamp = new Date().toISOString();

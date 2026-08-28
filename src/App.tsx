@@ -16,7 +16,6 @@ import ErrorBoundary from '@/components/somatech/ErrorBoundary';
 import PerformanceProvider from '@/components/somatech/PerformanceProvider';
 import ErrorProvider from '@/components/somatech/ErrorProvider';
 import AuthProvider, { useAuth } from '@/components/somatech/AuthProvider';
-import { PortfolioProvider } from '@/contexts/PortfolioContext';
 import SessionTimeoutWarning from '@/components/somatech/SessionTimeoutWarning';
 import { CookieConsent } from '@/components/somatech/CookieConsent';
 import { setAnalyticsSink } from '@/lib/analytics';
@@ -79,7 +78,6 @@ function App() {
           <ErrorProvider>
             <AuthProvider>
               <NativeAppInit />
-              <PortfolioProvider>
               <TooltipProvider>
                 <BrowserRouter>
                   <div className="min-h-screen bg-background">
@@ -144,7 +142,6 @@ function App() {
                 <Sonner />
                 <CookieConsent />
               </TooltipProvider>
-              </PortfolioProvider>
             </AuthProvider>
           </ErrorProvider>
         </PerformanceProvider>

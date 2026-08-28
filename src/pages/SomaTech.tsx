@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import AnimatedSplash from "@/components/somatech/AnimatedSplash";
 import { App as CapacitorApp } from "@capacitor/app";
 import { Capacitor } from "@capacitor/core";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import ErrorBoundary from "@/components/somatech/ErrorBoundary";
 import { modules } from "@/components/somatech/constants";
 import SomaTechLayout from "@/components/somatech/layout/SomaTechLayout";
@@ -16,43 +16,25 @@ import { NavigationProvider } from "@/contexts/NavigationContext";
 import { ActionGuardProvider } from "@/contexts/ActionGuardContext";
 import { savePendingAction, loadPendingAction, clearPendingAction } from "@/lib/pendingAction";
 import type { PendingAction } from "@/lib/pendingAction";
-import { StockDataProvider } from "@/components/somatech/stock-analysis/StockDataProvider";
 
 import { useSubscription } from "@/hooks/useSubscription";
 import { getModuleAccessStatus, getModuleRule, getRequiredTierLabel } from "@/config/moduleAccess";
 import { formatMonthlyPrice } from "@/config/pricing";
-import { coachService } from "@/services/coachService";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 // PageHeader removed — each module renders its own via NavigationWrapper
 
 // Lazy load modules for better performance
 const Dashboard = lazyWithRetry(() => import("@/components/somatech/Dashboard"));
-const StockAnalysis = lazyWithRetry(() => import("@/components/somatech/StockAnalysis"));
-const OptionsDashboard = lazyWithRetry(() => import("@/components/somatech/OptionsDashboard"));
-// const TradesDashboard = lazyWithRetry(() => import("@/components/somatech/TradesDashboard"));
-const Trades = lazyWithRetry(() => import("@/components/somatech/Trades"));
-const PDUFAPage = lazyWithRetry(() => import("@/pages/PDUFAPage"));
-const EarningsPage = lazyWithRetry(() => import("@/pages/EarningsPage"));
-const WatchlistModule = lazyWithRetry(() => import("@/components/somatech/WatchlistModule"));
-const BusinessValuation = lazyWithRetry(() => import("@/components/somatech/BusinessValuation"));
-const CashFlowSimulator = lazyWithRetry(() => import("@/components/somatech/CashFlowSimulator"));
-const RetirementPlanning = lazyWithRetry(() => import("@/components/somatech/RetirementPlanning"));
 const AuthDialog = lazyWithRetry(() => import("@/components/somatech/AuthDialog"));
 const PrivacyPolicy = lazyWithRetry(() => import("@/components/somatech/PrivacyPolicy"));
 const SupportPage = lazyWithRetry(() => import("@/components/somatech/SupportPage"));
 const TermsOfService = lazyWithRetry(() => import("@/components/somatech/TermsOfService"));
 const AccountSettings = lazyWithRetry(() => import("@/components/somatech/AccountSettings"));
-const PortfolioModule = lazyWithRetry(() => import("@/components/somatech/portfolio/PortfolioModule"));
-const JourneyMomentsModule = lazyWithRetry(() => import("@/components/somatech/journey/JourneyMomentsModule"));
 
 const PricingDialog = lazyWithRetry(() => import("@/components/somatech/enterprise/PricingDialog"));
 
 import { toast } from "@/hooks/use-toast";
 const RealEstateCalculator = lazyWithRetry(() => import("@/components/somatech/RealEstateCalculatorContainer"));
-const FinancialCoach = lazyWithRetry(() => import("@/components/somatech/FinancialCoach"));
-const AIToolsModule = lazyWithRetry(() => import("@/components/somatech/AIToolsModule"));
-const JourneyModule = lazyWithRetry(() => import("@/components/somatech/JourneyModule"));
-const PersonalFinanceDashboard = lazyWithRetry(() => import("@/components/somatech/personal-finance/PersonalFinanceDashboard"));
 const FinancialCalendar = lazyWithRetry(() => import("@/components/somatech/FinancialCalendar"));
 
 const formatTierLabel = (tier: string) =>
@@ -77,7 +59,6 @@ const getInitialModule = () => {
 
 const SomaTech = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [activeModule, setActiveModule] = useState(getInitialModule);
 
   // Navigation history for back button support
@@ -117,7 +98,6 @@ const SomaTech = () => {
   }, [navHistory.length]);
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [globalTicker, setGlobalTicker] = useState("AAPL");
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authDialogMessage, setAuthDialogMessage] = useState<string | null>(null);
   const [showPricingDialog, setShowPricingDialog] = useState(false);
@@ -167,60 +147,9 @@ const SomaTech = () => {
     return () => window.clearTimeout(safetyTimer);
   }, [animDone, authLoading, showSplash]);
 
-  // Redirect new users (no coach intake) to Financial Coach on first login.
-  // Fetch profile FIRST — only set the marker after confirming redirect is needed,
-  // so a failed fetch doesn't permanently suppress the redirect.
-  useEffect(() => {
-    if (!user || authLoading) return;
-    const key = `coach-intake-redirected-${user.id}`;
-    if (localStorage.getItem(key)) return;
-    coachService.getProfile(user.id).then((p) => {
-        if (!p?.completed_intake) {
-          // Only mark as done after we know we should redirect
-          localStorage.setItem(key, 'true');
-          // Only redirect if user is on dashboard (don't interrupt a pending module nav).
-          // Move the URL too, not just the state: the URL is what the
-          // module-sync effect below reconciles against, so a redirect that
-          // skips it gets undone the next time anything touches the query string.
-          if (activeModule === 'dashboard') {
-            setActiveModule('financial-coach');
-            setNavHistory(prev => [...prev, 'financial-coach']);
-            setSearchParams(prev => {
-              const next = new URLSearchParams(prev);
-              next.set('module', 'financial-coach');
-              return next;
-            }, { replace: true });
-          }
-        }
-    }).catch(() => {
-      // On error: don't set the marker — will retry on next login
-    });
-  }, [user?.id, authLoading]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // A Journey is a versioned planning document. Signing in must never silently
-  // overwrite the financial profile, activate a goal, or destroy the recovery
-  // draft. JourneyFlow migrates and activates it through its explicit workflow.
-  useEffect(() => {
-    if (!user) return;
-    const noticeKey = `journey-auth-ready-${user.id}`;
-    if (sessionStorage.getItem(noticeKey)) return;
-    try {
-      if (!localStorage.getItem('somatech_journey_draft')) return;
-      sessionStorage.setItem(noticeKey, 'true');
-      toast({
-        title: 'Your Journey draft is ready',
-        description: 'Review it in Journey, then activate it when the commitments are right for you.',
-      });
-    } catch {
-      // Storage can be unavailable in restricted browsing contexts.
-    }
-  }, [user]);
-
   // Handle URL parameters and module state
   useEffect(() => {
     const moduleParam = searchParams.get('module');
-    const donation = searchParams.get('donation');
-    const sessionId = searchParams.get('session_id');
     const upgrade = searchParams.get('upgrade');
     const subscriptionResult = searchParams.get('subscription');
     const subscriptionTier = searchParams.get('tier');
@@ -251,29 +180,6 @@ const SomaTech = () => {
       });
     }
     
-    // "funding-campaigns" is not a routable module, so navigating there landed
-    // the donor on the dashboard with no acknowledgement that the payment went
-    // through. Confirm it where they are and clear the checkout params.
-    if (donation === 'success' && sessionId) {
-      toast({
-        title: "Thank you for your donation",
-        description: "Your payment went through. Thank you for supporting the campaign.",
-      });
-      const cleaned = new URLSearchParams(searchParams);
-      cleaned.delete('donation');
-      cleaned.delete('session_id');
-      setSearchParams(cleaned, { replace: true });
-    } else if (donation === 'cancelled') {
-      toast({
-        title: "Donation cancelled",
-        description: "Your donation was cancelled. You can try again anytime.",
-        variant: "default",
-      });
-      const cleaned = new URLSearchParams(searchParams);
-      cleaned.delete('donation');
-      setSearchParams(cleaned, { replace: true });
-    }
-
     if (upgrade) {
       const moduleExists = modules.some((module) => module.id === upgrade);
       if (moduleExists) {
@@ -429,12 +335,6 @@ const SomaTech = () => {
           newSearchParams.set('module', module);
         }
 
-        // Preserve other parameters
-        const donation = searchParams.get('donation');
-        const sessionId = searchParams.get('session_id');
-        if (donation) newSearchParams.set('donation', donation);
-        if (sessionId) newSearchParams.set('session_id', sessionId);
-
         setSearchParams(newSearchParams);
         window.scrollTo({ top: 0, behavior: 'instant' });
       });
@@ -465,62 +365,10 @@ const SomaTech = () => {
     switch (activeModule) {
       case "dashboard":
         return renderWithAccess("dashboard", <Dashboard />);
-      case "stock-analysis":
-        return renderWithAccess(
-          "stock-analysis",
-          <StockAnalysis globalTicker={globalTicker} setGlobalTicker={setGlobalTicker} onRequestAuth={() => handleRequestAuth(null)} />
-        );
-      case "options-dashboard":
-        return renderWithAccess("options-dashboard", <OptionsDashboard />);
-      // case "trades-dashboard":
-      //   return renderWithAccess("trades-dashboard", <TradesDashboard />);
-      case "pdufa":
-        return renderWithAccess("pdufa", <PDUFAPage />);
-      case "earnings":
-        return renderWithAccess("earnings", <EarningsPage />);
-      case "trades":
-        return renderWithAccess("trades", <Trades />);
-      case "watchlist":
-        return renderWithAccess("watchlist", <WatchlistModule />);
-      case "portfolio":
-        return renderWithAccess("portfolio", <PortfolioModule />);
-      case "business-valuation":
-        return renderWithAccess("business-valuation", <BusinessValuation />);
-      case "cash-flow":
-        return renderWithAccess("cash-flow", <CashFlowSimulator />);
-      case "retirement-planning":
-        return renderWithAccess("retirement-planning", <RetirementPlanning />);
       case "real-estate":
         return renderWithAccess("real-estate", <RealEstateCalculator />);
       case "account":
         return renderWithAccess("account", <AccountSettings />);
-      case "financial-coach":
-        return renderWithAccess(
-          "financial-coach",
-          // h-full works because the edge-to-edge main is flex-col with overflow-hidden
-          <div className="h-full flex flex-col">
-            <FinancialCoach onNavigate={handleModuleChange} />
-          </div>
-        );
-      case "ai-tools":
-        return renderWithAccess("ai-tools", <AIToolsModule />);
-      case "journey":
-        return renderWithAccess(
-          "journey",
-          <JourneyModule
-            onNavigate={handleModuleChange}
-            onClose={handleGoBack}
-            onRequestAuth={() => handleRequestAuth(null)}
-          />
-        );
-      case "community":
-        return (
-          <ModuleWrapper moduleId="community">
-            <JourneyMomentsModule onRequestAuth={() => setShowAuthDialog(true)} />
-          </ModuleWrapper>
-        );
-      case "personal-finance":
-        return renderWithAccess("personal-finance", <PersonalFinanceDashboard onNavigate={handleModuleChange} plaidConnectionLimit={subscription.features.plaidConnectionLimit} onRequestUpgrade={() => navigate('/pricing')} />);
       case "financial-calendar":
         return <ModuleWrapper moduleId="financial-calendar"><FinancialCalendar /></ModuleWrapper>;
       case "support":
@@ -570,7 +418,6 @@ const SomaTech = () => {
         onRequestUpgrade={handleUpgradeRequest}
       >
       <ErrorBoundary>
-        <StockDataProvider globalTicker={globalTicker}>
         <SomaTechLayout
           activeModule={activeModule}
           sidebarCollapsed={sidebarCollapsed}
@@ -587,7 +434,6 @@ const SomaTech = () => {
           {/* Module Content */}
           {renderContent()}
         </SomaTechLayout>
-        </StockDataProvider>
 
         {/* Dialogs */}
         <AuthDialog

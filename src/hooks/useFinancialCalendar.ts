@@ -9,7 +9,7 @@ import {
   type FinancialEvent,
   type CreateEventParams,
 } from '@/services/financialCalendarService';
-import type { CalendarSeed } from '@/services/journeyMilestones';
+import type { CalendarSeed } from '@/services/financialCalendarService';
 
 const QK = {
   all:   (uid: string)                   => ['financial-calendar', uid] as const,

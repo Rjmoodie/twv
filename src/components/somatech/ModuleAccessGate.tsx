@@ -41,21 +41,14 @@ const statusIcons: Record<ModuleAccessStatus, React.ReactNode> = {
   ),
 };
 
+// Per-module selling points shown on the upgrade gate. A module with no entry
+// falls back to the generic copy below. The somatech entries (watchlist,
+// options, courses) went with the non-real-estate cut.
 const upgradeBenefits: Record<string, string[]> = {
-  'watchlist': [
-    'Sync your watchlist across devices',
-    'Unlock sentiment tagging and premium alerts',
-    'Export signals into the options dashboard',
-  ],
-  'options-dashboard': [
-    'Intraday Greeks, IV rank, and risk analytics',
-    'Institutional flow heat maps updated hourly',
-    'Strategy playbooks tailored to your tier',
-  ],
-  'courses': [
-    'Full access to the SomaTech academy library',
-    'Weekly cohort sessions with live Q&A',
-    'Earn certificates and track mastery scores',
+  'lead-gen': [
+    'Off-market property leads across all 50 states',
+    'Map and list search with saved filters',
+    'Export leads for outreach and skip tracing',
   ],
 };
 

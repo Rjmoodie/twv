@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { loadEnv } from "vite";
 
 /**
@@ -99,7 +98,6 @@ export default defineConfig(({ mode }) => {
       jsxImportSource: 'react',
       jsxRuntime: 'automatic',
     }),
-    mode === 'development' && componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -120,8 +118,7 @@ export default defineConfig(({ mode }) => {
       'mapbox-gl'
     ],
     exclude: [
-      'framer-motion',
-      'react-ts-tradingview-widgets'
+      'framer-motion'
     ]
   },
   build: {
@@ -191,7 +188,6 @@ export default defineConfig(({ mode }) => {
           'charts': ['recharts'],
           'maps': ['mapbox-gl'],
           'animations': ['framer-motion'],
-          'trading': ['react-ts-tradingview-widgets'],
           
           // Utilities
           'utils': [

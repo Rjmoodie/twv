@@ -16,14 +16,16 @@ import { cn } from '@/lib/utils';
 
 type NavModule = (typeof modules)[number];
 
-// Primary tabs: home → guided plan → data → AI coach → community feed.
-// Account is always reachable via the sidebar/menu so it doesn't need a tab slot.
+// Primary tabs: home → underwriting → account.
+//
+// The somatech tabs (journey, insights, coach, community) went with the
+// non-real-estate cut. Tabs are filtered against the registry below, so a stale
+// id degrades silently to a missing tab rather than a broken one — which is why
+// this list has to be kept in step with `modules` by hand.
 const PRIMARY_TABS = [
   'dashboard',
-  'journey',
-  'personal-finance',
-  'financial-coach',
-  'community',
+  'real-estate',
+  'account',
 ] as const;
 
 // Computed once at module load — PRIMARY_TABS is a compile-time constant.
@@ -41,10 +43,8 @@ const NAV_ICONS: Record<string, React.ComponentType<LucideProps>> = {
 // Short labels — max ~7 chars for a 75px tab slot
 const NAV_SHORT_LABELS: Record<string, string> = {
   'dashboard':       'Home',
-  'journey':         'Journey',
-  'personal-finance':'Insights',
-  'financial-coach': 'Coach',
-  'community':       'Community',
+  'real-estate':     'Deals',
+  'account':         'Account',
 };
 
 interface BottomNavigationProps {

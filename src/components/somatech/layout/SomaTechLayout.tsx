@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { User } from '@supabase/supabase-js';
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
 import OfflineIndicator from "@/components/somatech/OfflineIndicator";
@@ -10,7 +10,6 @@ import SomaTechDialogs from "./SomaTechDialogs";
 import FloatingActionMenu from "@/components/somatech/FloatingActionMenu";
 import BottomNavigation from "@/components/somatech/BottomNavigation";
 import MobileNavigation from "@/components/somatech/MobileNavigation";
-import JourneyFlow from "@/components/somatech/journey/JourneyFlow";
 import NetworkStatus from "@/components/somatech/NetworkStatus";
 import { useAuth } from "@/components/somatech/AuthProvider";
 import { useError } from "@/components/somatech/ErrorProvider";
@@ -19,7 +18,7 @@ import { usePerformance } from "@/components/somatech/PerformanceProvider";
 // Modules that should fill the full available height with their own internal scroll.
 // For these, we skip the px-4/py-4 outer wrapper and set main to overflow-hidden
 // so there's only ONE scroll container (the module's own).
-const EDGE_TO_EDGE_MODULES = new Set(['financial-coach']);
+const EDGE_TO_EDGE_MODULES = new Set<string>([]);
 
 interface SomaTechLayoutProps {
   activeModule: string;
@@ -51,14 +50,6 @@ const SomaTechLayout: React.FC<SomaTechLayoutProps> = ({
   subscription,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [journeyOpen, setJourneyOpen] = useState(false);
-
-  // Allow any component to open the journey via a custom event (avoids deep prop threading)
-  useEffect(() => {
-    const handler = () => setJourneyOpen(true);
-    window.addEventListener('somatech:open-journey', handler);
-    return () => window.removeEventListener('somatech:open-journey', handler);
-  }, []);
   const { profile } = useAuth();
   const { reportError } = useError();
   const { trackPerformance } = usePerformance();
@@ -108,7 +99,6 @@ const SomaTechLayout: React.FC<SomaTechLayoutProps> = ({
               authLoading={authLoading}
               onModuleChange={onModuleChange}
               onMenuOpen={() => setMobileMenuOpen(true)}
-              onGetStarted={() => setJourneyOpen(true)}
               onSignIn={onRequestAuth}
               onGoBack={onGoBack}
               canGoBack={canGoBack}
@@ -160,12 +150,6 @@ const SomaTechLayout: React.FC<SomaTechLayoutProps> = ({
 
           <SomaTechDialogs />
           <NetworkStatus />
-          <JourneyFlow
-            open={journeyOpen}
-            onClose={() => setJourneyOpen(false)}
-            onRequestAuth={() => { setJourneyOpen(false); onRequestAuth(); }}
-            onBrowseCommunity={() => { setJourneyOpen(false); onModuleChange('community'); }}
-          />
         </div>
       </div>
     </ErrorBoundary>

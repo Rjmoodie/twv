@@ -36,12 +36,12 @@ function ctxForTier(tier: 'free' | 'tier1' | 'tier2' | 'tier3'): ModuleAccessCon
 describe('getModuleAccessStatus — loading', () => {
   it('returns loading when authLoading is true', () => {
     const ctx = makeCtx({ authLoading: true, user: STUB_USER });
-    expect(getModuleAccessStatus('stock-analysis', ctx)).toBe('loading');
+    expect(getModuleAccessStatus('real-estate', ctx)).toBe('loading');
   });
 
   it('returns loading when subscriptionLoading is true', () => {
     const ctx = makeCtx({ subscriptionLoading: true, user: STUB_USER });
-    expect(getModuleAccessStatus('stock-analysis', ctx)).toBe('loading');
+    expect(getModuleAccessStatus('real-estate', ctx)).toBe('loading');
   });
 });
 
@@ -49,9 +49,9 @@ describe('getModuleAccessStatus — loading', () => {
 
 describe('getModuleAccessStatus — unauthenticated', () => {
   it('returns unauthenticated for auth-required modules when no user', () => {
-    expect(getModuleAccessStatus('stock-analysis', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('pdufa', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('trades', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('real-estate', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('lead-gen', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
   });
 
   it('returns ok for modules with no access rule', () => {
@@ -64,27 +64,26 @@ describe('getModuleAccessStatus — unauthenticated', () => {
 describe('getModuleAccessStatus — admin bypass', () => {
   it('admin always gets ok regardless of tier', () => {
     const ctx = makeCtx({ user: STUB_USER, isAdmin: true, subscriptionTier: 'free' });
-    expect(getModuleAccessStatus('stock-analysis', ctx)).toBe('ok');
-    expect(getModuleAccessStatus('courses', ctx)).toBe('ok');
+    expect(getModuleAccessStatus('real-estate', ctx)).toBe('ok');
+    expect(getModuleAccessStatus('lead-gen', ctx)).toBe('ok');
     expect(getModuleAccessStatus('expanded-data-sources', ctx)).toBe('ok');
   });
 });
 
 // ─── Tier-based access ────────────────────────────────────────────────────────
-// ─── Tier-based access ────────────────────────────────────────────────────────
 //
 // The tier model is two parallel paths, not a ladder:
-//   tier1 Planner  → financial-coach, real-estate, business-valuation
-//   tier2 Investor → stock-analysis, pdufa, earnings, portfolio, options, trades, lead-gen
-//   tier3 Complete → both paths + courses
+//   tier1 Planner  → real-estate
+//   tier2 Investor → lead-gen, expanded-data-sources
+//   tier3 Complete → both paths
 // A Planner does NOT get Investor modules and vice versa.
+//
+// This model is inherited from somatech and is due to be replaced by the
+// Investor / PM / Admin role split before any domain table lands. Until then
+// these tests guard the behaviour that ships.
 
 describe('getModuleAccessStatus — Investor path (tier2)', () => {
-  const investorModules = [
-    'stock-analysis', 'pdufa', 'earnings', 'portfolio',
-    'options-dashboard', 'ai-tools', 'trades', 'trades-dashboard',
-    'lead-gen', 'expanded-data-sources',
-  ];
+  const investorModules = ['lead-gen', 'expanded-data-sources'];
 
   for (const id of investorModules) {
     describe(id, () => {
@@ -97,7 +96,7 @@ describe('getModuleAccessStatus — Investor path (tier2)', () => {
 });
 
 describe('getModuleAccessStatus — Planner path (tier1)', () => {
-  const plannerModules = ['financial-coach', 'real-estate', 'business-valuation'];
+  const plannerModules = ['real-estate'];
 
   for (const id of plannerModules) {
     describe(id, () => {
@@ -112,12 +111,6 @@ describe('getModuleAccessStatus — Planner path (tier1)', () => {
 });
 
 describe('getModuleAccessStatus — Complete path (tier3)', () => {
-  describe('courses', () => {
-    it('tier1 → upgrade', () => expect(getModuleAccessStatus('courses', ctxForTier('tier1'))).toBe('upgrade'));
-    it('tier2 → upgrade', () => expect(getModuleAccessStatus('courses', ctxForTier('tier2'))).toBe('upgrade'));
-    it('tier3 → ok',      () => expect(getModuleAccessStatus('courses', ctxForTier('tier3'))).toBe('ok'));
-  });
-
   it('tier3 unlocks every gated module', () => {
     for (const id of Object.keys(moduleAccessRules)) {
       const rule = moduleAccessRules[id];
@@ -130,10 +123,9 @@ describe('getModuleAccessStatus — Complete path (tier3)', () => {
 // ─── Auth-only modules ────────────────────────────────────────────────────────
 
 describe('auth-only modules', () => {
-  it('watchlist and account need a user but no paid tier', () => {
-    expect(getModuleAccessStatus('watchlist', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('watchlist', ctxForTier('free'))).toBe('ok');
-    expect(getModuleAccessStatus('account',   ctxForTier('free'))).toBe('ok');
+  it('account needs a user but no paid tier', () => {
+    expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('account', ctxForTier('free'))).toBe('ok');
   });
 });
 
@@ -146,10 +138,6 @@ describe('moduleAccessRules consistency', () => {
         expect(rule.requiredFeature, `Rule "${id}" has minimumTier but no requiredFeature`).toBeDefined();
       }
     }
-  });
-
-  it('trades is gated on tradesDashboard, not advancedAnalytics', () => {
-    expect(moduleAccessRules['trades'].requiredFeature).toBe('tradesDashboard');
   });
 
   it('every rule requiring auth carries a description for the upgrade prompt', () => {
@@ -166,6 +154,20 @@ describe('moduleAccessRules consistency', () => {
       if (rule.requiredFeature) {
         expect(rule.requiredFeature in free, `Rule "${id}" names unknown feature "${rule.requiredFeature}"`).toBe(true);
       }
+    }
+  });
+
+  // Every gated module must still exist in the registry (or be a sub-surface
+  // rendered inside one). A rule for a deleted module silently gates nothing.
+  it('names no module that was removed with the non-real-estate cut', () => {
+    const cut = [
+      'stock-analysis', 'options-dashboard', 'pdufa', 'earnings', 'watchlist',
+      'portfolio', 'business-valuation', 'cash-flow', 'retirement-planning',
+      'financial-coach', 'ai-tools', 'journey', 'community', 'personal-finance',
+      'courses', 'trades', 'trades-dashboard',
+    ];
+    for (const id of cut) {
+      expect(moduleAccessRules[id], `Rule "${id}" survives for a deleted module`).toBeUndefined();
     }
   });
 });

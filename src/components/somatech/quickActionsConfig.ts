@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { TrendingUp, Calculator, Building, PiggyBank, Home, Star, FileText, BarChart3, Zap, PieChart, Building2 } from "lucide-react";
+import { Home, Building2, Calculator } from "lucide-react";
 
 export interface QuickAction {
   id: string;
@@ -11,46 +11,23 @@ export interface QuickAction {
   floating?: boolean;
 }
 
+/**
+ * Shortcuts surfaced on the dashboard and in the floating action menu.
+ *
+ * The somatech set (analyse stock, watchlist, business valuation, cash flow
+ * model, retirement) went with the non-real-estate cut. These `module` values
+ * are navigated to directly and are NOT validated against the registry, so an
+ * id for a deleted module produces a dead shortcut rather than a build error —
+ * keep this list in step with `constants.ts` by hand.
+ */
 export const quickActions: QuickAction[] = [
   {
-    id: 'analyze-stock',
-    title: 'Analyze Stock',
-    description: 'Get DCF valuation for any stock',
-    icon: TrendingUp,
+    id: 'underwrite-deal',
+    title: 'Underwrite a Deal',
+    description: 'BRRRR and traditional rental analysis',
+    icon: Calculator,
     color: 'from-blue-500 to-blue-600',
-    module: 'stock-analysis'
-  },
-  {
-    id: 'add-watchlist',
-    title: 'Add to Watchlist',
-    description: 'Save stocks for tracking',
-    icon: Star,
-    color: 'from-yellow-500 to-yellow-600',
-    module: 'watchlist'
-  },
-  {
-    id: 'business-valuation',
-    title: 'Value Business',
-    description: 'Comprehensive business analysis',
-    icon: Building,
-    color: 'from-purple-500 to-purple-600',
-    module: 'business-valuation'
-  },
-  {
-    id: 'cash-flow',
-    title: 'Cash Flow Model',
-    description: 'Project future cash flows',
-    icon: BarChart3,
-    color: 'from-green-500 to-green-600',
-    module: 'cash-flow'
-  },
-  {
-    id: 'retirement-plan',
-    title: 'Retirement Planning',
-    description: 'Plan your financial future',
-    icon: PiggyBank,
-    color: 'from-emerald-500 to-emerald-600',
-    module: 'retirement-planning'
+    module: 'real-estate'
   },
   {
     id: 'lead-gen',
@@ -62,30 +39,12 @@ export const quickActions: QuickAction[] = [
   },
   // For FloatingActionMenu (shorter set)
   {
-    id: 'floating-stock-analysis',
-    title: 'Stock Analysis',
-    description: '',
-    icon: TrendingUp,
-    color: 'from-green-500 to-emerald-600',
-    module: 'stock-analysis',
-    floating: true
-  },
-  {
-    id: 'floating-cash-flow',
-    title: 'Cash Flow',
+    id: 'floating-real-estate',
+    title: 'Underwriting',
     description: '',
     icon: Calculator,
     color: 'from-blue-500 to-cyan-600',
-    module: 'cash-flow',
-    floating: true
-  },
-  {
-    id: 'floating-business-valuation',
-    title: 'Business Valuation',
-    description: '',
-    icon: PieChart,
-    color: 'from-purple-500 to-violet-600',
-    module: 'business-valuation',
+    module: 'real-estate',
     floating: true
   },
   {
@@ -97,4 +56,4 @@ export const quickActions: QuickAction[] = [
     module: 'lead-gen',
     floating: true
   }
-]; 
+];

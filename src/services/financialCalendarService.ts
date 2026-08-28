@@ -1,5 +1,23 @@
 import { supabase } from '@/integrations/supabase/client';
-import type { CalendarSeed } from './journeyMilestones';
+
+/**
+ * Shape the bulk-seed functions below accept.
+ *
+ * This lived in `journeyMilestones`, which produced seeds from a user's
+ * financial-journey plan. That module was removed with the non-real-estate cut;
+ * the type is inlined here so the calendar still compiles. Phase 2 repoints the
+ * seeding at project milestones, inspections and permits, which is when the
+ * `journey_*` fields and event types below get renamed.
+ */
+export interface CalendarSeed {
+  title:       string;
+  description: string;
+  event_date:  string;  // ISO date YYYY-MM-DD
+  event_type:  'journey_milestone' | 'check_in' | 'coach_reminder' | 'savings_target';
+  category:    'savings' | 'debt' | 'investment' | 'home' | 'business' | 'general';
+  journey_id:  string;
+  metadata:    Record<string, unknown>;
+}
 
 export type EventType =
   | 'journey_milestone' | 'check_in' | 'coach_reminder'

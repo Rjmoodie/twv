@@ -9,7 +9,6 @@ import {
   Database,
   FileText,
   MessageSquare,
-  BookOpen,
   DollarSign,
   Activity
 } from 'lucide-react';
@@ -42,13 +41,6 @@ const AdminNavigation: React.FC = () => {
       icon: Users,
       path: '/admin/users',
       description: 'Manage users and subscriptions'
-    },
-    {
-      id: 'courses',
-      label: 'Course Management',
-      icon: BookOpen,
-      path: '/courses?tab=admin',
-      description: 'Manage courses and content'
     },
     {
       id: 'analytics',
