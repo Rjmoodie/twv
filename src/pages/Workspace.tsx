@@ -38,6 +38,7 @@ import { toast } from "@/hooks/use-toast";
 const RealEstateCalculator = lazyWithRetry(() => import("@/components/app/RealEstateCalculatorContainer"));
 const FinancialCalendar = lazyWithRetry(() => import("@/components/app/FinancialCalendar"));
 const Portfolio = lazyWithRetry(() => import("@/components/app/portfolio/Portfolio"));
+const CRM = lazyWithRetry(() => import("@/components/app/crm/CRM"));
 
 const formatTierLabel = (tier: string) =>
   tier
@@ -406,6 +407,8 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
         return renderWithAccess("real-estate", <RealEstateCalculator />);
       case "portfolio":
         return renderWithAccess("portfolio", <Portfolio />);
+      case "crm":
+        return renderWithAccess("crm", <CRM />);
       case "account":
         return renderWithAccess("account", <AccountSettings />);
       case "financial-calendar":

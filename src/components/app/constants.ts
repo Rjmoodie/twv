@@ -29,6 +29,20 @@ export const modules: Module[] = [
     }
   },
   {
+    id: "crm",
+    name: "CRM",
+    description: "Project relationships, follow-ups, and communication history",
+    icon: "Users",
+    category: "operations",
+    navGroup: "real-estate",
+    featured: false,
+    seo: {
+      title: "Real Estate CRM | TW Ventures",
+      description: "Manage project relationships, contacts, follow-ups, and communication activity.",
+      keywords: "real estate CRM, investor relations, client management, project contacts, TW Ventures"
+    }
+  },
+  {
     id: "account",
     name: "Account",
     description: "Manage your account settings and preferences",

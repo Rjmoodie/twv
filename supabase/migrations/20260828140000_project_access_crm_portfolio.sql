@@ -713,6 +713,7 @@ create table public.project_invitations (
   expires_at timestamptz not null,
   accepted_at timestamptz,
   accepted_by uuid references auth.users(id) on delete set null,
+  email_claimed_at timestamptz,
   email_sent_at timestamptz,
   email_provider_message_id text,
   created_at timestamptz not null default now(),
@@ -863,7 +864,10 @@ begin
   do update set
     token_hash = excluded.token_hash,
     invited_by = excluded.invited_by,
-    expires_at = excluded.expires_at
+    expires_at = excluded.expires_at,
+    email_claimed_at = null,
+    email_sent_at = null,
+    email_provider_message_id = null
   returning id, raw_token, project_invitations.expires_at;
 end;
 $$;
@@ -918,7 +922,7 @@ grant execute on function public.accept_project_invitation(text) to authenticate
 -- The dedicated invitation mailer uses the caller's JWT for this lookup. It
 -- receives only the fields needed to render delivery and never bypasses the
 -- organization-admin check.
-create or replace function public.get_project_invitation_delivery(invitation_token text)
+create or replace function public.claim_project_invitation_delivery(invitation_token text)
 returns table (
   invitation_id uuid,
   invite_email text,
@@ -927,48 +931,28 @@ returns table (
   expires_at timestamptz,
   email_sent_at timestamptz
 )
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select invitation.id, invitation.email, invitation.role, project.name,
-    invitation.expires_at, invitation.email_sent_at
-  from public.project_invitations invitation
-  join public.projects project on project.id = invitation.project_id
-  where invitation.token_hash = encode(extensions.digest(invitation_token, 'sha256'), 'hex')
-    and invitation.accepted_at is null
-    and invitation.expires_at > now()
-    and private.is_organization_admin(invitation.organization_id);
-$$;
-
-create or replace function public.mark_project_invitation_emailed(
-  invitation_token text,
-  provider_message_id text default null
-)
-returns boolean
 language plpgsql
 security definer
 set search_path = ''
 as $$
-declare
-  updated_count integer;
 begin
+  return query
   update public.project_invitations invitation
-  set email_sent_at = coalesce(invitation.email_sent_at, now()),
-      email_provider_message_id = coalesce(invitation.email_provider_message_id, provider_message_id)
-  where invitation.token_hash = encode(extensions.digest(invitation_token, 'sha256'), 'hex')
+  set email_claimed_at = now()
+  from public.projects project
+  where project.id = invitation.project_id
+    and invitation.token_hash = encode(extensions.digest(invitation_token, 'sha256'), 'hex')
     and invitation.accepted_at is null
     and invitation.expires_at > now()
-    and private.is_organization_admin(invitation.organization_id);
-  get diagnostics updated_count = row_count;
-  return updated_count = 1;
+    and invitation.email_sent_at is null
+    and (invitation.email_claimed_at is null or invitation.email_claimed_at < now() - interval '5 minutes')
+    and private.is_organization_admin(invitation.organization_id)
+  returning invitation.id, invitation.email, invitation.role, project.name,
+    invitation.expires_at, invitation.email_sent_at;
 end;
 $$;
-revoke all on function public.get_project_invitation_delivery(text) from public, anon, authenticated;
-revoke all on function public.mark_project_invitation_emailed(text, text) from public, anon, authenticated;
-grant execute on function public.get_project_invitation_delivery(text) to authenticated;
-grant execute on function public.mark_project_invitation_emailed(text, text) to authenticated;
+revoke all on function public.claim_project_invitation_delivery(text) from public, anon, authenticated;
+grant execute on function public.claim_project_invitation_delivery(text) to authenticated;
 
 -- One role-aware, bounded read model prevents list/map clients from joining the
 -- entire project graph or leaking internal fields to investors and clients.

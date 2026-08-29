@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(22);
+select plan(26);
 
 insert into auth.users (
   instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
@@ -94,12 +94,37 @@ cross join lateral public.create_project_invitation(
   (select id from portal_ids where label = 'project'), invite.email, invite.invite_role
 );
 select is((select count(*) from portal_tokens), 3::bigint, 'owner creates role-bound project invitations');
+select is(
+  (select count(*) from public.claim_project_invitation_delivery((select token from portal_tokens where role = 'project_manager'))),
+  1::bigint,
+  'owner can atomically claim an invitation for email delivery'
+);
+select is(
+  (select count(*) from public.claim_project_invitation_delivery((select token from portal_tokens where role = 'project_manager'))),
+  0::bigint,
+  'a second sender cannot concurrently claim the same invitation'
+);
+select lives_ok(
+  $$select public.create_crm_contact(
+    (select id from portal_ids where label = 'organization'),
+    'investor', 'Ivy', 'Investor', 'ivy@example.com', null, 'Ivy Capital',
+    (select id from portal_ids where label = 'project')
+  )$$,
+  'owner creates and links a CRM contact transactionally'
+);
+select is(
+  (select count(*) from public.crm_contact_projects link
+   join public.crm_contacts contact on contact.id = link.contact_id
+   where contact.email = 'ivy@example.com'),
+  1::bigint,
+  'transactional CRM creation includes the project relationship'
+);
 
 set local request.jwt.claims = '{"sub":"a1000000-0000-4000-8000-000000000002","email":"portfolio-pm@example.com","role":"authenticated"}';
 select is(public.accept_project_invitation((select token from portal_tokens where role = 'project_manager')), 'project_manager', 'PM accepts the PM invitation');
 select is((select count(*) from public.projects), 1::bigint, 'PM can read the assigned project record');
 select is((select count(*) from public.get_portfolio_projects() where can_manage), 1::bigint, 'PM receives a manageable portfolio project');
-select is((select count(*) from public.crm_contacts), 1::bigint, 'PM can read CRM contacts linked to their project');
+select is((select count(*) from public.crm_contacts), 2::bigint, 'PM can read CRM contacts linked to their project');
 select is((select count(*) from public.project_investments), 0::bigint, 'PM cannot read investor capital records');
 
 insert into public.project_updates (

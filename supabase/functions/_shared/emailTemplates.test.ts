@@ -23,7 +23,7 @@ describe('registry', () => {
   });
 
   it('covers every event type the outbox currently emits', () => {
-    expect(REGISTERED_EVENT_TYPES).toEqual(['calendar_reminder', 'project_milestone_due']);
+    expect(REGISTERED_EVENT_TYPES).toEqual(['calendar_reminder', 'project_milestone_due', 'project_invitation']);
   });
 
   // A template for an event nothing sends is dead copy nobody reviews. The
@@ -80,6 +80,30 @@ describe('project_milestone_due', () => {
     }, ctx)!;
     expect(email.html).not.toContain('<img src=x');
     expect(email.html).toContain('&lt;img');
+  });
+});
+
+describe('project_invitation', () => {
+  it('renders a secure project-scoped acceptance action', () => {
+    const email = renderEmail('project_invitation', {
+      invitation_id: 'i7',
+      project_name: 'River House',
+      invite_role: 'project_manager',
+      action_url: '/invite/opaque-token',
+      expires_at: '2026-09-05',
+    }, ctx)!;
+    expect(email.subject).toContain('River House');
+    expect(email.html).toContain('https://app.example.com/invite/opaque-token');
+    expect(email.html).toContain('project manager');
+  });
+
+  it('escapes project and role text', () => {
+    const email = renderEmail('project_invitation', {
+      project_name: '<script>alert(1)</script>',
+      invite_role: '<img src=x>',
+    }, ctx)!;
+    expect(email.html).not.toContain('<script>');
+    expect(email.html).not.toContain('<img src=x>');
   });
 });
 

@@ -53,6 +53,7 @@ describe('getModuleAccessStatus — unauthenticated', () => {
     expect(getModuleAccessStatus('lead-gen', makeCtx())).toBe('unauthenticated');
     expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
     expect(getModuleAccessStatus('portfolio', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('crm', makeCtx())).toBe('unauthenticated');
   });
 
   it('returns ok for modules with no access rule', () => {

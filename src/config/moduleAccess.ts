@@ -45,6 +45,10 @@ export const moduleAccessRules: Record<string, ModuleAccessRule> = {
     requiresAuth: true,
     description: 'Sign in to access the projects assigned to your investor, client, or project manager portal.',
   },
+  crm: {
+    requiresAuth: true,
+    description: 'Sign in with administrator or project manager access to open the project CRM.',
+  },
 
   // ── Underwriting path ───────────────────────────────────────────────────
   'real-estate': {

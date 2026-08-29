@@ -124,6 +124,33 @@ const TEMPLATES: Record<string, Template> = {
         + `<p style="margin:16px 0 0;color:#667085;font-size:13px">This operational reminder was generated from your TW Ventures project schedule.</p>`;
     },
   },
+  project_invitation: {
+    content: payload => {
+      const projectName = str(payload.project_name, 'a TW Ventures project');
+      const role = str(payload.invite_role, 'project member').replace(/_/g, ' ');
+      return {
+        title: `You’re invited to ${projectName}`,
+        message: `You have been invited as ${role} for ${projectName}.`,
+        actionPath: str(payload.action_url, '/'),
+        actionLabel: 'Accept project invitation',
+        category: 'project',
+        pushTag: `project_invitation-${str(payload.invitation_id, 'unknown')}`,
+      };
+    },
+    body: (content, actionUrl, payload) => {
+      const projectName = str(payload.project_name);
+      const role = str(payload.invite_role, 'project member').replace(/_/g, ' ');
+      const expiresAt = str(payload.expires_at);
+      return `<p style="margin:0 0 12px">${escapeHtml(content.message)}</p>`
+        + `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e4e7ec;border-radius:10px;padding:14px 16px">`
+        + (projectName ? `<tr><td style="font-size:13px;color:#667085">Project</td><td style="padding-left:18px;font-size:13px;font-weight:600">${escapeHtml(projectName)}</td></tr>` : '')
+        + `<tr><td style="font-size:13px;color:#667085;padding-top:6px">Access</td><td style="padding-left:18px;padding-top:6px;font-size:13px;font-weight:600">${escapeHtml(role)}</td></tr>`
+        + (expiresAt ? `<tr><td style="font-size:13px;color:#667085;padding-top:6px">Expires</td><td style="padding-left:18px;padding-top:6px;font-size:13px;font-weight:600">${escapeHtml(expiresAt)}</td></tr>` : '')
+        + `</table>`
+        + (actionUrl ? emailButton(content.actionLabel, actionUrl) : '')
+        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">Sign in with the exact email address that received this invitation. If you were not expecting it, you can ignore this message.</p>`;
+    },
+  },
 };
 
 export function hasTemplate(eventType: string): boolean {

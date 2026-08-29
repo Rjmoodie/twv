@@ -39,6 +39,9 @@ export type AnalyticsEvent =
   | 'portfolio_view_toggled'
   | 'portfolio_action_completed'
   | 'project_invitation_created'
+  | 'crm_contact_created'
+  | 'crm_activity_created'
+  | 'crm_task_completed'
   // Trust — did we show a number nobody could use?
   | 'valuation_unavailable';
 
