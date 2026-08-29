@@ -18,7 +18,7 @@ type NavModule = (typeof modules)[number];
 
 // Primary tabs: home → underwriting → account.
 //
-// The somatech tabs (journey, insights, coach, community) went with the
+// The inherited tabs (journey, insights, coach, community) went with the
 // non-real-estate cut. Tabs are filtered against the registry below, so a stale
 // id degrades silently to a missing tab rather than a broken one — which is why
 // this list has to be kept in step with `modules` by hand.

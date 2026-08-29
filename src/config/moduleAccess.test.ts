@@ -80,7 +80,7 @@ describe('getModuleAccessStatus — admin bypass', () => {
 //   tier3 Complete → both paths
 // A Planner does NOT get Investor modules and vice versa.
 //
-// This model is inherited from somatech and is due to be replaced by the
+// This model is inherited from the prior platform and is due to be replaced by the
 // Investor / PM / Admin role split before any domain table lands. Until then
 // these tests guard the behaviour that ships.
 

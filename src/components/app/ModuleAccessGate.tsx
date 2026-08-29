@@ -42,7 +42,7 @@ const statusIcons: Record<ModuleAccessStatus, React.ReactNode> = {
 };
 
 // Per-module selling points shown on the upgrade gate. A module with no entry
-// falls back to the generic copy below. The somatech entries (watchlist,
+// falls back to the generic copy below. The inherited entries (watchlist,
 // options, courses) went with the non-real-estate cut.
 const upgradeBenefits: Record<string, string[]> = {
   'lead-gen': [

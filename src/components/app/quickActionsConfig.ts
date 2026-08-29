@@ -14,7 +14,7 @@ export interface QuickAction {
 /**
  * Shortcuts surfaced on the dashboard and in the floating action menu.
  *
- * The somatech set (analyse stock, watchlist, business valuation, cash flow
+ * The inherited set (analyse stock, watchlist, business valuation, cash flow
  * model, retirement) went with the non-real-estate cut. These `module` values
  * are navigated to directly and are NOT validated against the registry, so an
  * id for a deleted module produces a dead shortcut rather than a build error —

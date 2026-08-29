@@ -16,7 +16,7 @@ const Section = ({ label, children }: { label: string; children: ReactNode }) =>
 /**
  * Phase 0 home screen.
  *
- * The somatech dashboard was a personal-finance overview — net worth hero,
+ * The inherited dashboard was a personal-finance overview — net worth hero,
  * coach next-step, portfolio summary, market quotes. All of it was removed with
  * the non-real-estate cut. Rates are the one panel that survived on merit: the
  * policy rate, the Treasury curve and consumer borrowing costs feed the BRRRR
