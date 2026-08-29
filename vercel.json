@@ -63,25 +63,25 @@
       ]
     },
     {
-      "source": "/investor/?(.*)",
+      "source": "/investor/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
     },
     {
-      "source": "/pm/?(.*)",
+      "source": "/pm/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
     },
     {
-      "source": "/client/?(.*)",
+      "source": "/client/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" }
       ]
     },
     {
-      "source": "/invite/(.*)",
+      "source": "/invite/:path*",
       "headers": [
         { "key": "X-Robots-Tag", "value": "noindex, nofollow" },
         { "key": "Referrer-Policy", "value": "no-referrer" },
