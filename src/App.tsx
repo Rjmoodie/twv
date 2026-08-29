@@ -35,6 +35,7 @@ if (import.meta.env.DEV) {
 
 // Lazy load main pages
 const Workspace = lazyWithRetry(() => import('./pages/Workspace'));
+const InvestorInquiryPage = lazyWithRetry(() => import('./pages/InvestorInquiryPage'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ClientOnboardingPage = lazyWithRetry(() => import('./pages/ClientOnboardingPage'));
 const ResetPasswordPage = lazyWithRetry(() => import('./pages/ResetPasswordPage'));
@@ -94,6 +95,7 @@ function App() {
                           </Suspense>
                         } 
                       />
+                      <Route path="/investors" element={<Suspense fallback={<div>Loading…</div>}><InvestorInquiryPage /></Suspense>} />
                       <Route path="/investor" element={<Suspense fallback={<div>Loading investor portal…</div>}><Workspace portalIntent="investor" /></Suspense>} />
                       <Route path="/pm" element={<Suspense fallback={<div>Loading project manager portal…</div>}><Workspace portalIntent="project_manager" /></Suspense>} />
                       <Route path="/client" element={<Suspense fallback={<div>Loading client portal…</div>}><Workspace portalIntent="client" /></Suspense>} />

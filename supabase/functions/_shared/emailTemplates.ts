@@ -94,6 +94,40 @@ const TEMPLATES: Record<string, Template> = {
         + `<p style="margin:16px 0 0;color:#667085;font-size:13px">You set this reminder in TW Ventures. Provider dates can change after a reminder is scheduled.</p>`;
     },
   },
+  investor_inquiry_received: {
+    content: payload => {
+      const name = str(payload.full_name, 'Someone');
+      const selfReport = str(payload.accreditation_self_report, 'unsure');
+      const selfReportLabel = selfReport === 'accredited'
+        ? 'self-reports as accredited'
+        : selfReport === 'not_accredited'
+          ? 'self-reports as not accredited'
+          : 'is unsure of their accreditation status';
+      return {
+        title: `New investor enquiry: ${name}`,
+        message: `${name} enquired through the investor page and ${selfReportLabel}.`,
+        actionPath: '/?module=crm',
+        actionLabel: 'Open CRM',
+        category: 'investor',
+        pushTag: `investor_inquiry-${str(payload.inquiry_id, 'unknown')}`,
+      };
+    },
+    body: (content, actionUrl, payload) => {
+      const email = str(payload.email);
+      const range = str(payload.investment_range).replace(/_/g, ' ');
+      return `<p style="margin:0 0 12px">${escapeHtml(content.message)}</p>`
+        + ((email || range)
+          ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e4e7ec;border-radius:10px;padding:14px 16px">`
+            + (email ? `<tr><td style="font-size:13px;color:#667085">Email</td><td style="padding-left:18px;font-size:13px;font-weight:600">${escapeHtml(email)}</td></tr>` : '')
+            + (range ? `<tr><td style="font-size:13px;color:#667085;padding-top:6px">Range</td><td style="padding-left:18px;padding-top:6px;font-size:13px;font-weight:600">${escapeHtml(range)}</td></tr>` : '')
+            + `</table>`
+          : '')
+        + (actionUrl ? emailButton(content.actionLabel, actionUrl) : '')
+        // Stated in every one of these so it is never inferred from the form.
+        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">What the enquirer reported about their own accreditation is a lead qualifier, not a verification. It does not satisfy Rule 506(c).</p>`;
+    },
+  },
+
   project_milestone_due: {
     content: payload => {
       const milestoneTitle = str(payload.title, 'Project milestone');

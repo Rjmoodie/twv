@@ -39,6 +39,8 @@ export type AnalyticsEvent =
   | 'portfolio_view_toggled'
   | 'portfolio_action_completed'
   | 'project_invitation_created'
+  // Investor funnel — does anyone actually raise their hand?
+  | 'investor_inquiry_submitted'
   | 'crm_contact_created'
   | 'crm_activity_created'
   | 'crm_task_completed'

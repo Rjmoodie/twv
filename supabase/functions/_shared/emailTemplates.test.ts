@@ -23,7 +23,14 @@ describe('registry', () => {
   });
 
   it('covers every event type the outbox currently emits', () => {
-    expect(REGISTERED_EVENT_TYPES).toEqual(['calendar_reminder', 'project_milestone_due', 'project_invitation']);
+    // Order-independent: the registry is a map, and asserting insertion order
+    // made this fail whenever a template was added anywhere but the end.
+    expect([...REGISTERED_EVENT_TYPES].sort()).toEqual([
+      'calendar_reminder',
+      'investor_inquiry_received',
+      'project_invitation',
+      'project_milestone_due',
+    ]);
   });
 
   // A template for an event nothing sends is dead copy nobody reviews. The
@@ -104,6 +111,41 @@ describe('project_invitation', () => {
     }, ctx)!;
     expect(email.html).not.toContain('<script>');
     expect(email.html).not.toContain('<img src=x>');
+  });
+});
+
+describe('investor_inquiry_received', () => {
+  it('routes administrators to the CRM and deduplicates push per enquiry', () => {
+    const content = renderContent('investor_inquiry_received', {
+      inquiry_id: 'q1', full_name: 'Dana Reed', email: 'dana@example.com',
+      accreditation_self_report: 'accredited',
+    })!;
+    expect(content.title).toBe('New investor enquiry: Dana Reed');
+    expect(content.message).toContain('self-reports as accredited');
+    expect(content.actionPath).toBe('/?module=crm');
+    expect(content.pushTag).toBe('investor_inquiry-q1');
+  });
+
+  it('does not present a self-report as a verification', () => {
+    const email = renderEmail('investor_inquiry_received', {
+      full_name: 'Dana Reed', email: 'dana@example.com', accreditation_self_report: 'accredited',
+    }, ctx)!;
+    expect(email.html).toContain('not a verification');
+    expect(email.html).toContain('506(c)');
+  });
+
+  it('escapes enquirer-supplied values', () => {
+    const email = renderEmail('investor_inquiry_received', {
+      full_name: '<img src=x onerror=1>', email: 'a@b.co',
+    }, ctx)!;
+    expect(email.html).not.toContain('<img src=x');
+    expect(email.html).toContain('&lt;img');
+  });
+
+  it('degrades without a name rather than rendering "undefined"', () => {
+    const content = renderContent('investor_inquiry_received', {})!;
+    expect(content.title).toBe('New investor enquiry: Someone');
+    expect(JSON.stringify(content)).not.toContain('undefined');
   });
 });
 

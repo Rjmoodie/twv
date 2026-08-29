@@ -98,9 +98,17 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 />
               </>
             ) : (
-              <Button size="sm" onClick={onSignIn ?? (() => navigate('/get-started'))}>
-                Sign In
-              </Button>
+              // A signed-out visitor arriving from search lands here. Without
+              // this the investor page exists but nothing links to it, which is
+              // how /investor ended up unreachable in the first place.
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => navigate('/investors')}>
+                  Investors
+                </Button>
+                <Button size="sm" onClick={onSignIn ?? (() => navigate('/get-started'))}>
+                  Sign In
+                </Button>
+              </div>
             )}
           </div>
         </div>

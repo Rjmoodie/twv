@@ -9,6 +9,11 @@ const routeMetadata: Record<string, { title: string; description: string; index:
     description: 'TW Ventures acquires, develops, and builds real estate in Philadelphia. In-house general contracting from off-market acquisition through construction to stabilized, cash-flowing assets.',
     index: true,
   },
+  '/investors': {
+    title: 'Invest in Philadelphia Real Estate | TW Ventures',
+    description: 'TW Ventures acquires, develops, and builds Philadelphia real estate in-house. Start a conversation about investing alongside us.',
+    index: true,
+  },
   '/get-started': {
     title: 'Client Portal & Project Onboarding | TW Ventures',
     description: 'Access your TW Ventures projects, follow construction and development updates, view documents, and start your next real estate project.',
