@@ -73,19 +73,20 @@ jobs:
       continue-on-error: true
       run: npm run security:audit:all
       
-    # Scans the entire repository rather than a commit range. A `base`/`head`
-    # diff is wrong for this repo on two counts: on a push to `main` the two
-    # refs are the same commit, so TruffleHog exits 1 having scanned nothing,
-    # and a range scan only ever sees the newest commits -- while this codebase
-    # was copied wholesale from another project and CI had never run against it,
-    # so anything committed before today had never been scanned at all.
-    # `--only-verified` keeps this to secrets confirmed live, not every string
-    # shaped like a key.
+    # Full-history secrets scan, run through the CLI rather than the action.
+    #
+    # The action derives its own commit range from the event -- on a push that
+    # is `before..after` -- so it only ever sees the newest commits. That is a
+    # reasonable ongoing gate but it was never going to cover this repo, which
+    # was copied wholesale from another codebase and whose CI had never run:
+    # everything committed before today had gone unscanned. `git file:///repo`
+    # walks the entire history instead. `--only-verified` keeps findings to
+    # secrets confirmed live; `--fail` turns a finding into a red build.
     - name: Check for secrets
-      uses: trufflesecurity/trufflehog@main
-      with:
-        path: ./
-        extra_args: --only-verified
+      run: |
+        docker run --rm -v "$PWD:/repo" \
+          ghcr.io/trufflesecurity/trufflehog:3.97.1 \
+          git file:///repo --only-verified --fail
 
 # Deployment is handled by Vercel's GitHub integration (push to main → build →
 # production). The previous `deploy:` job here used amondnet/vercel-action gated
