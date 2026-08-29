@@ -1,10 +1,13 @@
 name: CI/CD Pipeline
 
+# `main` is the only branch this repo has ever had: origin/HEAD points at it and
+# neither `master` nor `develop` exists. Triggering on those meant every job
+# below was dead config -- CI had never run a single time.
 on:
   push:
-    branches: [ master, develop ]
+    branches: [ main ]
   pull_request:
-    branches: [ master, develop ]
+    branches: [ main ]
 
 jobs:
   test:
@@ -70,11 +73,11 @@ jobs:
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: master
+        base: main
         head: HEAD
         extra_args: --debug --only-verified
 
-# Deployment is handled by Vercel's GitHub integration (push to master → build →
+# Deployment is handled by Vercel's GitHub integration (push to main → build →
 # production). The previous `deploy:` job here used amondnet/vercel-action gated
 # on refs/heads/main — a branch that does not exist — so it never ran once.
 # Removed rather than fixed, to avoid two systems deploying the same commit.

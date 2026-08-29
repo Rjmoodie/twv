@@ -32,7 +32,8 @@ const NAV_ICONS: Record<string, React.ComponentType<LucideProps>> = {
   User: LucideUser,
 };
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
-import { getModuleAccessStatus, getModuleRule, getRequiredTierLabel } from '@/config/moduleAccess';
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from '@/config/moduleAccess';
+import { useAuth } from '@/components/app/AuthProvider';
 import type { ModuleAccessStatus } from '@/config/moduleAccess';
 import { toast } from '@/hooks/use-toast';
 
@@ -102,27 +103,26 @@ const GroupedNavigation = ({
 
   const groups = useMemo(groupModules, []);
 
-  const { hasFeature, subscriptionTier, loading: subscriptionLoading, userProfile } = subscription;
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+  const { access, accessLoading, userProfile } = useAuth();
+  const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
   const getStatusMeta = (moduleId: string) => {
     const status = getModuleAccessStatus(moduleId, {
       user,
       authLoading,
-      subscriptionLoading,
-      hasFeature,
-      subscriptionTier,
-      isAdmin,
+      accessLoading,
+      personas: access.personas,
+      isSuperAdmin,
     });
 
     return {
       status,
-      isLocked: status === 'unauthenticated' || status === 'upgrade',
+      isLocked: status === 'unauthenticated' || status === 'forbidden',
       isLoading: status === 'loading',
       lockLabel:
         status === 'unauthenticated'
           ? 'Sign in required'
-          : status === 'upgrade'
+          : status === 'forbidden'
             ? 'Upgrade required'
             : undefined,
     };
@@ -139,9 +139,9 @@ const GroupedNavigation = ({
       return;
     }
 
-    if (status === 'upgrade') {
+    if (status === 'forbidden') {
       const rule = getModuleRule(moduleId);
-      const tierLabel = getRequiredTierLabel(rule);
+      const tierLabel = getAccessRequirementLabel(rule);
       const moduleName = modules.find((m) => m.id === moduleId)?.name || 'this module';
       toast({
         title: 'Upgrade required',

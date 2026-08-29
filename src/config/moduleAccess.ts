@@ -1,15 +1,37 @@
 import type { User } from '@supabase/supabase-js';
-import type { SubscriptionTier, SubscriptionFeatures } from '@/types/subscription';
+import type { SubscriptionTier } from '@/types/subscription';
+import type { PortalPersona } from '@/components/app/AuthProvider';
 import type { Module } from '@/components/app/types';
 
+/**
+ * Who may open a module.
+ *
+ * This used to gate on subscription feature flags inherited from the somatech
+ * codebase, which meant the firm's own principals were asked to buy a plan
+ * before they could open the underwriting calculator. TW Ventures is an
+ * internal operations platform: access follows what someone is to the firm, not
+ * what they have paid.
+ *
+ * Personas come from real `organization_members` and `project_members` rows via
+ * AuthProvider, and are the same ones the portals and CRM already enforce.
+ * Stripe stays — it bills fee engagements — but it no longer decides who sees
+ * what.
+ */
 export interface ModuleAccessRule {
   requiresAuth?: boolean;
-  requiredFeature?: keyof SubscriptionFeatures;
-  minimumTier?: SubscriptionTier;
+  /** Holding any one of these grants access. Omit for auth-only modules. */
+  requiredPersonas?: PortalPersona[];
   description?: string;
-  highlightTier?: SubscriptionTier;
 }
 
+export const personaLabels: Record<PortalPersona, string> = {
+  admin: 'Administrator',
+  project_manager: 'Project Manager',
+  investor: 'Investor',
+  client: 'Client',
+};
+
+/** Billing plan names. Used by the pricing surface, never by module access. */
 export const tierLabels: Record<SubscriptionTier, string> = {
   free: 'Free',
   tier1: 'Underwriting',
@@ -17,59 +39,38 @@ export const tierLabels: Record<SubscriptionTier, string> = {
   tier3: 'Complete',
 };
 
-const tierOrder: Record<SubscriptionTier, number> = {
-  free: 0,
-  tier1: 1,
-  tier2: 2,
-  tier3: 3,
-};
-
-export type ModuleAccessStatus = 'ok' | 'loading' | 'unauthenticated' | 'upgrade';
+export type ModuleAccessStatus = 'ok' | 'loading' | 'unauthenticated' | 'forbidden';
 
 export interface ModuleAccessContext {
   user: User | null;
   authLoading: boolean;
-  subscriptionLoading: boolean;
-  hasFeature: (feature: keyof SubscriptionFeatures) => boolean;
-  subscriptionTier: SubscriptionTier;
-  isAdmin: boolean;
+  accessLoading: boolean;
+  personas: PortalPersona[];
+  /** Platform-owner bypass from `user_profiles.role`, distinct from the admin persona. */
+  isSuperAdmin: boolean;
 }
 
+const INTERNAL: PortalPersona[] = ['admin', 'project_manager'];
+
 export const moduleAccessRules: Record<string, ModuleAccessRule> = {
-  // ── Auth only (free tier) ────────────────────────────────────────────────
-  account: {
-    requiresAuth: true,
-    description: 'Sign in to update your profile, security preferences, and notification settings.',
-  },
-  portfolio: {
-    requiresAuth: true,
-    description: 'Sign in to access the projects assigned to your investor, client, or project manager portal.',
-  },
+  // ── Signed in, any persona ───────────────────────────────────────────────
+  // Portfolio is the shared surface. Every persona sees it and row-level
+  // security decides what is inside, so gating the module itself would hide the
+  // one screen an investor or client signs in for.
+  account:   { requiresAuth: true },
+  support:   { requiresAuth: true },
+  portfolio: { requiresAuth: true },
+
+  // ── Internal only ────────────────────────────────────────────────────────
   crm: {
     requiresAuth: true,
-    description: 'Sign in with administrator or project manager access to open the project CRM.',
+    requiredPersonas: INTERNAL,
+    description: 'Contacts and communication history are internal to the firm.',
   },
-
-  // ── Underwriting path ───────────────────────────────────────────────────
   'real-estate': {
     requiresAuth: true,
-    requiredFeature: 'realEstate',
-    highlightTier: 'tier1',
-    description: 'Access the BRRRR calculator, deal sourcing, and rental analysis tools — included in the Underwriting plan.',
-  },
-
-  // ── Investor path ─────────────────────────────────────────────────────────
-  'lead-gen': {
-    requiresAuth: true,
-    requiredFeature: 'advancedAnalytics',
-    highlightTier: 'tier2',
-    description: 'Access live real estate intelligence and property lead exports — included in the Investor plan.',
-  },
-  'expanded-data-sources': {
-    requiresAuth: true,
-    requiredFeature: 'aiTools',
-    highlightTier: 'tier2',
-    description: 'Unlock premium data integrations and AI-powered sourcing workflows — included in the Investor plan.',
+    requiredPersonas: INTERNAL,
+    description: 'Underwriting is internal — it exposes deal economics before a deal is won.',
   },
 };
 
@@ -78,36 +79,28 @@ export const getModuleAccessStatus = (
   context: ModuleAccessContext,
 ): ModuleAccessStatus => {
   const rule = moduleAccessRules[moduleId];
-  const { user, authLoading, subscriptionLoading, hasFeature, subscriptionTier, isAdmin } = context;
+  const { user, authLoading, accessLoading, personas, isSuperAdmin } = context;
 
   if (!rule) {
-    if (authLoading || subscriptionLoading) {
-      return 'loading';
-    }
-    return 'ok';
+    return authLoading || accessLoading ? 'loading' : 'ok';
   }
 
-  if (authLoading || subscriptionLoading) {
+  // Personas arrive on a second round trip after the session resolves. Deciding
+  // before they land would flash a denial at someone who does have access.
+  if (authLoading || accessLoading) {
     return 'loading';
   }
 
-  if (rule.requiresAuth && !user && !isAdmin) {
+  if (rule.requiresAuth && !user && !isSuperAdmin) {
     return 'unauthenticated';
   }
 
-  if (isAdmin) {
+  if (isSuperAdmin) {
     return 'ok';
   }
 
-  if (rule.requiredFeature) {
-    if (hasFeature(rule.requiredFeature)) {
-      return 'ok';
-    }
-    return 'upgrade';
-  }
-
-  if (rule.minimumTier && tierOrder[subscriptionTier] < tierOrder[rule.minimumTier]) {
-    return 'upgrade';
+  if (rule.requiredPersonas?.length) {
+    return rule.requiredPersonas.some((persona) => personas.includes(persona)) ? 'ok' : 'forbidden';
   }
 
   return 'ok';
@@ -116,15 +109,10 @@ export const getModuleAccessStatus = (
 export const getModuleRule = (moduleId: string): ModuleAccessRule | undefined =>
   moduleAccessRules[moduleId];
 
-export const getRequiredTierLabel = (rule?: ModuleAccessRule): string | null => {
-  if (!rule) return null;
-  if (rule.highlightTier) {
-    return tierLabels[rule.highlightTier];
-  }
-  if (rule.minimumTier) {
-    return tierLabels[rule.minimumTier];
-  }
-  return null;
+/** "Administrator or Project Manager" — what a denial tells the reader they need. */
+export const getAccessRequirementLabel = (rule?: ModuleAccessRule): string | null => {
+  if (!rule?.requiredPersonas?.length) return null;
+  return rule.requiredPersonas.map((persona) => personaLabels[persona]).join(' or ');
 };
 
 export const moduleRequiresAccessControl = (module: Module): boolean =>

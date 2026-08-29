@@ -8,7 +8,8 @@ import type { LucideProps } from 'lucide-react';
 import { modules } from './constants';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
-import { getModuleAccessStatus, getModuleRule, getRequiredTierLabel } from '@/config/moduleAccess';
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from '@/config/moduleAccess';
+import { useAuth } from '@/components/app/AuthProvider';
 import type { ModuleAccessStatus } from '@/config/moduleAccess';
 import { toast } from '@/hooks/use-toast';
 import { useHaptics } from '@/hooks/useHaptics';
@@ -75,16 +76,16 @@ const BottomNavigation = ({
   onRequestAuth,
   onRequestUpgrade,
 }: BottomNavigationProps) => {
-  const { hasFeature, subscriptionTier, loading: subscriptionLoading, userProfile } = subscription;
+  const { access, accessLoading, userProfile } = useAuth();
   const haptics = useHaptics();
-  const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
+  const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
   const navModules = NAV_MODULES;
 
   // Batch access context — single memo so moduleStatusMap only recomputes when auth/subscription changes
   const accessContext = useMemo(() => ({
-    user, authLoading, subscriptionLoading, hasFeature, subscriptionTier, isAdmin,
-  }), [user, authLoading, subscriptionLoading, hasFeature, subscriptionTier, isAdmin]);
+    user, authLoading, accessLoading, personas: access.personas, isSuperAdmin,
+  }), [user, authLoading, accessLoading, access.personas, isSuperAdmin]);
 
   // Derive all statuses once per render, not per-button
   const moduleStatusMap = useMemo(() =>
@@ -92,11 +93,11 @@ const BottomNavigation = ({
       const status = getModuleAccessStatus(module.id, accessContext);
       acc[module.id] = {
         status,
-        isLocked: status === 'unauthenticated' || status === 'upgrade',
+        isLocked: status === 'unauthenticated' || status === 'forbidden',
         isLoading: status === 'loading',
         lockLabel:
           status === 'unauthenticated' ? 'Sign in required'
-          : status === 'upgrade'       ? 'Upgrade required'
+          : status === 'forbidden'       ? 'Upgrade required'
           : undefined,
       };
       return acc;
@@ -112,8 +113,8 @@ const BottomNavigation = ({
       onRequestAuth?.();
       return;
     }
-    if (status === 'upgrade') {
-      const tierLabel = getRequiredTierLabel(rule);
+    if (status === 'forbidden') {
+      const tierLabel = getAccessRequirementLabel(rule);
       toast({
         title: 'Upgrade required',
         description: tierLabel

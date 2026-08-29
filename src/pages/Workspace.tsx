@@ -19,7 +19,7 @@ import { savePendingAction, loadPendingAction, clearPendingAction } from "@/lib/
 import type { PendingAction } from "@/lib/pendingAction";
 
 import { useSubscription } from "@/hooks/useSubscription";
-import { getModuleAccessStatus, getModuleRule, getRequiredTierLabel } from "@/config/moduleAccess";
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from "@/config/moduleAccess";
 import { formatMonthlyPrice } from "@/config/pricing";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 // PageHeader removed — each module renders its own via NavigationWrapper
@@ -36,7 +36,6 @@ const PricingDialog = lazyWithRetry(() => import("@/components/app/enterprise/Pr
 
 import { toast } from "@/hooks/use-toast";
 const RealEstateCalculator = lazyWithRetry(() => import("@/components/app/RealEstateCalculatorContainer"));
-const FinancialCalendar = lazyWithRetry(() => import("@/components/app/FinancialCalendar"));
 const Portfolio = lazyWithRetry(() => import("@/components/app/portfolio/Portfolio"));
 const CRM = lazyWithRetry(() => import("@/components/app/crm/CRM"));
 
@@ -110,7 +109,7 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
   const [authDialogMessage, setAuthDialogMessage] = useState<string | null>(null);
   const [showPricingDialog, setShowPricingDialog] = useState(false);
   const [pendingUpgradeModule, setPendingUpgradeModule] = useState<string | null>(null);
-  const { user, loading: authLoading, accessLoading, hasPersona } = useAuth();
+  const { user, loading: authLoading, access, accessLoading, hasPersona } = useAuth();
   const portalPromptedRef = useRef(false);
   const subscription = useSubscription();
   const { reportError } = useError();
@@ -260,16 +259,14 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
   const moduleAccessContext = useMemo(() => ({
     user,
     authLoading,
-    subscriptionLoading: subscription.loading,
-    hasFeature: subscription.hasFeature,
-    subscriptionTier: subscription.subscriptionTier,
-    isAdmin: subscription.userProfile?.role === 'admin' || subscription.userProfile?.role === 'super_admin'
+    accessLoading,
+    personas: access.personas,
+    isSuperAdmin: subscription.userProfile?.role === 'admin' || subscription.userProfile?.role === 'super_admin'
   }), [
     user,
     authLoading,
-    subscription.loading,
-    subscription.hasFeature,
-    subscription.subscriptionTier,
+    accessLoading,
+    access.personas,
     subscription.userProfile?.role
   ]);
 
@@ -312,18 +309,15 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
       return false;
     }
 
-    if (status === 'upgrade') {
+    if (status === 'forbidden') {
       const rule = getModuleRule(moduleId);
-      const tierLabel = getRequiredTierLabel(rule);
-      const moduleName = modules.find((m) => m.id === moduleId)?.name || 'this module';
-      const requiredTier = rule?.highlightTier || rule?.minimumTier;
-      const priceLabel = requiredTier ? formatMonthlyPrice(requiredTier) : null;
-      handleUpgradeRequest(moduleId);
+      const requirement = getAccessRequirementLabel(rule);
+      const moduleName = modules.find((m) => m.id === moduleId)?.name || 'this area';
       toast({
-        title: 'Upgrade required',
-        description: tierLabel
-          ? `Upgrade to ${tierLabel}${priceLabel ? ` (${priceLabel})` : ''} to unlock ${moduleName}.`
-          : (rule?.description || 'Upgrade your plan to unlock this module.')
+        title: 'Access not assigned',
+        description: requirement
+          ? `${moduleName} requires ${requirement} access. Ask a workspace administrator to assign it.`
+          : (rule?.description || 'Ask a workspace administrator for access to this area.')
       });
       return false;
     }
@@ -337,9 +331,7 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
         moduleId={moduleId}
         user={user}
         authLoading={authLoading}
-        subscription={subscription}
         onRequestAuth={() => setShowAuthDialog(true)}
-        onRequestUpgrade={handleUpgradeRequest}
       >
         {element}
       </ModuleAccessGate>
@@ -411,8 +403,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
         return renderWithAccess("crm", <CRM />);
       case "account":
         return renderWithAccess("account", <AccountSettings />);
-      case "financial-calendar":
-        return <ModuleWrapper moduleId="financial-calendar"><FinancialCalendar /></ModuleWrapper>;
       case "support":
         return <ModuleWrapper moduleId="support"><SupportPage /></ModuleWrapper>;
       case "privacy-policy":

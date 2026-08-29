@@ -31,14 +31,13 @@ see [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) for the honest list
 | Interest rates panel (FRED) | Working |
 | Stripe subscriptions and billing portal | Working |
 | Notifications and outbound mail | Schema and worker code ready locally; not deployed |
-| Financial calendar | In tree, deregistered pending repointing |
 | Database schema | Fresh TW schema — local replay passed; not linked or deployed |
 | Project lifecycle backend | Schema ready — UI not built |
 
 ## Stack
 
 - **Frontend** — React 18, TypeScript, Vite, Tailwind, shadcn/ui
-- **Backend** — Supabase (Postgres, Auth, 20 edge functions)
+- **Backend** — Supabase (Postgres, Auth, 18 edge functions)
 - **Payments** — Stripe
 - **Maps** — Mapbox GL, Turf, PostGIS
 - **Mobile** — Capacitor (iOS and Android shells)

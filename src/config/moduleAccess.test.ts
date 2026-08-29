@@ -1,172 +1,177 @@
 import { describe, it, expect } from 'vitest';
-import { getModuleAccessStatus, moduleAccessRules } from './moduleAccess';
-import { getSubscriptionFeatures } from '@/types/subscription';
+import {
+  getModuleAccessStatus,
+  getAccessRequirementLabel,
+  getModuleRule,
+  moduleAccessRules,
+  personaLabels,
+} from './moduleAccess';
 import type { ModuleAccessContext } from './moduleAccess';
+import type { PortalPersona } from '@/components/app/AuthProvider';
 import type { User } from '@supabase/supabase-js';
+import { modules } from '@/components/app/constants';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const STUB_USER = { id: 'user-1', email: 'test@test.com' } as User;
 
-function makeCtx(
-  overrides: Partial<ModuleAccessContext> = {}
-): ModuleAccessContext {
+function ctx(overrides: Partial<ModuleAccessContext> = {}): ModuleAccessContext {
   return {
     user: null,
     authLoading: false,
-    subscriptionLoading: false,
-    hasFeature: () => false,
-    subscriptionTier: 'free',
-    isAdmin: false,
+    accessLoading: false,
+    personas: [],
+    isSuperAdmin: false,
     ...overrides,
   };
 }
 
-function ctxForTier(tier: 'free' | 'tier1' | 'tier2' | 'tier3'): ModuleAccessContext {
-  const features = getSubscriptionFeatures(tier);
-  return makeCtx({
-    user: STUB_USER,
-    subscriptionTier: tier,
-    hasFeature: (f) => Boolean(features[f]),
-  });
-}
+/** A signed-in user holding exactly these personas. */
+const as = (...personas: PortalPersona[]) => ctx({ user: STUB_USER, personas });
 
-// ─── Loading state ────────────────────────────────────────────────────────────
+const INTERNAL_MODULES = ['crm', 'real-estate'];
+const SHARED_MODULES = ['account', 'support', 'portfolio'];
+
+// ─── Loading ──────────────────────────────────────────────────────────────────
 
 describe('getModuleAccessStatus — loading', () => {
-  it('returns loading when authLoading is true', () => {
-    const ctx = makeCtx({ authLoading: true, user: STUB_USER });
-    expect(getModuleAccessStatus('real-estate', ctx)).toBe('loading');
+  it('waits for the session', () => {
+    expect(getModuleAccessStatus('real-estate', ctx({ authLoading: true, user: STUB_USER }))).toBe('loading');
   });
 
-  it('returns loading when subscriptionLoading is true', () => {
-    const ctx = makeCtx({ subscriptionLoading: true, user: STUB_USER });
-    expect(getModuleAccessStatus('real-estate', ctx)).toBe('loading');
+  // Personas land on a second round trip. Deciding before they arrive would
+  // flash a denial at someone who does have access.
+  it('waits for personas even once the session has resolved', () => {
+    expect(getModuleAccessStatus('real-estate', ctx({ user: STUB_USER, accessLoading: true }))).toBe('loading');
+  });
+
+  it('waits before answering for a module with no rule at all', () => {
+    expect(getModuleAccessStatus('unknown-module', ctx({ accessLoading: true }))).toBe('loading');
   });
 });
 
 // ─── Unauthenticated ──────────────────────────────────────────────────────────
 
 describe('getModuleAccessStatus — unauthenticated', () => {
-  it('returns unauthenticated for auth-required modules when no user', () => {
-    expect(getModuleAccessStatus('real-estate', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('lead-gen', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('portfolio', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('crm', makeCtx())).toBe('unauthenticated');
+  it('asks anyone signed out to sign in', () => {
+    for (const id of [...INTERNAL_MODULES, ...SHARED_MODULES]) {
+      expect(getModuleAccessStatus(id, ctx()), `module "${id}"`).toBe('unauthenticated');
+    }
   });
 
-  it('returns ok for modules with no access rule', () => {
-    expect(getModuleAccessStatus('some-unknown-module', makeCtx())).toBe('ok');
+  it('returns ok for a module with no access rule', () => {
+    expect(getModuleAccessStatus('dashboard', ctx())).toBe('ok');
   });
 });
 
-// ─── Admin bypass ─────────────────────────────────────────────────────────────
+// ─── Personas ─────────────────────────────────────────────────────────────────
 
-describe('getModuleAccessStatus — admin bypass', () => {
-  it('admin always gets ok regardless of tier', () => {
-    const ctx = makeCtx({ user: STUB_USER, isAdmin: true, subscriptionTier: 'free' });
-    expect(getModuleAccessStatus('real-estate', ctx)).toBe('ok');
-    expect(getModuleAccessStatus('lead-gen', ctx)).toBe('ok');
-    expect(getModuleAccessStatus('expanded-data-sources', ctx)).toBe('ok');
-  });
-});
-
-// ─── Tier-based access ────────────────────────────────────────────────────────
-//
-// The tier model is two parallel paths, not a ladder:
-//   tier1 Planner  → real-estate
-//   tier2 Investor → lead-gen, expanded-data-sources
-//   tier3 Complete → both paths
-// A Planner does NOT get Investor modules and vice versa.
-//
-// This model is inherited from the prior platform and is due to be replaced by the
-// Investor / PM / Admin role split before any domain table lands. Until then
-// these tests guard the behaviour that ships.
-
-describe('getModuleAccessStatus — Investor path (tier2)', () => {
-  const investorModules = ['lead-gen', 'expanded-data-sources'];
-
-  for (const id of investorModules) {
+describe('internal modules', () => {
+  for (const id of INTERNAL_MODULES) {
     describe(id, () => {
-      it('free  → upgrade', () => expect(getModuleAccessStatus(id, ctxForTier('free'))).toBe('upgrade'));
-      it('tier1 → upgrade', () => expect(getModuleAccessStatus(id, ctxForTier('tier1'))).toBe('upgrade'));
-      it('tier2 → ok',      () => expect(getModuleAccessStatus(id, ctxForTier('tier2'))).toBe('ok'));
-      it('tier3 → ok',      () => expect(getModuleAccessStatus(id, ctxForTier('tier3'))).toBe('ok'));
+      it('admin → ok', () => expect(getModuleAccessStatus(id, as('admin'))).toBe('ok'));
+      it('project manager → ok', () => expect(getModuleAccessStatus(id, as('project_manager'))).toBe('ok'));
+      it('investor → forbidden', () => expect(getModuleAccessStatus(id, as('investor'))).toBe('forbidden'));
+      it('client → forbidden', () => expect(getModuleAccessStatus(id, as('client'))).toBe('forbidden'));
+      it('no persona → forbidden', () => expect(getModuleAccessStatus(id, as())).toBe('forbidden'));
     });
   }
 });
 
-describe('getModuleAccessStatus — Planner path (tier1)', () => {
-  const plannerModules = ['real-estate'];
-
-  for (const id of plannerModules) {
+describe('shared modules', () => {
+  // Portfolio is the screen an investor or client signs in for. Row-level
+  // security decides what is inside it, so the module itself stays open to every
+  // persona — gating it would lock them out of the whole product.
+  for (const id of SHARED_MODULES) {
     describe(id, () => {
-      it('free  → upgrade', () => expect(getModuleAccessStatus(id, ctxForTier('free'))).toBe('upgrade'));
-      it('tier1 → ok',      () => expect(getModuleAccessStatus(id, ctxForTier('tier1'))).toBe('ok'));
-      it('tier2 → upgrade', () => expect(getModuleAccessStatus(id, ctxForTier('tier2'))).toBe('upgrade'));
-      // Regression guard: Complete must include the Planner path. Building
-      // `complete` as { ...planner, ...investor } silently reset these to false.
-      it('tier3 → ok',      () => expect(getModuleAccessStatus(id, ctxForTier('tier3'))).toBe('ok'));
+      for (const persona of ['admin', 'project_manager', 'investor', 'client'] as PortalPersona[]) {
+        it(`${persona} → ok`, () => expect(getModuleAccessStatus(id, as(persona))).toBe('ok'));
+      }
+      it('signed in with no persona yet → ok', () => expect(getModuleAccessStatus(id, as())).toBe('ok'));
     });
   }
 });
 
-describe('getModuleAccessStatus — Complete path (tier3)', () => {
-  it('tier3 unlocks every gated module', () => {
-    for (const id of Object.keys(moduleAccessRules)) {
-      const rule = moduleAccessRules[id];
-      if (!rule.requiredFeature) continue;   // auth-only modules
-      expect(getModuleAccessStatus(id, ctxForTier('tier3')), `module "${id}" locked for Complete`).toBe('ok');
+describe('super admin', () => {
+  it('reaches every module regardless of persona', () => {
+    const context = ctx({ user: STUB_USER, isSuperAdmin: true });
+    for (const id of [...INTERNAL_MODULES, ...SHARED_MODULES]) {
+      expect(getModuleAccessStatus(id, context), `module "${id}"`).toBe('ok');
     }
   });
 });
 
-// ─── Auth-only modules ────────────────────────────────────────────────────────
+// ─── Requirement label ────────────────────────────────────────────────────────
 
-describe('auth-only modules', () => {
-  it('account needs a user but no paid tier', () => {
-    expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
-    expect(getModuleAccessStatus('account', ctxForTier('free'))).toBe('ok');
+describe('getAccessRequirementLabel', () => {
+  it('names the personas a denial can be resolved with', () => {
+    expect(getAccessRequirementLabel(getModuleRule('crm'))).toBe('Administrator or Project Manager');
+  });
+
+  it('returns null for an auth-only module, which has no role to name', () => {
+    expect(getAccessRequirementLabel(getModuleRule('account'))).toBeNull();
+  });
+
+  it('returns null for an unknown module', () => {
+    expect(getAccessRequirementLabel(getModuleRule('nope'))).toBeNull();
   });
 });
 
 // ─── Rule consistency ─────────────────────────────────────────────────────────
 
 describe('moduleAccessRules consistency', () => {
-  it('every rule with a minimumTier above free also names a requiredFeature', () => {
+  it('every persona-gated rule carries a description for the denial screen', () => {
     for (const [id, rule] of Object.entries(moduleAccessRules)) {
-      if (rule.minimumTier && rule.minimumTier !== 'free') {
-        expect(rule.requiredFeature, `Rule "${id}" has minimumTier but no requiredFeature`).toBeDefined();
-      }
-    }
-  });
-
-  it('every rule requiring auth carries a description for the upgrade prompt', () => {
-    for (const [id, rule] of Object.entries(moduleAccessRules)) {
-      if (rule.requiredFeature) {
+      if (rule.requiredPersonas?.length) {
         expect(rule.description, `Rule "${id}" has no description`).toBeTruthy();
       }
     }
   });
 
-  it('every requiredFeature is a real feature flag', () => {
-    const free = getSubscriptionFeatures('free');
+  it('every named persona is a real one', () => {
     for (const [id, rule] of Object.entries(moduleAccessRules)) {
-      if (rule.requiredFeature) {
-        expect(rule.requiredFeature in free, `Rule "${id}" names unknown feature "${rule.requiredFeature}"`).toBe(true);
+      for (const persona of rule.requiredPersonas ?? []) {
+        expect(persona in personaLabels, `Rule "${id}" names unknown persona "${persona}"`).toBe(true);
       }
     }
   });
 
-  // Every gated module must still exist in the registry (or be a sub-surface
-  // rendered inside one). A rule for a deleted module silently gates nothing.
-  it('names no module that was removed with the non-real-estate cut', () => {
+  it('a persona-gated rule always requires auth — personas imply a session', () => {
+    for (const [id, rule] of Object.entries(moduleAccessRules)) {
+      if (rule.requiredPersonas?.length) {
+        expect(rule.requiresAuth, `Rule "${id}" gates on persona without requiring auth`).toBe(true);
+      }
+    }
+  });
+
+  // Regression guard for the model swap: access follows what someone is to the
+  // firm, not what they have paid. A rule reintroducing a billing concept would
+  // put the firm's own staff back behind a paywall.
+  it('names no subscription concept', () => {
+    for (const [id, rule] of Object.entries(moduleAccessRules)) {
+      const keys = Object.keys(rule);
+      for (const banned of ['requiredFeature', 'minimumTier', 'highlightTier']) {
+        expect(keys, `Rule "${id}" still gates on billing via "${banned}"`).not.toContain(banned);
+      }
+    }
+  });
+
+  // The rule set drifted once already: rules for lead-gen and
+  // expanded-data-sources outlived the modules themselves, so they gated
+  // nothing while looking like policy. Tie every rule to the registry.
+  it('every rule names a module that is actually registered', () => {
+    const registered = new Set(modules.map((module) => module.id));
+    for (const id of Object.keys(moduleAccessRules)) {
+      expect(registered.has(id), `Rule "${id}" has no module in the registry`).toBe(true);
+    }
+  });
+
+  it('names no module removed with the non-real-estate cut', () => {
     const cut = [
       'stock-analysis', 'options-dashboard', 'pdufa', 'earnings', 'watchlist',
-      'business-valuation', 'cash-flow', 'retirement-planning',
-      'financial-coach', 'ai-tools', 'journey', 'community', 'personal-finance',
-      'courses', 'trades', 'trades-dashboard',
+      'business-valuation', 'cash-flow', 'retirement-planning', 'financial-coach',
+      'ai-tools', 'journey', 'community', 'personal-finance', 'courses',
+      'trades', 'trades-dashboard',
     ];
     for (const id of cut) {
       expect(moduleAccessRules[id], `Rule "${id}" survives for a deleted module`).toBeUndefined();

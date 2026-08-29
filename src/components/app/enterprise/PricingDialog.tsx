@@ -10,7 +10,6 @@ import { Check, X, Lock, ShieldCheck, AlertCircle, Loader2 } from "lucide-react"
 import type { SubscriptionTier } from "@/types/subscription";
 import type { UseSubscriptionReturn } from "@/hooks/useSubscription";
 import { PRICING_PLAN_ORDER, PRICING_PLANS, formatMonthlyPrice, getPlanDetails } from "@/config/pricing";
-import { getModuleRule, getRequiredTierLabel } from "@/config/moduleAccess";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PricingDialogProps {
@@ -49,17 +48,12 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
   const [stepUpError, setStepUpError] = useState('');
   const [stepUpLoading, setStepUpLoading] = useState(false);
 
-  const requiredTier = useMemo(() => {
-    if (!requestedModule) return null;
-    const rule = getModuleRule(requestedModule.id);
-    return rule?.highlightTier || rule?.minimumTier || null;
-  }, [requestedModule]);
-
-  const requiredPlan = useMemo(() => getPlanDetails(requiredTier || undefined), [requiredTier]);
-  const requiredTierLabel = useMemo(
-    () => getRequiredTierLabel(getModuleRule(requestedModule?.id ?? "")),
-    [requestedModule]
-  );
+  // Modules no longer map to a billing tier — access follows persona — so there
+  // is no "the module you wanted needs plan X" hint to show. The dialog is now
+  // purely a plan chooser.
+  const requiredTier: SubscriptionTier | null = null;
+  const requiredPlan = useMemo(() => getPlanDetails(undefined), []);
+  const requiredTierLabel: string | null = null;
 
   // Features the user is currently locked out of
   const missingFeatures = FEATURE_ROWS.filter(

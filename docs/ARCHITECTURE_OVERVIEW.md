@@ -104,15 +104,20 @@ This is the surface that becomes the deal pipeline, then the portfolio view.
 
 ## Calendar
 
-`FinancialCalendar.tsx` is in the tree but not in the registry. Its personal
-reminder half still works; its market half read earnings, FDA and macro feeds
-from an edge function that was deleted. It is kept as the starting point for
-repointing at project milestones, inspections and permits, and deliberately not
-reachable until then.
+Removed. `FinancialCalendar.tsx` and its service layer
+(`financialCalendarService`, `calendarUtility`, `calendarReminderService`,
+`useFinancialCalendar`, `market-calendar-api`) were deleted on 2026-08-29. The
+market half called a `market-calendar` edge function that does not exist in this
+repo, so every load threw; the surface was routable but had never worked here.
+
+The `calendar_reminders` table survives in the schema. When project milestones,
+inspections and permits need a calendar, build it against that table rather than
+restoring the somatech component — its data model was earnings, FDA decisions
+and macro releases, none of which this platform tracks.
 
 ## Backend
 
-Supabase — Postgres, Auth, and twenty edge functions:
+Supabase — Postgres, Auth, and eighteen edge functions:
 
 | Group | Functions |
 |---|---|
@@ -121,7 +126,7 @@ Supabase — Postgres, Auth, and twenty edge functions:
 | Rates | `fetch-rates` (FRED) |
 | Notifications | `dispatch-notifications`, `email-unsubscribe`, `resend-webhook` |
 | Account | `delete-account` |
-| Bank data | `plaid-link`, `plaid-sync` |
+| Projects | `send-project-invitation` |
 
 `_shared/` holds the pieces more than one function needs. Two are worth knowing
 about before you touch outbound mail:
@@ -181,11 +186,39 @@ run with database access.
 
 Carried over from somatech, none of it load-bearing, all of it worth knowing:
 
-- A type-error backlog the gate reports but does not fail on.
+- A type-error backlog the gate reports but does not fail on. The 2026-08-29
+  sweep cut it from 216 to ~138 by deleting the dead code that held most of it.
 - `components/app/types.ts` still carries types for removed modules;
   real-estate code imports it, so pruning it is separate surgery.
 - `AdminNavigation` links to `/admin` routes that do not exist in `App.tsx`.
-- A handful of files under `components/ui/` are unreferenced or reference
-  missing siblings, and predate the cut.
+- Twenty-six files under `components/ui/` are unreferenced. They are the
+  vendored shadcn kit and are kept deliberately: they are the source you copy a
+  primitive from, not dead product code.
+- `SubscriptionFeatures` in `types/subscription.ts` is still somatech's product
+  catalogue — options dashboards, PDUFA calendars, course access, Discord. It
+  drives nothing: `hasFeature` is never called with a key and
+  `SubscriptionService.canAccessModule` has no callers. It is being replaced by
+  the persona model in `config/moduleAccess.ts`; prune it when that lands.
+- `scripts/admin/grant-tier3-legacy.sql` is a one-off that hardcodes a real
+  user's email and UUID, and its comments reference `enterprise/
+  SubscriptionStatus`, which no longer exists.
 - The generated Supabase types, parked migrations, and archive documentation
   intentionally retain source-system names as historical reference.
+
+## The 2026-08-29 consistency sweep
+
+Sixty-three files (~590 KB) were deleted: forty-five that no entrypoint could
+reach, plus the calendar, Discord and Plaid trees once their surfaces were
+unmounted. Three inherited features were live in the UI and broken — Account
+Settings' Discord tab (calling `discord-role-sync` and
+`discord-oauth-callback`, neither of which exists), its Banks tab (Plaid,
+querying a `plaid_transactions` table absent from TW's schema), and the
+Financial Calendar. All three were removed, along with the `plaid-link` and
+`plaid-sync` edge functions.
+
+Account Settings' readiness score was rebalanced from `banks 35 / profile 30 /
+discord 25 / security 10` to `profile 70 / security 30`.
+
+No `somatech` identifier remains in `src/`, `api/`, `scripts/` or `public/`.
+The remaining mentions are provenance notes in documentation and the parked
+reference migrations, which are deliberate.

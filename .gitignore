@@ -277,5 +277,10 @@ $RECYCLE.BIN/
 # Inherited build cache
 .cache/
 
-# Local Supabase runtime metadata (generated keys and connection state)
+# Supabase local CLI state (machine-specific, never commit)
+supabase/.branches/
 supabase/.temp/
+
+# Stray Deno lockfile at repo root (this is an npm project; edge functions
+# keep their own lock under supabase/functions/)
+/deno.lock

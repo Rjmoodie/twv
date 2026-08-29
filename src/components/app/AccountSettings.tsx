@@ -3,14 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthProvider";
 import { useToast } from "@/hooks/use-toast";
-import { usePlaid } from "@/hooks/usePlaid";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
 import {
-  User, Shield, Bell, Settings, MessageSquare, Building2,
+  User, Shield, Bell, Settings,
   Crown, Users, CheckCircle2, AlertCircle, Circle,
   RefreshCw, Loader2, ChevronRight, ShieldAlert,
 } from "lucide-react";
@@ -19,8 +18,6 @@ import ProfileSettings from "./account/ProfileSettings";
 import EnhancedSecuritySettings from "./account/EnhancedSecuritySettings";
 import NotificationSettings from "./account/NotificationSettings";
 import ThemeSettings from "./account/ThemeSettings";
-import DiscordSettings from "./account/DiscordSettings";
-import PlaidSettings from "./account/PlaidSettings";
 import DangerZoneSettings from "./account/DangerZoneSettings";
 import { cn } from "@/lib/utils";
 import type { Profile } from "./types";
@@ -64,26 +61,18 @@ interface AccountReadiness {
   score:            number;         // 0–100
   statusLabel:      ReadinessStatus;
   profileScore:     number;         // profile_completion_score (0–100)
-  bankConnected:    boolean;
-  discordConnected: boolean;
   mfaEnabled:       boolean;
   steps:            ReadinessStep[];
 }
 
-function deriveReadiness(
-  profile: Profile,
-  bankConnected: boolean,
-  discordConnected: boolean,
-): AccountReadiness {
+function deriveReadiness(profile: Profile): AccountReadiness {
   const profileScore    = profile.profile_completion_score ?? 0;
   const mfaEnabled      = !!profile.two_factor_enabled;
 
-  // Weighted score: banks 35, profile 30, discord 25, security 10
+  // Weighted score: profile 70, security 30
   const score = Math.round(
-    (profileScore / 100) * 30 +
-    (bankConnected    ? 35 : 0) +
-    (discordConnected ? 25 : 0) +
-    (mfaEnabled       ? 10 : 0)
+    (profileScore / 100) * 70 +
+    (mfaEnabled ? 30 : 0)
   );
 
   const statusLabel: ReadinessStatus =
@@ -93,24 +82,6 @@ function deriveReadiness(
 
   const steps: ReadinessStep[] = [];
 
-  if (!bankConnected) {
-    steps.push({
-      id:          'bank',
-      title:       'Connect a bank account',
-      description: 'Auto-updates your net worth, cash flow, and Coach insights with real data.',
-      targetTab:   'banks',
-      priority:    'high',
-    });
-  }
-  if (!discordConnected) {
-    steps.push({
-      id:          'discord',
-      title:       'Connect Discord',
-      description: 'Unlocks community access, trading alerts, and course content.',
-      targetTab:   'discord',
-      priority:    'high',
-    });
-  }
   if (profileScore < 75) {
     steps.push({
       id:          'profile',
@@ -120,8 +91,17 @@ function deriveReadiness(
       priority:    'medium',
     });
   }
+  if (!mfaEnabled) {
+    steps.push({
+      id:          'security',
+      title:       'Enable two-factor authentication',
+      description: 'Protects your account and any project data shared with you.',
+      targetTab:   'security',
+      priority:    'high',
+    });
+  }
 
-  return { score, statusLabel, profileScore, bankConnected, discordConnected, mfaEnabled, steps };
+  return { score, statusLabel, profileScore, mfaEnabled, steps };
 }
 
 // ── Status dot ────────────────────────────────────────────────────────────────
@@ -195,12 +175,9 @@ const AccountSettings: React.FC = () => {
   const { user, userProfile } = useAuth();
   const { toast }             = useToast();
   const queryClient           = useQueryClient();
-  const plaid                 = usePlaid();
 
   const [activeTab, setActiveTab] = useState('profile');
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
-  const discordConnected = !!userProfile?.discordId;
-  const bankConnected    = plaid.connections.length > 0;
 
   const profileQuery = useQuery({
     queryKey: ['profile', user?.id],
@@ -239,8 +216,8 @@ const AccountSettings: React.FC = () => {
 
   const readiness = useMemo(() => {
     if (!profileQuery.data) return null;
-    return deriveReadiness(profileQuery.data, bankConnected, discordConnected);
-  }, [profileQuery.data, bankConnected, discordConnected]);
+    return deriveReadiness(profileQuery.data);
+  }, [profileQuery.data]);
 
   // ── Loading ───────────────────────────────────────────────────────────────
 
@@ -255,8 +232,8 @@ const AccountSettings: React.FC = () => {
         {/* Summary skeleton */}
         <div className="h-20 w-full bg-muted/40 rounded-2xl animate-pulse" />
         {/* Cards skeleton */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
+        <div className="grid grid-cols-2 gap-3">
+          {[...Array(2)].map((_, i) => (
             <div key={i} className="h-24 bg-muted/30 rounded-2xl animate-pulse" />
           ))}
         </div>
@@ -299,8 +276,6 @@ const AccountSettings: React.FC = () => {
   // ── Tab config (with dot states) ──────────────────────────────────────────
 
   const profileDot: DotState  = (readiness?.profileScore ?? 0) >= 75 ? 'complete' : (readiness?.profileScore ?? 0) > 0 ? 'partial' : 'empty';
-  const bankDot: DotState     = bankConnected ? 'complete' : 'empty';
-  const discordDot: DotState  = discordConnected ? 'complete' : 'empty';
   const securityDot: DotState = readiness?.mfaEnabled ? 'complete' : 'partial';
 
   const tabs = [
@@ -308,8 +283,6 @@ const AccountSettings: React.FC = () => {
     { value: 'security',      label: 'Security',      icon: <Shield className="h-4 w-4 shrink-0" />,         dot: securityDot },
     { value: 'notifications', label: 'Notifications', icon: <Bell className="h-4 w-4 shrink-0" />,           dot: 'empty' as DotState },
     { value: 'theme',         label: 'Appearance',    icon: <Settings className="h-4 w-4 shrink-0" />,       dot: 'complete' as DotState },
-    { value: 'discord',       label: 'Discord',       icon: <MessageSquare className="h-4 w-4 shrink-0" />,  dot: discordDot  },
-    { value: 'banks',         label: 'Banks',         icon: <Building2 className="h-4 w-4 shrink-0" />,      dot: bankDot     },
     { value: 'account-data', label: 'Data & billing', icon: <ShieldAlert className="h-4 w-4 shrink-0" />,   dot: 'empty' as DotState },
     ...(isAdmin ? [{ value: 'admin', label: 'Admin', icon: <Crown className="h-4 w-4 shrink-0" />, dot: 'complete' as DotState }] : []),
   ];
@@ -350,23 +323,13 @@ const AccountSettings: React.FC = () => {
             aria-valuemax={100}
             aria-label={`Account setup ${readiness.score}% complete`}
           >
-            {/* Banks 35% */}
-            <div className="rounded-l-full bg-primary/15 overflow-hidden" style={{ flexBasis: '35%' }}>
+            {/* Profile 70% */}
+            <div className="rounded-l-full bg-primary/15 overflow-hidden" style={{ flexBasis: '70%' }}>
               <div className="h-full bg-primary transition-all duration-500 rounded-l-full"
-                style={{ width: readiness.bankConnected ? '100%' : '0%' }} />
-            </div>
-            {/* Profile 30% */}
-            <div className="bg-primary/15 overflow-hidden" style={{ flexBasis: '30%' }}>
-              <div className="h-full bg-primary transition-all duration-500"
                 style={{ width: `${readiness.profileScore}%` }} />
             </div>
-            {/* Discord 25% */}
-            <div className="bg-primary/15 overflow-hidden" style={{ flexBasis: '25%' }}>
-              <div className="h-full bg-primary transition-all duration-500"
-                style={{ width: readiness.discordConnected ? '100%' : '0%' }} />
-            </div>
-            {/* Security 10% */}
-            <div className="rounded-r-full bg-primary/15 overflow-hidden" style={{ flexBasis: '10%' }}>
+            {/* Security 30% */}
+            <div className="rounded-r-full bg-primary/15 overflow-hidden" style={{ flexBasis: '30%' }}>
               <div className="h-full bg-primary transition-all duration-500 rounded-r-full"
                 style={{ width: readiness.mfaEnabled ? '100%' : '0%' }} />
             </div>
@@ -376,7 +339,7 @@ const AccountSettings: React.FC = () => {
 
       {/* ── Status cards ────────────────────────────────────────────────────── */}
       {readiness && (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3">
           <StatusCard
             icon={<User className="h-4 w-4" />}
             label="Profile"
@@ -384,22 +347,6 @@ const AccountSettings: React.FC = () => {
             sub={readiness.profileScore >= 75 ? 'Fully personalised' : 'Add bio & location'}
             dot={profileDot}
             onClick={() => setActiveTab('profile')}
-          />
-          <StatusCard
-            icon={<Building2 className="h-4 w-4" />}
-            label="Banks"
-            value={bankConnected ? `${plaid.connections.length} connected` : 'Not connected'}
-            sub={bankConnected ? 'Insights auto-updating' : 'Connect to unlock insights'}
-            dot={bankDot}
-            onClick={() => setActiveTab('banks')}
-          />
-          <StatusCard
-            icon={<MessageSquare className="h-4 w-4" />}
-            label="Discord"
-            value={discordConnected ? 'Connected' : 'Not connected'}
-            sub={discordConnected ? 'Community access active' : 'Unlock community access'}
-            dot={discordDot}
-            onClick={() => setActiveTab('discord')}
           />
           <StatusCard
             icon={<Shield className="h-4 w-4" />}
@@ -458,8 +405,6 @@ const AccountSettings: React.FC = () => {
         <TabsContent value="security"      className="space-y-4"><EnhancedSecuritySettings /></TabsContent>
         <TabsContent value="notifications" className="space-y-4"><NotificationSettings /></TabsContent>
         <TabsContent value="theme"         className="space-y-4"><ThemeSettings profile={profile} onUpdate={handleUpdateProfile} /></TabsContent>
-        <TabsContent value="discord"       className="space-y-4"><DiscordSettings /></TabsContent>
-        <TabsContent value="banks"         className="space-y-4"><PlaidSettings /></TabsContent>
         <TabsContent value="account-data"  className="space-y-4"><DangerZoneSettings /></TabsContent>
 
         {isAdmin && (
