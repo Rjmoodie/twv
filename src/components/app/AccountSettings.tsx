@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   User, Shield, Bell, Settings,
   Crown, Users, CheckCircle2, AlertCircle, Circle,
-  RefreshCw, Loader2, ChevronRight, ShieldAlert,
+  RefreshCw, ChevronRight, ShieldAlert,
 } from "lucide-react";
 
 import ProfileSettings from "./account/ProfileSettings";

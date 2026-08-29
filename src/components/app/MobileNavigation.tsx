@@ -1,4 +1,3 @@
-import React from 'react';
 import { X } from 'lucide-react';
 import Logo from './Logo';
 import GroupedNavigation from './GroupedNavigation';

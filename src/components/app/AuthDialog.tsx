@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Mail, Lock, Eye, EyeOff, CheckCircle, ArrowLeft,
+  Mail, Eye, EyeOff, CheckCircle, ArrowLeft,
   Shield, Sparkles, AlertCircle, Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";

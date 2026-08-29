@@ -211,6 +211,7 @@ const DealSourcingMap: React.FC<Props> = ({
       // ── Viewport change → parent ─────────────────────────────────────────
       const emitBounds = () => {
         const b = map.getBounds();
+        if (!b) return;
         onBoundsChangeRef.current({
           north: b.getNorth(), south: b.getSouth(),
           east:  b.getEast(),  west:  b.getWest(),

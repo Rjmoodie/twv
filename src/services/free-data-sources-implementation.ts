@@ -24,6 +24,7 @@ export interface FreeDataResult {
 export interface ProcessedProperty {
   id:                    string;
   data_source:           string;
+  source_record_id:      string | null;
   lead_type:             string;
   property_address:      string | null;
   city:                  string | null;
@@ -253,7 +254,7 @@ class FreeDataSourcesImplementation {
       supabase.from('real_estate_leads').select('*', { count: 'exact', head: true }).eq('is_distressed', true),
     ]);
 
-    const countBy = <K extends string>(rows: { [key: string]: string | null }[] | null, key: string) => {
+    const countBy = (rows: { [key: string]: string | null }[] | null, key: string) => {
       const map: Record<string, number> = {};
       for (const r of rows ?? []) {
         const v = r[key];

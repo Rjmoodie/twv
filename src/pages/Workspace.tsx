@@ -6,7 +6,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import ErrorBoundary from "@/components/app/ErrorBoundary";
 import { modules } from "@/components/app/constants";
 import AppLayout from "@/components/app/layout/AppLayout";
-import type { Module } from "@/components/app/types";
 import ModuleWrapper from "@/components/app/ModuleWrapper";
 import ModuleAccessGate from "@/components/app/ModuleAccessGate";
 import { useAuth } from "@/components/app/AuthProvider";
@@ -20,7 +19,6 @@ import type { PendingAction } from "@/lib/pendingAction";
 
 import { useSubscription } from "@/hooks/useSubscription";
 import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from "@/config/moduleAccess";
-import { formatMonthlyPrice } from "@/config/pricing";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 // PageHeader removed — each module renders its own via NavigationWrapper
 

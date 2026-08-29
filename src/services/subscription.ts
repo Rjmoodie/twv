@@ -72,6 +72,8 @@ export class SubscriptionService {
         return null;
       }
 
+      if (!data) return null;
+
       return {
         id: data.id,
         email: data.email,
@@ -79,8 +81,8 @@ export class SubscriptionService {
         subscriptionTier: (data.subscription_tier ?? 'free') as SubscriptionTier,
         role: (data.role ?? 'user') as UserRole,
         stripeCustomerId: data.stripe_customer_id ?? null,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
+        createdAt: data.created_at ?? new Date().toISOString(),
+        updatedAt: data.updated_at ?? new Date().toISOString(),
         subscriptionStatus: (data.subscription_status ?? 'active') as UserProfile['subscriptionStatus'],
         subscriptionEndsAt: data.subscription_ends_at ?? null
       };

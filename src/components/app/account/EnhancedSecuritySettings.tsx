@@ -15,9 +15,9 @@ interface LoginActivity {
   id: string;
   login_timestamp: string;
   ip_address: string | null;
-  user_agent: string;
-  device_type: string;
-  location: string;
+  user_agent: string | null;
+  device_type: string | null;
+  location: string | null;
   success: boolean;
 }
 
@@ -165,7 +165,7 @@ const EnhancedSecuritySettings = () => {
     return new Date(timestamp).toLocaleString();
   };
 
-  const getDeviceIcon = (deviceType: string) => {
+  const getDeviceIcon = (deviceType: string | null) => {
     switch (deviceType?.toLowerCase()) {
       case 'mobile':
         return <Smartphone className="h-4 w-4" />;

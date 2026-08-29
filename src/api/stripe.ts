@@ -98,7 +98,7 @@ export class StripeAPI {
     if (checkoutInFlight) return;
     checkoutInFlight = true;
     try {
-      const { sessionId, url } = await this.createCheckoutSession({
+      const { url } = await this.createCheckoutSession({
         tier,
         successUrl,
         cancelUrl

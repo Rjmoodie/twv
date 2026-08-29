@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { 
   Wifi, 
   WifiOff, 
   RefreshCw, 
   CheckCircle, 
-  AlertTriangle,
   Clock
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -23,7 +21,6 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ onRetry }) => {
   const [connectionType, setConnectionType] = useState<string>('unknown');
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
-  const [lastFailedRequest, setLastFailedRequest] = useState<string | null>(null);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -121,7 +118,7 @@ const NetworkStatus: React.FC<NetworkStatusProps> = ({ onRetry }) => {
   };
 
   // Don't show anything if online and no issues
-  if (isOnline && retryCount === 0 && !lastFailedRequest) {
+  if (isOnline && retryCount === 0) {
     return null;
   }
 

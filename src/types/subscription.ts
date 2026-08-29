@@ -16,11 +16,11 @@ export interface UserProfile {
   name: string;
   subscriptionTier: SubscriptionTier;
   role: UserRole;
-  stripeCustomerId?: string;
+  stripeCustomerId?: string | null;
   createdAt: string;
   updatedAt: string;
   subscriptionStatus: 'active' | 'canceled' | 'past_due' | 'unpaid';
-  subscriptionEndsAt?: string;
+  subscriptionEndsAt?: string | null;
 }
 
 export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {

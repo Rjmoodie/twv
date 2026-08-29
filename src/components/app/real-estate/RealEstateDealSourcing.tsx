@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,7 +17,7 @@ import {
   CheckCircle2, Loader2, ChevronDown, ChevronUp, AlertCircle, BarChart2,
   Calendar, User, Tag, DollarSign, AlertTriangle, ExternalLink,
   Flame, Clock, FileCheck, HelpCircle, TrendingUp, Activity,
-  Copy, CheckCheck, Zap, Star, Map as MapIcon,
+  Copy, Zap, Star, Map as MapIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -32,8 +31,8 @@ import { useAuth } from "@/components/app/AuthProvider";
 import { type MapBounds } from "./DealSourcingMap";
 import {
   ServerFilters, DEFAULT_SERVER_FILTERS, LEAD_TYPE_LABELS,
-  LeadScore, ScoredLead, SourcingSummary, SourceHealth, LeadMixItem, DataConfidence,
-  SmartPreset, PresetConfig, SMART_PRESETS, LeadReviewStatus, LeadAction,
+  ScoredLead,
+  SmartPreset, SMART_PRESETS, LeadReviewStatus,
   scoreLead, scoreBadgeClasses, explainLead, recommendAction,
   deriveSummary, deriveAllSourceHealth, deriveLeadMix, deriveDataConfidence,
   presetServerFilters, presetClientFilter,
@@ -353,7 +352,7 @@ const RealEstateDealSourcing: React.FC<Props> = ({ onAnalyzeLead }) => {
       const csv  = [
         cols.join(","),
         ...all.map(r => cols.map(c => {
-          const v = (r as Record<string, unknown>)[c];
+          const v = (r as unknown as Record<string, unknown>)[c];
           if (Array.isArray(v)) return `"${v.join(";")}"`;
           return `"${String(v ?? "").replace(/"/g, '""')}"`;
         }).join(",")),

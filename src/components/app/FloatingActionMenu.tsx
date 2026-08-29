@@ -1,5 +1,5 @@
 import { quickActions, type QuickAction } from './quickActionsConfig';
-import React, { useState, useEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import { Plus, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from '@supabase/supabase-js';
@@ -52,7 +52,6 @@ const FloatingActionMenu = ({
   onModuleSelect,
   user,
   authLoading,
-  subscription,
   onRequestAuth,
   onRequestUpgrade,
 }: FloatingActionMenuProps) => {

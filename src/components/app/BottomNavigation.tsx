@@ -15,8 +15,6 @@ import { toast } from '@/hooks/use-toast';
 import { useHaptics } from '@/hooks/useHaptics';
 import { cn } from '@/lib/utils';
 
-type NavModule = (typeof modules)[number];
-
 // Primary tabs: home → underwriting → account.
 //
 // The inherited tabs (journey, insights, coach, community) went with the
@@ -72,7 +70,6 @@ const BottomNavigation = ({
   onModuleChange,
   user,
   authLoading,
-  subscription,
   onRequestAuth,
   onRequestUpgrade,
 }: BottomNavigationProps) => {

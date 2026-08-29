@@ -3,7 +3,6 @@ import { Search, ChevronLeft, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import NotificationBell from '@/components/app/NotificationBell';
 import { ProfileDropdown } from '@/components/app/ProfileDropdown';
-import { useAuth } from '@/components/app/AuthProvider';
 import { CommandPalette } from '@/components/app/CommandPalette';
 import { useNavigate } from 'react-router-dom';
 import Logo from '@/components/app/Logo';
@@ -22,7 +21,6 @@ interface AppHeaderProps {
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
-  activeModule,
   user,
   profile,
   authLoading,

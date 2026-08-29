@@ -77,7 +77,6 @@ const GroupedNavigation = ({
   className,
   user,
   authLoading,
-  subscription,
   onRequestAuth,
   onRequestUpgrade,
 }: GroupedNavigationProps) => {

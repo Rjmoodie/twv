@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, FileText, TrendingUp, Home } from "lucide-react";
+import { Save, FileText, TrendingUp } from "lucide-react";
 import { BRRRRResults, BRRRRInputs } from "./brrrrCalculations";
 import { formatCurrency, formatPercentage } from "./realEstateUtils";
 

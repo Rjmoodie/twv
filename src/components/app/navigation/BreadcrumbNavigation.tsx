@@ -1,21 +1,13 @@
 import React from 'react';
-import { ChevronRight, Home } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { modules } from '../constants';
 import { cn } from '@/lib/utils';
-
-interface BreadcrumbItem {
-  id: string;
-  name: string;
-  path?: string;
-  icon?: React.ReactNode;
-}
 
 interface BreadcrumbNavigationProps {
   activeModule: string;
   onModuleChange: (module: string) => void;
   onBack?: () => void;
   showBackButton?: boolean;
-  customBreadcrumbs?: BreadcrumbItem[];
   className?: string;
 }
 
@@ -24,7 +16,6 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
   onModuleChange,
   onBack,
   showBackButton = false,
-  customBreadcrumbs,
   className
 }) => {
   const currentModule = modules.find(m => m.id === activeModule);
@@ -44,12 +35,6 @@ export const BreadcrumbNavigation: React.FC<BreadcrumbNavigationProps> = ({
 
   const navGroup = getNavGroupName(activeModule);
   
-  const handleBreadcrumbClick = (item: BreadcrumbItem) => {
-    if (item.id && item.id !== activeModule) {
-      onModuleChange(item.id);
-    }
-  };
-
   const handleBack = () => {
     if (onBack) {
       onBack();

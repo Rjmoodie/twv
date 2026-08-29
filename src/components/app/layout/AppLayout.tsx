@@ -7,7 +7,6 @@ import AppHeader from "./AppHeader";
 import AppSidebar from "./AppSidebar";
 import AppContent from "./AppContent";
 import AppDialogs from "./AppDialogs";
-import FloatingActionMenu from "@/components/app/FloatingActionMenu";
 import BottomNavigation from "@/components/app/BottomNavigation";
 import MobileNavigation from "@/components/app/MobileNavigation";
 import NetworkStatus from "@/components/app/NetworkStatus";

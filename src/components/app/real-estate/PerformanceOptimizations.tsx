@@ -3,12 +3,17 @@ import { useCallback, useEffect, useState } from "react";
 const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number
-): ((...args: Parameters<T>) => void) => {
-  let timeout: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeout);
+): ((...args: Parameters<T>) => void) & { cancel: () => void } => {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const debounced = (...args: Parameters<T>) => {
+    if (timeout) clearTimeout(timeout);
     timeout = setTimeout(() => func(...args), wait);
   };
+  debounced.cancel = () => {
+    if (timeout) clearTimeout(timeout);
+    timeout = undefined;
+  };
+  return debounced;
 };
 import { toast } from "@/hooks/use-toast";
 import { Save, Wifi, WifiOff } from "lucide-react";
