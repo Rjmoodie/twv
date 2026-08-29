@@ -12,7 +12,6 @@ interface AppSidebarProps {
   sidebarCollapsed: boolean;
   onModuleChange: (module: string) => void;
   onRequestAuth: () => void;
-  onRequestUpgrade: (moduleId: string) => void;
   onSidebarToggle: () => void;
   user: User | null;
   authLoading: boolean;
@@ -24,7 +23,6 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
   sidebarCollapsed,
   onModuleChange,
   onRequestAuth,
-  onRequestUpgrade,
   onSidebarToggle,
   user,
   authLoading,
@@ -64,7 +62,6 @@ const AppSidebar: React.FC<AppSidebarProps> = ({
           activeModule={activeModule}
           onModuleChange={onModuleChange}
           onRequestAuth={onRequestAuth}
-          onRequestUpgrade={onRequestUpgrade}
           variant="desktop"
           user={user}
           authLoading={authLoading}

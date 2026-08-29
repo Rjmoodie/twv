@@ -13,7 +13,6 @@ interface MobileNavigationProps {
   authLoading: boolean;
   subscription: UseSubscriptionReturn;
   onRequestAuth?: () => void;
-  onRequestUpgrade?: (moduleId: string) => void;
 }
 
 const MobileNavigation = ({
@@ -25,7 +24,6 @@ const MobileNavigation = ({
   authLoading,
   subscription,
   onRequestAuth,
-  onRequestUpgrade,
 }: MobileNavigationProps) => {
   const handleModuleSelect = (moduleId: string) => {
     onModuleChange(moduleId);
@@ -81,7 +79,6 @@ const MobileNavigation = ({
             authLoading={authLoading}
             subscription={subscription}
             onRequestAuth={onRequestAuth}
-            onRequestUpgrade={onRequestUpgrade}
           />
         </nav>
 

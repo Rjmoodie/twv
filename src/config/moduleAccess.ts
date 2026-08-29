@@ -109,6 +109,33 @@ export const getModuleAccessStatus = (
 export const getModuleRule = (moduleId: string): ModuleAccessRule | undefined =>
   moduleAccessRules[moduleId];
 
+/**
+ * Should this module appear in navigation for this viewer?
+ *
+ * Persona-gated modules are hidden from anyone who does not hold the persona,
+ * rather than shown padlocked. A padlock is an invitation -- it reads as
+ * "unlock me" -- and nothing a client, an investor, or a signed-out visitor can
+ * do ever will: CRM and underwriting need a role at the firm, which is granted
+ * by an administrator, not requested and not bought. Hiding is the honest
+ * signal, and it keeps the names of internal tooling off an external customer's
+ * screen.
+ *
+ * Auth-only modules (portfolio, account, support) stay listed and padlocked
+ * when signed out, because there the lock is truthful: signing in does open
+ * them.
+ *
+ * While personas are still resolving this returns false, so a client never sees
+ * `CRM` flash into the sidebar and then vanish.
+ *
+ * This is presentation and nothing more. Reaching the module by URL is still
+ * refused by ModuleAccessGate, and the rows behind it by row-level security.
+ */
+export const isModuleVisible = (moduleId: string, context: ModuleAccessContext): boolean => {
+  const rule = moduleAccessRules[moduleId];
+  if (!rule?.requiredPersonas?.length) return true;
+  return getModuleAccessStatus(moduleId, context) === 'ok';
+};
+
 /** "Administrator or Project Manager" — what a denial tells the reader they need. */
 export const getAccessRequirementLabel = (rule?: ModuleAccessRule): string | null => {
   if (!rule?.requiredPersonas?.length) return null;

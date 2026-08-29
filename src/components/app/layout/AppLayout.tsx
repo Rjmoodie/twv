@@ -27,7 +27,6 @@ interface AppLayoutProps {
   onGoBack: () => void;
   canGoBack: boolean;
   onRequestAuth: () => void;
-  onRequestUpgrade: (moduleId: string) => void;
   children: React.ReactNode;
   user: User | null;
   authLoading: boolean;
@@ -42,7 +41,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   onGoBack,
   canGoBack,
   onRequestAuth,
-  onRequestUpgrade,
   children,
   user,
   authLoading,
@@ -81,7 +79,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             sidebarCollapsed={sidebarCollapsed}
             onModuleChange={onModuleChange}
             onRequestAuth={onRequestAuth}
-            onRequestUpgrade={onRequestUpgrade}
             onSidebarToggle={handleSidebarToggle}
             user={user}
             authLoading={authLoading}
@@ -127,7 +124,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               activeModule={activeModule}
               onModuleChange={onModuleChange}
               onRequestAuth={onRequestAuth}
-              onRequestUpgrade={onRequestUpgrade}
               user={user}
               authLoading={authLoading}
               subscription={subscription}
@@ -144,7 +140,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             authLoading={authLoading}
             subscription={subscription}
             onRequestAuth={onRequestAuth}
-            onRequestUpgrade={onRequestUpgrade}
           />
 
           <AppDialogs />

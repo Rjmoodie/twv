@@ -3,6 +3,7 @@ import {
   getModuleAccessStatus,
   getAccessRequirementLabel,
   getModuleRule,
+  isModuleVisible,
   moduleAccessRules,
   personaLabels,
 } from './moduleAccess';
@@ -175,6 +176,67 @@ describe('moduleAccessRules consistency', () => {
     ];
     for (const id of cut) {
       expect(moduleAccessRules[id], `Rule "${id}" survives for a deleted module`).toBeUndefined();
+    }
+  });
+});
+
+// ─── Navigation visibility ────────────────────────────────────────────────────
+//
+// What each viewer is shown, as distinct from what they may open. Persona-gated
+// modules are hidden rather than padlocked, because a padlock reads as an
+// invitation and nothing a client or a visitor can do will ever open CRM.
+
+/** Every module id that would appear in navigation for this viewer. */
+const visibleTo = (context: ModuleAccessContext) =>
+  modules.filter((module) => isModuleVisible(module.id, context)).map((module) => module.id);
+
+describe('isModuleVisible — the three views', () => {
+  it('anonymous: no internal module names, shared ones stay (locked in the UI)', () => {
+    const shown = visibleTo(ctx());
+    expect(shown).toContain('dashboard');
+    for (const id of SHARED_MODULES) expect(shown).toContain(id);
+    for (const id of INTERNAL_MODULES) expect(shown).not.toContain(id);
+  });
+
+  it('client: sees the shared surface only', () => {
+    const shown = visibleTo(as('client'));
+    for (const id of SHARED_MODULES) expect(shown).toContain(id);
+    for (const id of INTERNAL_MODULES) expect(shown).not.toContain(id);
+  });
+
+  it('investor: same as client — neither can ever hold an internal persona', () => {
+    expect(visibleTo(as('investor'))).toEqual(visibleTo(as('client')));
+  });
+
+  it('project manager: sees everything', () => {
+    const shown = visibleTo(as('project_manager'));
+    for (const id of [...SHARED_MODULES, ...INTERNAL_MODULES]) expect(shown).toContain(id);
+  });
+
+  it('admin persona sees everything too', () => {
+    const shown = visibleTo(as('admin'));
+    for (const id of INTERNAL_MODULES) expect(shown).toContain(id);
+  });
+
+  it('super admin sees everything without holding any persona', () => {
+    const shown = visibleTo(ctx({ user: STUB_USER, isSuperAdmin: true }));
+    for (const id of INTERNAL_MODULES) expect(shown).toContain(id);
+  });
+
+  it('hides internal modules while personas are still resolving', () => {
+    // Revealing then retracting would flash `CRM` at a client mid-load.
+    const shown = visibleTo(ctx({ user: STUB_USER, accessLoading: true }));
+    for (const id of INTERNAL_MODULES) expect(shown).not.toContain(id);
+  });
+
+  it('visibility never widens what may actually be opened', () => {
+    for (const persona of ['client', 'investor', 'project_manager', 'admin'] as PortalPersona[]) {
+      const context = as(persona);
+      for (const module of modules) {
+        if (isModuleVisible(module.id, context) && moduleAccessRules[module.id]?.requiredPersonas) {
+          expect(getModuleAccessStatus(module.id, context)).toBe('ok');
+        }
+      }
     }
   });
 });

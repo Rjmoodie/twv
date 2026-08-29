@@ -1,10 +1,10 @@
 import { quickActions, type QuickAction } from './quickActionsConfig';
-import { useState, useEffect, memo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { Plus, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from '@supabase/supabase-js';
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
-import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from '@/config/moduleAccess';
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel, isModuleVisible } from '@/config/moduleAccess';
 import { useAuth } from '@/components/app/AuthProvider';
 import type { ModuleAccessStatus } from '@/config/moduleAccess';
 import { toast } from '@/hooks/use-toast';
@@ -15,7 +15,6 @@ interface FloatingActionMenuProps {
   authLoading: boolean;
   subscription: UseSubscriptionReturn;
   onRequestAuth?: () => void;
-  onRequestUpgrade?: (moduleId: string) => void;
 }
 
 interface QuickActionButtonProps {
@@ -53,7 +52,6 @@ const FloatingActionMenu = ({
   user,
   authLoading,
   onRequestAuth,
-  onRequestUpgrade,
 }: FloatingActionMenuProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -68,19 +66,23 @@ const FloatingActionMenu = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const floatingActions = quickActions.filter(a => a.floating);
-
   const { access, accessLoading, userProfile } = useAuth();
   const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
+  const accessContext = useMemo(
+    () => ({ user, authLoading, accessLoading, personas: access.personas, isSuperAdmin }),
+    [user, authLoading, accessLoading, access.personas, isSuperAdmin],
+  );
+
+  // "Underwrite a Deal" points at `real-estate`, so the shortcut disappears for
+  // a client rather than sitting there padlocked.
+  const floatingActions = useMemo(
+    () => quickActions.filter(a => a.floating && isModuleVisible(a.module, accessContext)),
+    [accessContext],
+  );
+
   const getStatusMeta = (moduleId: string) => {
-    const status = getModuleAccessStatus(moduleId, {
-      user,
-      authLoading,
-      accessLoading,
-      personas: access.personas,
-      isSuperAdmin,
-    });
+    const status = getModuleAccessStatus(moduleId, accessContext);
 
     return {
       status,
@@ -90,7 +92,7 @@ const FloatingActionMenu = ({
         status === 'unauthenticated'
           ? 'Sign in required'
           : status === 'forbidden'
-            ? 'Upgrade required'
+            ? 'Not available for your role'
             : undefined,
     };
   };
@@ -107,16 +109,16 @@ const FloatingActionMenu = ({
     }
 
     if (status === 'forbidden') {
+      // Access follows persona, so there is nothing to buy here.
       const rule = getModuleRule(moduleId);
-      const tierLabel = getAccessRequirementLabel(rule);
+      const roleLabel = getAccessRequirementLabel(rule);
       const moduleName = quickActions.find(action => action.module === moduleId)?.title || 'this module';
       toast({
-        title: 'Upgrade required',
-        description: tierLabel
-          ? `Upgrade to ${tierLabel} to unlock ${moduleName}.`
-          : (rule?.description || 'Upgrade your plan to unlock this module.'),
+        title: 'Not available for your role',
+        description: roleLabel
+          ? `${moduleName} is limited to ${roleLabel}. Ask a workspace administrator for access.`
+          : (rule?.description || 'Ask a workspace administrator for access.'),
       });
-      onRequestUpgrade?.(moduleId);
     }
   };
 

@@ -32,7 +32,7 @@ const NAV_ICONS: Record<string, React.ComponentType<LucideProps>> = {
   User: LucideUser,
 };
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
-import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from '@/config/moduleAccess';
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel, isModuleVisible } from '@/config/moduleAccess';
 import { useAuth } from '@/components/app/AuthProvider';
 import type { ModuleAccessStatus } from '@/config/moduleAccess';
 import { toast } from '@/hooks/use-toast';
@@ -46,7 +46,6 @@ interface GroupedNavigationProps {
   authLoading: boolean;
   subscription: UseSubscriptionReturn;
   onRequestAuth?: () => void;
-  onRequestUpgrade?: (moduleId: string) => void;
 }
 
 // Define the order and labels for nav groups.
@@ -59,11 +58,15 @@ const navGroupOrder: { key: string; name: string; flat?: boolean }[] = [
   { key: 'account',     name: 'Account'    },
 ];
 
-// Group modules by navGroup
-const groupModules = () => {
+// Group modules by navGroup, dropping the ones this viewer should not be shown
+// at all. Groups left empty disappear with their heading -- the render already
+// returns null for an empty group -- so a client sees no "Real Estate" section
+// rather than an empty one.
+const groupModules = (isVisible: (moduleId: string) => boolean) => {
   const groups: Record<string, typeof modules> = {};
   for (const m of modules) {
     if (!m.navGroup) continue;
+    if (!isVisible(m.id)) continue;
     if (!groups[m.navGroup]) groups[m.navGroup] = [];
     groups[m.navGroup].push(m);
   }
@@ -78,7 +81,6 @@ const GroupedNavigation = ({
   user,
   authLoading,
   onRequestAuth,
-  onRequestUpgrade,
 }: GroupedNavigationProps) => {
   // Determine which group the active module belongs to so it starts expanded
   const activeGroup = useMemo(() => {
@@ -100,19 +102,21 @@ const GroupedNavigation = ({
     }));
   };
 
-  const groups = useMemo(groupModules, []);
-
   const { access, accessLoading, userProfile } = useAuth();
   const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
+  const accessContext = useMemo(
+    () => ({ user, authLoading, accessLoading, personas: access.personas, isSuperAdmin }),
+    [user, authLoading, accessLoading, access.personas, isSuperAdmin],
+  );
+
+  const groups = useMemo(
+    () => groupModules((moduleId) => isModuleVisible(moduleId, accessContext)),
+    [accessContext],
+  );
+
   const getStatusMeta = (moduleId: string) => {
-    const status = getModuleAccessStatus(moduleId, {
-      user,
-      authLoading,
-      accessLoading,
-      personas: access.personas,
-      isSuperAdmin,
-    });
+    const status = getModuleAccessStatus(moduleId, accessContext);
 
     return {
       status,
@@ -122,7 +126,7 @@ const GroupedNavigation = ({
         status === 'unauthenticated'
           ? 'Sign in required'
           : status === 'forbidden'
-            ? 'Upgrade required'
+            ? 'Not available for your role'
             : undefined,
     };
   };
@@ -139,16 +143,18 @@ const GroupedNavigation = ({
     }
 
     if (status === 'forbidden') {
+      // Reachable only if a module slips past isModuleVisible. Access follows
+      // persona now, so there is nothing to buy: say who to ask, and do not
+      // open the pricing dialog at someone whose money cannot help them.
       const rule = getModuleRule(moduleId);
-      const tierLabel = getAccessRequirementLabel(rule);
+      const roleLabel = getAccessRequirementLabel(rule);
       const moduleName = modules.find((m) => m.id === moduleId)?.name || 'this module';
       toast({
-        title: 'Upgrade required',
-        description: tierLabel
-          ? `Upgrade to ${tierLabel} to unlock ${moduleName}.`
-          : (rule?.description || 'Upgrade your plan to unlock this module.'),
+        title: 'Not available for your role',
+        description: roleLabel
+          ? `${moduleName} is limited to ${roleLabel}. Ask a workspace administrator for access.`
+          : (rule?.description || 'Ask a workspace administrator for access.'),
       });
-      onRequestUpgrade?.(moduleId);
     }
   };
 

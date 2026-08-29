@@ -8,7 +8,7 @@ import type { LucideProps } from 'lucide-react';
 import { modules } from './constants';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { UseSubscriptionReturn } from '@/hooks/useSubscription';
-import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from '@/config/moduleAccess';
+import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel, isModuleVisible } from '@/config/moduleAccess';
 import { useAuth } from '@/components/app/AuthProvider';
 import type { ModuleAccessStatus } from '@/config/moduleAccess';
 import { toast } from '@/hooks/use-toast';
@@ -55,7 +55,6 @@ interface BottomNavigationProps {
   authLoading: boolean;
   subscription: UseSubscriptionReturn;
   onRequestAuth?: () => void;
-  onRequestUpgrade?: (moduleId: string) => void;
 }
 
 type StatusMeta = {
@@ -71,18 +70,22 @@ const BottomNavigation = ({
   user,
   authLoading,
   onRequestAuth,
-  onRequestUpgrade,
 }: BottomNavigationProps) => {
   const { access, accessLoading, userProfile } = useAuth();
   const haptics = useHaptics();
   const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
-  const navModules = NAV_MODULES;
-
   // Batch access context — single memo so moduleStatusMap only recomputes when auth/subscription changes
   const accessContext = useMemo(() => ({
     user, authLoading, accessLoading, personas: access.personas, isSuperAdmin,
   }), [user, authLoading, accessLoading, access.personas, isSuperAdmin]);
+
+  // `real-estate` is persona-gated, so the tab bar is four wide for internal
+  // staff and three for a client. The grid below sizes off this length.
+  const navModules = useMemo(
+    () => NAV_MODULES.filter(module => isModuleVisible(module.id, accessContext)),
+    [accessContext],
+  );
 
   // Derive all statuses once per render, not per-button
   const moduleStatusMap = useMemo(() =>
@@ -94,7 +97,7 @@ const BottomNavigation = ({
         isLoading: status === 'loading',
         lockLabel:
           status === 'unauthenticated' ? 'Sign in required'
-          : status === 'forbidden'       ? 'Upgrade required'
+          : status === 'forbidden'       ? 'Not available for your role'
           : undefined,
       };
       return acc;
@@ -111,16 +114,16 @@ const BottomNavigation = ({
       return;
     }
     if (status === 'forbidden') {
-      const tierLabel = getAccessRequirementLabel(rule);
+      // Access follows persona, so there is nothing to buy here.
+      const roleLabel = getAccessRequirementLabel(rule);
       toast({
-        title: 'Upgrade required',
-        description: tierLabel
-          ? `Upgrade to ${tierLabel} to unlock ${moduleName}.`
-          : (rule?.description ?? 'Upgrade your plan to unlock this module.'),
+        title: 'Not available for your role',
+        description: roleLabel
+          ? `${moduleName} is limited to ${roleLabel}. Ask a workspace administrator for access.`
+          : (rule?.description ?? 'Ask a workspace administrator for access.'),
       });
-      onRequestUpgrade?.(moduleId);
     }
-  }, [onRequestAuth, onRequestUpgrade]);
+  }, [onRequestAuth]);
 
   const handleModuleSelect = useCallback((moduleId: string) => {
     const meta = moduleStatusMap[moduleId];

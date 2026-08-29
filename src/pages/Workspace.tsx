@@ -451,7 +451,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
           onGoBack={handleGoBack}
           canGoBack={canGoBack}
           onRequestAuth={() => setShowAuthDialog(true)}
-          onRequestUpgrade={handleUpgradeRequest}
           user={user}
           authLoading={authLoading}
           subscription={subscription}
