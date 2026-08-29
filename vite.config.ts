@@ -62,23 +62,6 @@ export default defineConfig(({ mode }) => {
         target: 'http://localhost:3001',
         changeOrigin: true,
       },
-      // Vite itself proxies these — no separate server required
-      '/proxy/sec-tickers': {
-        target: 'https://www.sec.gov',
-        changeOrigin: true,
-        rewrite: () => '/files/company_tickers.json',
-        headers: {
-          'User-Agent': 'Somatech research@somatech.pro',
-        },
-      },
-      '/edgar-api': {
-        target: 'https://data.sec.gov',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/edgar-api/, ''),
-        headers: {
-          'User-Agent': 'Somatech research@somatech.pro',
-        },
-      },
     },
   },
   define: {

@@ -5,16 +5,30 @@
   <meta charset="UTF-8" />
   <!-- Capacitor / mobile viewport — no scaling, respects safe areas -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>TW Ventures</title>
-  <meta name="description" content="Real estate development and construction management — acquisition through stabilization." />
+  <!-- Keywords front-loaded, brand last: Google frequently rewrites the tail to
+       the site name anyway, and the competing Philadelphia firm ranks on
+       "general contracting" — a term TW does in-house but was not claiming. -->
+  <title>Philadelphia Real Estate Development &amp; General Contracting | TW Ventures</title>
+  <meta name="description" content="TW Ventures acquires, develops, and builds real estate in Philadelphia. In-house general contracting from off-market acquisition through construction to stabilized, cash-flowing assets." />
   <meta name="author" content="TW Ventures LLC" />
+  <meta name="application-name" content="TW Ventures" />
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+  <link rel="canonical" href="https://twv-llc.com/" />
+
+  <!-- Local search signals. Geo meta tags are not ranking factors on their own,
+       but they are read by some directories and aggregators, and they keep the
+       stated service area consistent with the LocalBusiness JSON-LD below. -->
+  <meta name="geo.region" content="US-PA" />
+  <meta name="geo.placename" content="Philadelphia" />
 
   <!-- PWA / manifest -->
   <link rel="manifest" href="/manifest.json" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="/logo.png" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <!-- Favicon. Was /logo.png — a 528 KB 1024px master downloaded on every page
+       load to render at 16px. logo-192.png is the same mark at 20 KB.
+       NOTE: this is the full lockup (wordmark plus tagline) and goes unreadable
+       at 16px. A simplified TW monogram would serve better as the tab icon. -->
+  <link rel="icon" type="image/png" sizes="192x192" href="/logo-192.png" />
 
   <!-- iOS home screen -->
   <link rel="apple-touch-icon" href="/logo-192.png" />
@@ -28,10 +42,81 @@
   <meta name="theme-color" content="#F5F7FA" media="(prefers-color-scheme: light)" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="TW Ventures" />
-  <meta property="og:description" content="Real estate development and construction management." />
-  <meta property="og:image" content="/logo.png" />
+  <meta property="og:site_name" content="TW Ventures" />
+  <meta property="og:title" content="Philadelphia Real Estate Development | TW Ventures" />
+  <meta property="og:description" content="Philadelphia real estate acquisition, development, in-house general contracting, and stabilization." />
   <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://twv-llc.com/" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:image" content="https://twv-llc.com/og-image.jpg" />
+  <meta property="og:image:type" content="image/jpeg" />
+  <meta property="og:image:width" content="1536" />
+  <meta property="og:image:height" content="1024" />
+  <meta property="og:image:alt" content="TW Ventures — Acquire, Build, Manage" />
+
+  <!-- X / Twitter. summary_large_image, not summary: the card art is 1536x1024,
+       and `summary` centre-crops it to a small square. -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Philadelphia Real Estate Development | TW Ventures" />
+  <meta name="twitter:description" content="Philadelphia real estate acquisition, development, in-house general contracting, and stabilization." />
+  <meta name="twitter:image" content="https://twv-llc.com/og-image.jpg" />
+  <meta name="twitter:image:alt" content="TW Ventures — Acquire, Build, Manage" />
+
+  <!-- Search engines can understand the business without executing the app. -->
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": ["Organization", "GeneralContractor"],
+          "@id": "https://twv-llc.com/#organization",
+          "name": "TW Ventures LLC",
+          "url": "https://twv-llc.com/",
+          "logo": "https://twv-llc.com/logo-512.png",
+          "image": "https://twv-llc.com/og-image.jpg",
+          "description": "Philadelphia real estate development and construction management — acquisition, entitlement, in-house general contracting, stabilization, and long-term property management.",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Philadelphia",
+            "addressRegion": "PA",
+            "addressCountry": "US"
+          },
+          "areaServed": [
+            { "@type": "City", "name": "Philadelphia", "sameAs": "https://en.wikipedia.org/wiki/Philadelphia" },
+            { "@type": "AdministrativeArea", "name": "Philadelphia County, Pennsylvania" },
+            { "@type": "AdministrativeArea", "name": "Greater Philadelphia" }
+          ],
+          "knowsAbout": [
+            "Real estate development",
+            "Construction management",
+            "Property acquisition",
+            "Zoning and entitlements",
+            "Multifamily development",
+            "Property management"
+          ],
+          "hasOfferCatalog": {
+            "@type": "OfferCatalog",
+            "name": "Services",
+            "itemListElement": [
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Acquisitions", "description": "Off-market and on-market sourcing across Philadelphia." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Development", "description": "Entitlements through shovel-ready, with architects, zoning counsel, and engineers." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Construction Management", "description": "In-house general contracting with cost and quality aligned to ownership." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Stabilization", "description": "Lease-up to a cashflowing asset and refinance." } },
+              { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Property Management", "description": "Long-term management across the held portfolio." } }
+            ]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://twv-llc.com/#website",
+          "url": "https://twv-llc.com/",
+          "name": "TW Ventures",
+          "publisher": { "@id": "https://twv-llc.com/#organization" },
+          "inLanguage": "en-US"
+        }
+      ]
+    }
+  </script>
   
   <!-- Apply theme before React mounts to avoid flash and fix status bar race condition -->
   <script>
@@ -51,7 +136,12 @@
   <!-- Premium Typography - Apple-inspired font pairing -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <!-- Only the weights the app actually renders. A grep of the source finds
+       font-normal/medium/semibold/bold and nothing else, so 300/800/900 were
+       being downloaded for no one. Space Grotesk is applied by a single
+       utility class at semibold; JetBrains Mono is used at 400 and 500.
+       This is a render-blocking third-party stylesheet, so it lands on LCP. -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 
 <body>

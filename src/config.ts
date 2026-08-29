@@ -1,11 +1,15 @@
 import { z } from 'zod';
 
+const defaultSiteUrl = typeof window === 'undefined'
+  ? 'http://localhost:8081'
+  : window.location.origin;
+
 const clientEnvSchema = z.object({
   VITE_SUPABASE_URL: z.string().url('Invalid Supabase URL').optional(),
   VITE_SUPABASE_ANON_KEY: z.string().min(1, 'Supabase anon key is required').optional(),
   VITE_MAPBOX_TOKEN: z.string().min(1, 'Mapbox token is required').optional(),
   VITE_GOOGLE_MAPS_API_KEY: z.string().min(1, 'Google Maps API key is required').optional(),
-  SITE_URL: z.string().url('Invalid site URL').default('https://somatech.pro'),
+  SITE_URL: z.string().url('Invalid site URL').default(defaultSiteUrl),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   DISCORD_BOT_TOKEN: z.string().optional(),
 });
@@ -18,12 +22,12 @@ const parseClientEnv = () => {
       const missingVars = error.errors.map(err => `${err.path.join('.')}: ${err.message}`);
       console.warn('Client config validation warnings:\n' + missingVars.join('\n'));
       return clientEnvSchema.parse({
-        SITE_URL: 'https://somatech.pro',
+        SITE_URL: defaultSiteUrl,
         NODE_ENV: 'development',
       });
     }
     return clientEnvSchema.parse({
-      SITE_URL: 'https://somatech.pro',
+      SITE_URL: defaultSiteUrl,
       NODE_ENV: 'development',
     });
   }

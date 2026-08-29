@@ -15,7 +15,14 @@
 import { spawnSync } from 'node:child_process';
 
 // Free identifiers survive bundling and throw at runtime.
-const FATAL = new Set(['TS2304', 'TS2552']);
+//
+// TS2307 -- an import that resolves to nothing -- belongs here for the same
+// reason, and was added after a directory rename left `App.tsx` importing a
+// page that no longer existed. The gate passed, because the identifier was
+// bound; the module behind it simply was not there. A static import fails the
+// build, but a lazy `import()` inside a route only fails when a user navigates
+// to it, which is the worst place to find out.
+const FATAL = new Set(['TS2304', 'TS2552', 'TS2307']);
 
 const run = spawnSync(
   'npx',
@@ -29,8 +36,8 @@ const errors = output.split('\n').filter((line) => /error TS\d+:/.test(line));
 const fatal = errors.filter((line) => FATAL.has(line.match(/error (TS\d+):/)[1]));
 
 if (fatal.length) {
-  console.error(`\nType gate failed: ${fatal.length} unresolved identifier(s).`);
-  console.error('These compile but throw at runtime.\n');
+  console.error(`\nType gate failed: ${fatal.length} unresolved reference(s).`);
+  console.error('An unresolved identifier or module reaches runtime as a throw.\n');
   for (const line of fatal) console.error(`  ${line.trim()}`);
   console.error('');
   process.exit(1);
@@ -42,7 +49,7 @@ for (const line of errors) {
   counts.set(code, (counts.get(code) ?? 0) + 1);
 }
 
-console.log('Type gate passed: no unresolved identifiers.');
+console.log('Type gate passed: no unresolved identifiers or modules.');
 if (errors.length) {
   const summary = [...counts.entries()]
     .sort((a, b) => b[1] - a[1])

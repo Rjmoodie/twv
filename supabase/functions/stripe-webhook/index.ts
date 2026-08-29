@@ -1,4 +1,4 @@
-// SomaTech Stripe Webhook Handler
+// TW Ventures Stripe Webhook Handler
 // Processes Stripe webhook events and updates subscription status
 
 import Stripe from "npm:stripe@16.6.0";
@@ -44,40 +44,43 @@ async function upsertSub(
 ) {
   const isCanceled = status === "canceled" || status === "unpaid";
   const effectiveTier = isCanceled ? "free" : tier;
-  const effectiveStatus = isCanceled ? "canceled" : status;
+  const profileStatus = status === "past_due"
+    ? "past_due"
+    : status === "active" || status === "trialing"
+      ? "active"
+      : status === "unpaid" || status === "incomplete" || status === "incomplete_expired"
+        ? "unpaid"
+        : "canceled";
+  const priceId = sub.items.data[0]?.price?.id ?? null;
 
   // 1. Write to subscriptions table (source of truth for Stripe data)
-  await supabase.from("subscriptions").upsert({
+  const { error: subscriptionError } = await supabase.from("subscriptions").upsert({
     user_id: userId,
     stripe_subscription_id: sub.id,
+    stripe_price_id: priceId,
     plan: effectiveTier,
-    status: effectiveStatus,
+    status,
+    current_period_start: new Date(sub.current_period_start * 1000).toISOString(),
     current_period_end: new Date(sub.current_period_end * 1000).toISOString(),
+    cancel_at_period_end: sub.cancel_at_period_end,
     updated_at: new Date().toISOString(),
-  });
+  }, { onConflict: "stripe_subscription_id" });
+  if (subscriptionError) throw subscriptionError;
 
   // 2. Denormalise onto user_profiles for fast frontend reads
-  await supabase
+  const { error: profileError } = await supabase
     .from("user_profiles")
     .update({
       subscription_tier: effectiveTier,
-      subscription_status: effectiveStatus,
+      subscription_status: profileStatus,
       subscription_ends_at: isCanceled
         ? new Date(sub.current_period_end * 1000).toISOString()
         : null,
+      stripe_customer_id: String(sub.customer),
       updated_at: new Date().toISOString(),
     })
     .eq("id", userId);
-}
-
-async function enqueueDiscordRoleJob(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-  action: "grant" | "revoke"
-) {
-  await supabase
-    .from("discord_role_jobs")
-    .insert({ user_id: userId, action, run_after: new Date().toISOString() });
+  if (profileError) throw profileError;
 }
 
 /**
@@ -86,20 +89,27 @@ async function enqueueDiscordRoleJob(
  */
 async function isAlreadyProcessed(
   supabase: ReturnType<typeof createClient>,
-  eventId: string,
-  eventType: string
+  eventId: string
 ): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("processed_webhook_events")
+    .select("event_id")
+    .eq("event_id", eventId)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
+
+async function markProcessed(
+  supabase: ReturnType<typeof createClient>,
+  eventId: string,
+  eventType: string,
+) {
   const { error } = await supabase
     .from("processed_webhook_events")
     .insert({ event_id: eventId, event_type: eventType });
-
-  // Unique constraint violation (23505) means we already handled this event
-  if (error?.code === "23505") return true;
-  if (error) {
-    // Log but don't block — better to double-process than to drop an event
-    console.error("Idempotency insert error:", error);
-  }
-  return false;
+  // A concurrent delivery can finish the same idempotent updates first.
+  if (error && error.code !== "23505") throw error;
 }
 
 serve(async (req) => {
@@ -125,11 +135,11 @@ serve(async (req) => {
 
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE")!
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
     // Idempotency — skip if already processed (Stripe retries for up to 3 days)
-    if (await isAlreadyProcessed(supabase, event.id, event.type)) {
+    if (await isAlreadyProcessed(supabase, event.id)) {
       console.log(`Skipping already-processed event: ${event.id}`);
       return new Response(JSON.stringify({ received: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -188,7 +198,6 @@ serve(async (req) => {
         }
 
         await upsertSub(supabase, bc.user_id, sub, tier, sub.status);
-        await enqueueDiscordRoleJob(supabase, bc.user_id, "grant");
         console.log(`Checkout completed: user=${bc.user_id} tier=${tier}`);
         break;
       }
@@ -217,9 +226,6 @@ serve(async (req) => {
         }
 
         await upsertSub(supabase, bc.user_id, sub, tier, sub.status);
-
-        const isActive = ["active", "trialing", "past_due"].includes(sub.status);
-        await enqueueDiscordRoleJob(supabase, bc.user_id, isActive ? "grant" : "revoke");
         console.log(`Subscription updated: user=${bc.user_id} tier=${tier} status=${sub.status}`);
         break;
       }
@@ -241,7 +247,6 @@ serve(async (req) => {
 
         // Deletion always means downgrade to free
         await upsertSub(supabase, bc.user_id, sub, "free", "canceled");
-        await enqueueDiscordRoleJob(supabase, bc.user_id, "revoke");
         console.log(`Subscription deleted: user=${bc.user_id} → downgraded to free`);
         break;
       }
@@ -268,7 +273,6 @@ serve(async (req) => {
         if (!tier) break;
 
         await upsertSub(supabase, bc.user_id, sub, tier, "active");
-        await enqueueDiscordRoleJob(supabase, bc.user_id, "grant");
         console.log(`Payment succeeded: user=${bc.user_id} tier=${tier} re-activated`);
         break;
       }
@@ -312,6 +316,8 @@ serve(async (req) => {
         console.log(`Unhandled event type: ${event.type}`);
         break;
     }
+
+    await markProcessed(supabase, event.id, event.type);
 
     return new Response(JSON.stringify({ received: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -17,7 +17,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/somatech/AuthProvider';
+import { useAuth } from '@/components/app/AuthProvider';
 import { subMonths, format } from 'date-fns';
 import type { PlaidTransaction } from '@/hooks/useTransactions';
 

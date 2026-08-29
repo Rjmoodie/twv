@@ -1,25 +1,20 @@
 import { Suspense } from 'react';
 import { useNativeApp } from '@/hooks/useNativeApp';
 import { useStatusBarTheme } from '@/hooks/useStatusBarTheme';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-
-// Component to redirect /somatech to / while preserving query params
-const SomaTechRedirect = () => {
-  const location = useLocation();
-  return <Navigate to={{ pathname: '/', search: location.search }} replace />;
-};
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as Sonner } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import ErrorBoundary from '@/components/somatech/ErrorBoundary';
-import PerformanceProvider from '@/components/somatech/PerformanceProvider';
-import ErrorProvider from '@/components/somatech/ErrorProvider';
-import AuthProvider, { useAuth } from '@/components/somatech/AuthProvider';
-import SessionTimeoutWarning from '@/components/somatech/SessionTimeoutWarning';
-import { CookieConsent } from '@/components/somatech/CookieConsent';
+import ErrorBoundary from '@/components/app/ErrorBoundary';
+import PerformanceProvider from '@/components/app/PerformanceProvider';
+import ErrorProvider from '@/components/app/ErrorProvider';
+import AuthProvider, { useAuth } from '@/components/app/AuthProvider';
+import SessionTimeoutWarning from '@/components/app/SessionTimeoutWarning';
+import { CookieConsent } from '@/components/app/CookieConsent';
 import { setAnalyticsSink } from '@/lib/analytics';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
+import RouteSeo from '@/components/app/RouteSeo';
 
 // ─── Analytics sink ───────────────────────────────────────────────────────────
 //
@@ -39,11 +34,12 @@ if (import.meta.env.DEV) {
 }
 
 // Lazy load main pages
-const SomaTech = lazyWithRetry(() => import('./pages/SomaTech'));
+const Workspace = lazyWithRetry(() => import('./pages/Workspace'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
-const PricingPage = lazyWithRetry(() => import('./pages/PricingPage'));
+const ClientOnboardingPage = lazyWithRetry(() => import('./pages/ClientOnboardingPage'));
 const ResetPasswordPage = lazyWithRetry(() => import('./pages/ResetPasswordPage'));
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'));
+const InviteAcceptancePage = lazyWithRetry(() => import('./pages/InviteAcceptancePage'));
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -80,6 +76,7 @@ function App() {
               <NativeAppInit />
               <TooltipProvider>
                 <BrowserRouter>
+                  <RouteSeo />
                   <div className="min-h-screen bg-background">
                     <Routes>
                       <Route 
@@ -89,26 +86,27 @@ function App() {
                             <div className="flex items-center justify-center min-h-screen">
                               <div className="text-center">
                                 <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-                                <p className="mt-4 text-muted-foreground">Loading SomaTech Platform...</p>
+                                <p className="mt-4 text-muted-foreground">Loading TW Ventures...</p>
                               </div>
                             </div>
                           }>
-                            <SomaTech />
+                            <Workspace />
                           </Suspense>
                         } 
                       />
+                      <Route path="/investor" element={<Suspense fallback={<div>Loading investor portal…</div>}><Workspace portalIntent="investor" /></Suspense>} />
+                      <Route path="/pm" element={<Suspense fallback={<div>Loading project manager portal…</div>}><Workspace portalIntent="project_manager" /></Suspense>} />
+                      <Route path="/client" element={<Suspense fallback={<div>Loading client portal…</div>}><Workspace portalIntent="client" /></Suspense>} />
+                      <Route path="/invite/:token" element={<Suspense fallback={<div>Loading invitation…</div>}><InviteAcceptancePage /></Suspense>} />
                       <Route 
-                        path="/pricing" 
+                        path="/get-started"
                         element={
                           <Suspense fallback={<div>Loading...</div>}>
-                            <PricingPage />
+                            <ClientOnboardingPage />
                           </Suspense>
                         } 
                       />
-                      <Route 
-                        path="/somatech" 
-                        element={<SomaTechRedirect />}
-                      />
+                      <Route path="/pricing" element={<Navigate to="/get-started" replace />} />
                       <Route 
                         path="/reset-password" 
                         element={

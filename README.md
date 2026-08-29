@@ -10,9 +10,10 @@ underwriting forward into the budget it is later measured against.
 
 ## Status
 
-**Phase 0 — chassis.** The app logs in, routes, and underwrites deals. Projects,
-budgets, draws, the investor portal, the fee-client track and the public site are
-not built yet.
+**Phase 0 UI, Phase 1 backend foundation.** The app logs in, routes, and
+underwrites deals. The database now carries deals through projects, budgets,
+costs, draws, and milestones, but those operational screens, the investor
+portal, the fee-client track, and the public site are not built yet.
 
 This codebase began as a copy of the somatech platform, and the non-real-estate
 half of that product has been removed. What remains is the shell, auth, billing,
@@ -29,9 +30,10 @@ see [Architecture Overview](./docs/ARCHITECTURE_OVERVIEW.md) for the honest list
 | Property deal sourcing, Mapbox + PostGIS maps | Working |
 | Interest rates panel (FRED) | Working |
 | Stripe subscriptions and billing portal | Working |
-| Notifications and outbound mail | Working, one event type registered |
+| Notifications and outbound mail | Schema and worker code ready locally; not deployed |
 | Financial calendar | In tree, deregistered pending repointing |
-| Database schema | **Empty** — TW's own project, tables ported deliberately |
+| Database schema | Fresh TW schema — local replay passed; not linked or deployed |
+| Project lifecycle backend | Schema ready — UI not built |
 
 ## Stack
 
@@ -73,12 +75,17 @@ on purpose.
 
 ## Database
 
-`supabase/migrations/` is empty by design. TW runs its own Supabase project and
-ports tables one at a time, verifying DDL against the source schema rather than
-trusting the inherited ledger — which is known to have drifted. The 68 somatech
-migrations are parked in `supabase/migrations.somatech-reference/` as reference
-only. See [supabase/migrations/README.md](./supabase/migrations/README.md) before
-porting anything.
+`supabase/migrations/` now contains TW's fresh foundation in dependency order:
+platform identity and billing, the real-estate lifecycle, lead sourcing, and
+communications/account operations. The sequence was replayed against a clean
+local Supabase database; it has not been linked to or deployed on a hosted
+project.
+
+The 68 somatech migrations remain parked in
+`supabase/migrations.somatech-reference/` as reference only. They are not part
+of TW's migration ledger. See
+[supabase/migrations/README.md](./supabase/migrations/README.md) before extending
+the schema.
 
 Do not apply TW migrations through the configured Supabase MCP connection — it
 points at a different project.

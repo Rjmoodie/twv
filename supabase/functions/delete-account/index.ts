@@ -42,6 +42,55 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Never orphan a paid Stripe subscription. The customer must cancel in
+    // the billing portal first so Stripe remains the source of truth for
+    // access through the paid-through date.
+    const { data: billingProfile, error: billingProfileError } = await adminClient
+      .from("user_profiles")
+      .select("subscription_tier, subscription_status")
+      .eq("id", user_id)
+      .maybeSingle();
+    if (billingProfileError) throw billingProfileError;
+    if (
+      billingProfile?.subscription_tier !== "free" &&
+      ["active", "trialing", "past_due"].includes(billingProfile?.subscription_status ?? "")
+    ) {
+      return corsError("Cancel the active subscription before deleting this account", 409);
+    }
+
+    // Deleting an Auth user cascades personal rows, but organizations contain
+    // business records and may have other members. Refuse to destroy shared
+    // work and require an explicit transfer/leave operation first. A default
+    // single-user workspace can be deleted safely; its domain rows cascade.
+    const { data: memberships, error: membershipError } = await adminClient
+      .from("organization_members")
+      .select("organization_id")
+      .eq("user_id", user_id);
+    if (membershipError) throw membershipError;
+
+    for (const membership of memberships ?? []) {
+      const { count, error: countError } = await adminClient
+        .from("organization_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("organization_id", membership.organization_id)
+        .neq("user_id", user_id);
+      if (countError) throw countError;
+      if ((count ?? 0) > 0) {
+        return corsError(
+          "Transfer or leave shared TW Ventures workspaces before deleting this account",
+          409,
+        );
+      }
+    }
+
+    for (const membership of memberships ?? []) {
+      const { error: organizationDeleteError } = await adminClient
+        .from("organizations")
+        .delete()
+        .eq("id", membership.organization_id);
+      if (organizationDeleteError) throw organizationDeleteError;
+    }
+
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(user_id);
     if (deleteError) throw deleteError;
 

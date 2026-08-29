@@ -4,10 +4,9 @@ declare function require(module: string): unknown;
 
 export default {
   darkMode: ["class"],
+  // Everything lives under src/. The ./pages, ./components and ./app globs that
+  // used to sit here were Next.js-era leftovers matching nothing.
   content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
   ],
   prefix: "",

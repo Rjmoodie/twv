@@ -6,7 +6,6 @@
  */
 
 import {
-  EMAIL_BRAND,
   emailButton,
   emailShell,
   escapeHtml,
@@ -92,7 +91,37 @@ const TEMPLATES: Record<string, Template> = {
             + `</table>`
           : '')
         + (actionUrl ? emailButton(content.actionLabel, actionUrl) : '')
-        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">You set this reminder in SomaTech. Provider dates can change after a reminder is scheduled.</p>`;
+        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">You set this reminder in TW Ventures. Provider dates can change after a reminder is scheduled.</p>`;
+    },
+  },
+  project_milestone_due: {
+    content: payload => {
+      const milestoneTitle = str(payload.title, 'Project milestone');
+      const projectName = str(payload.project_name, 'Your project');
+      const dueDate = str(payload.due_date);
+      return {
+        title: `Milestone due: ${milestoneTitle}`,
+        message: dueDate
+          ? `${milestoneTitle} for ${projectName} is due ${dueDate}.`
+          : `${milestoneTitle} for ${projectName} is coming due.`,
+        actionPath: str(payload.action_url, '/?module=dashboard'),
+        actionLabel: 'Open project dashboard',
+        category: 'project',
+        pushTag: `project_milestone-${str(payload.milestone_id, 'unknown')}`,
+      };
+    },
+    body: (content, actionUrl, payload) => {
+      const projectName = str(payload.project_name);
+      const dueDate = str(payload.due_date);
+      return `<p style="margin:0 0 12px">${escapeHtml(content.message)}</p>`
+        + ((projectName || dueDate)
+          ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e4e7ec;border-radius:10px;padding:14px 16px">`
+            + (projectName ? `<tr><td style="font-size:13px;color:#667085">Project</td><td style="padding-left:18px;font-size:13px;font-weight:600">${escapeHtml(projectName)}</td></tr>` : '')
+            + (dueDate ? `<tr><td style="font-size:13px;color:#667085;padding-top:6px">Due</td><td style="padding-left:18px;padding-top:6px;font-size:13px;font-weight:600">${escapeHtml(dueDate)}</td></tr>` : '')
+            + `</table>`
+          : '')
+        + (actionUrl ? emailButton(content.actionLabel, actionUrl) : '')
+        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">This operational reminder was generated from your TW Ventures project schedule.</p>`;
     },
   },
 };

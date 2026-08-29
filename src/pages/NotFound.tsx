@@ -1,8 +1,7 @@
-import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Home, ArrowLeft, Search, HelpCircle, RefreshCw } from 'lucide-react';
+import { Home, ArrowLeft, HelpCircle, RefreshCw } from 'lucide-react';
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ const NotFound = () => {
     if (window.history.length > 1) {
       navigate(-1);
     } else {
-      navigate('/somatech');
+      navigate('/');
     }
   };
 
@@ -21,7 +20,7 @@ const NotFound = () => {
   };
 
   const handleGoHome = () => {
-    navigate('/somatech');
+    navigate('/');
   };
 
   return (
@@ -78,41 +77,29 @@ const NotFound = () => {
               Popular Pages
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <Link 
-                to="/somatech?module=dashboard" 
+              <Link
+                to="/?module=dashboard"
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
                 Dashboard
               </Link>
-              <Link 
-                to="/somatech?module=stock-analysis" 
+              <Link
+                to="/?module=real-estate"
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
-                Stock Analysis
+                Real Estate
               </Link>
-              <Link 
-                to="/somatech?module=business-valuation" 
+              <Link
+                to="/?module=account"
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
-                Business Valuation
+                Account
               </Link>
-              <Link 
-                to="/somatech?module=real-estate" 
+              <Link
+                to="/?module=support"
                 className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
               >
-                Real Estate Calculator
-              </Link>
-              <Link 
-                to="/somatech?module=cash-flow" 
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-              >
-                Cash Flow Simulator
-              </Link>
-              <Link 
-                to="/somatech?module=retirement-planning" 
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-              >
-                Retirement Planning
+                Support
               </Link>
             </div>
           </div>

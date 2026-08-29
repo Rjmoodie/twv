@@ -8,8 +8,8 @@ import {
   safeUrl,
 } from './email-brand.ts';
 
-const POSTAL = '"SomaTech, 1 Market St, San Francisco, CA 94105"'.replace(/"/g, '');
-const UNSUB = 'https://somatech.pro/email/unsubscribe?token=abc';
+const POSTAL = '"TW Ventures, 1 Example St, Example City, NY 10001"'.replace(/"/g, '');
+const UNSUB = 'https://app.example.com/email/unsubscribe?token=abc';
 
 /**
  * These assert the rules, not the markup. Styling is free to change; a
@@ -50,7 +50,7 @@ describe('footer compliance', () => {
   it('renders the opt-out and the postal address in a compliant marketing footer', () => {
     const footer = emailFooter({ variant: 'marketing', unsubscribeUrl: UNSUB, postalAddress: POSTAL });
     expect(footer).toContain(UNSUB);
-    expect(footer).toContain('Market St');
+    expect(footer).toContain('Example St');
   });
 
   it('offers no opt-out of any kind in a transactional footer', () => {
@@ -86,6 +86,6 @@ describe('escaping', () => {
   it('rejects non-http schemes', () => {
     expect(safeUrl('javascript:alert(1)')).toBeNull();
     expect(safeUrl('data:text/html,x')).toBeNull();
-    expect(safeUrl('https://somatech.pro/x')).toBe('https://somatech.pro/x');
+    expect(safeUrl('https://app.example.com/x')).toBe('https://app.example.com/x');
   });
 });

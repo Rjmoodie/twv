@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/components/somatech/AuthProvider';
+import { useAuth } from '@/components/app/AuthProvider';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 
 // Extracts the real error message from a Supabase FunctionsHttpError —

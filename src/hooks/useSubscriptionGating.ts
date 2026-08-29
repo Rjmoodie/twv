@@ -8,7 +8,7 @@
  * Uses SubscriptionService (reads from user_profiles DB) — no Stripe calls.
  */
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/components/somatech/AuthProvider';
+import { useAuth } from '@/components/app/AuthProvider';
 import { SubscriptionService } from '@/services/subscription';
 import { getSubscriptionFeatures, type SubscriptionFeatures } from '@/types/subscription';
 

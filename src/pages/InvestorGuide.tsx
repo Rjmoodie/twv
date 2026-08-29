@@ -25,7 +25,7 @@ const onePagerUrl = "/one-pager.pdf";         // ← link to your one pager
 
 const content = {
   company: {
-    name: "Somatech",
+    name: "TW Ventures",
     tagline: "Operational OS for client–admin collaboration.",
     lastUpdated: new Date().toISOString().slice(0, 10),
     heroImage: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1600&q=80&auto=format&fit=crop",
@@ -403,4 +403,3 @@ export default function InvestorGuidePage() {
     </main>
   );
 }
-

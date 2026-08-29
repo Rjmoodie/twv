@@ -149,7 +149,7 @@ const ResetPasswordPage = () => {
   if (checkingLink) return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" aria-label="Validating recovery link" /></div>;
 
   if (!validRecovery) return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4"><Card className="w-full max-w-md"><CardContent className="pt-6 text-center space-y-4"><AlertCircle className="mx-auto h-10 w-10 text-destructive" /><h1 className="text-xl font-semibold">Reset link expired or invalid</h1><p className="text-sm text-muted-foreground">For your security, password changes require a fresh recovery link. Return to sign in and request another one.</p><Button onClick={() => navigate('/')}>Return to SomaTech</Button></CardContent></Card></div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-4"><Card className="w-full max-w-md"><CardContent className="pt-6 text-center space-y-4"><AlertCircle className="mx-auto h-10 w-10 text-destructive" /><h1 className="text-xl font-semibold">Reset link expired or invalid</h1><p className="text-sm text-muted-foreground">For your security, password changes require a fresh recovery link. Return to sign in and request another one.</p><Button onClick={() => navigate('/')}>Return to TW Ventures</Button></CardContent></Card></div>
   );
 
   return (
@@ -264,7 +264,7 @@ const ResetPasswordPage = () => {
               onClick={() => navigate('/')}
               className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
             >
-              Back to SomaTech
+              Back to TW Ventures
             </button>
           </div>
         </CardContent>

@@ -74,8 +74,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/somatech?subscription=success`,
-      cancel_url: `${req.headers.get("origin")}/somatech?subscription=cancelled`,
+      success_url: `${req.headers.get("origin")}/?subscription=success`,
+      cancel_url: `${req.headers.get("origin")}/?subscription=cancelled`,
       metadata: {
         user_id: user.id,
         plan_name: planName

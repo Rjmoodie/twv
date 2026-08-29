@@ -70,7 +70,7 @@ export class DiscordAlertService {
         inline: false
       })),
       footer: {
-        text: 'PDUFA Alert System • Powered by SomaTech'
+        text: 'PDUFA Alert System • Powered by TW Ventures'
       },
       timestamp: new Date().toISOString()
     };
@@ -98,7 +98,7 @@ export class DiscordAlertService {
         inline: false
       })),
       footer: {
-        text: 'PDUFA Alert System • Powered by SomaTech'
+        text: 'PDUFA Alert System • Powered by TW Ventures'
       },
       timestamp: new Date().toISOString()
     };
@@ -126,7 +126,7 @@ export class DiscordAlertService {
         inline: true
       })),
       footer: {
-        text: 'PDUFA Alert System • Powered by SomaTech'
+        text: 'PDUFA Alert System • Powered by TW Ventures'
       },
       timestamp: new Date().toISOString()
     };

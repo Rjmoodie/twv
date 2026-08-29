@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Somatech Performance Audit Script
+# TW Ventures Performance Audit Script
 # This script performs a comprehensive performance audit of the application
 
 set -e
 
-echo "🔍 Starting Somatech Performance Audit..."
+echo "🔍 Starting TW Ventures Performance Audit..."
 echo "=========================================="
 
 # Colors for output
@@ -184,4 +184,4 @@ if [ "$1" = "--dev" ]; then
     echo ""
     print_status "info" "Starting development server..."
     npm run dev
-fi 
+fi

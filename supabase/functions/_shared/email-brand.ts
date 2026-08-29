@@ -39,8 +39,7 @@ export interface ShellOptions extends FooterOptions {
 }
 
 const BRAND = {
-  name: 'SomaTech',
-  site: 'https://somatech.pro',
+  name: 'TW Ventures',
   accent: '#2563eb',
   ink: '#0f172a',
   muted: '#667085',
@@ -109,7 +108,7 @@ export function emailFooter(options: FooterOptions): string {
   const lines: string[] = [];
 
   if (variant === 'transactional') {
-    lines.push('You are receiving this because of activity on your SomaTech account.');
+    lines.push('You are receiving this because of activity on your TW Ventures account.');
     if (preferences) {
       lines.push(`<a href="${escapeHtml(preferences)}" style="color:${BRAND.muted}">Manage notification preferences</a>`);
     }
@@ -125,7 +124,7 @@ export function emailFooter(options: FooterOptions): string {
   return `<hr style="border:none;border-top:1px solid ${BRAND.hairline};margin:28px 0 16px" />`
     + lines.map(line => `<p style="margin:0 0 6px;color:${BRAND.muted};font-size:12px;line-height:18px">${line}</p>`).join('')
     + `<p style="margin:12px 0 0;color:${BRAND.muted};font-size:12px">`
-    + `SomaTech is a research tool. Nothing in this email is investment advice.`
+    + `TW Ventures is an operations and underwriting tool. Nothing in this email is financial, legal, tax, or investment advice.`
     + `</p>`;
 }
 

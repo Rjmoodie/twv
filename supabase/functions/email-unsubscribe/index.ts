@@ -20,7 +20,7 @@ const page = (heading: string, body: string, status = 200) => new Response(
   + `<title>${escapeHtml(heading)}</title></head>`
   + `<body style="margin:0;background:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif">`
   + `<div style="max-width:520px;margin:64px auto;padding:32px;background:#fff;border:1px solid #e4e7ec;border-radius:14px">`
-  + `<p style="margin:0 0 20px;font-size:15px;font-weight:700;color:#2563eb">SomaTech</p>`
+  + `<p style="margin:0 0 20px;font-size:15px;font-weight:700;color:#2563eb">TW Ventures</p>`
   + `<h1 style="margin:0 0 12px;font-size:21px;color:#0f172a">${escapeHtml(heading)}</h1>`
   + body
   + `</div></body></html>`,
@@ -30,8 +30,8 @@ const page = (heading: string, body: string, status = 200) => new Response(
 Deno.serve(async req => {
   const url = Deno.env.get('SUPABASE_URL');
   const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const siteUrl = Deno.env.get('SITE_URL') ?? 'https://somatech.pro';
-  if (!url || !serviceKey) return page('Unavailable', '<p>This service is temporarily unavailable.</p>', 503);
+  const siteUrl = Deno.env.get('SITE_URL');
+  if (!url || !serviceKey || !siteUrl) return page('Unavailable', '<p>This service is temporarily unavailable.</p>', 503);
 
   const requestUrl = new URL(req.url);
   let token = requestUrl.searchParams.get('token') ?? '';
@@ -55,7 +55,7 @@ Deno.serve(async req => {
       .from('user_email_preferences').select('user_id').eq('unsubscribe_token', token).maybeSingle();
     if (!row) return page('Link not recognised', '<p style="color:#667085">This unsubscribe link is no longer valid.</p>', 404);
 
-    return page('Unsubscribe from SomaTech updates',
+    return page('Unsubscribe from TW Ventures updates',
       `<p style="color:#475467;font-size:15px;line-height:23px">This stops product updates and announcements. `
       + `Security notices and the reminders you set yourself will still be sent.</p>`
       + `<form method="POST" style="margin-top:24px">`

@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# SomaTech Supabase + Stripe + Discord Integration Deployment Script
+# TW Ventures Supabase + Stripe + Discord Integration Deployment Script
 # This script deploys all Edge Functions and sets up the integration
 
 set -e
 
-echo "🚀 Deploying SomaTech Supabase Integration..."
+echo "🚀 Deploying TW Ventures Supabase Integration..."
 
 # Check if Supabase CLI is installed
 if ! command -v supabase &> /dev/null; then
@@ -128,5 +128,4 @@ echo "   - Create a test subscription"
 echo "   - Verify Discord role assignment"
 echo "   - Test billing portal access"
 echo ""
-echo "🎉 SomaTech integration is ready!"
-
+echo "🎉 TW Ventures integration is ready!"

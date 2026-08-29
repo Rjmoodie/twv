@@ -276,3 +276,6 @@ $RECYCLE.BIN/
 
 # Inherited build cache
 .cache/
+
+# Local Supabase runtime metadata (generated keys and connection state)
+supabase/.temp/

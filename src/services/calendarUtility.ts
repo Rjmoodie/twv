@@ -17,7 +17,7 @@ const fold = (line: string) => {
   return chunks.join('\r\n ');
 };
 
-export function eventsToIcs(events: FinancialEvent[], calendarName = 'SomaTech Calendar'): string {
+export function eventsToIcs(events: FinancialEvent[], calendarName = 'TW Ventures Calendar'): string {
   const body = events.map((event) => {
     const start = event.event_date.replaceAll('-', '');
     const endDate = new Date(`${event.event_date}T12:00:00Z`);
@@ -26,7 +26,7 @@ export function eventsToIcs(events: FinancialEvent[], calendarName = 'SomaTech C
     const sourceUrl = typeof event.metadata.sourceUrl === 'string' ? event.metadata.sourceUrl : '';
     return [
       'BEGIN:VEVENT',
-      fold(`UID:${escapeIcs(event.id)}@somatech.pro`),
+      fold(`UID:${escapeIcs(event.id)}@twventures.app`),
       `DTSTART;VALUE=DATE:${start}`,
       `DTEND;VALUE=DATE:${end}`,
       fold(`SUMMARY:${escapeIcs(event.title)}`),
@@ -35,7 +35,7 @@ export function eventsToIcs(events: FinancialEvent[], calendarName = 'SomaTech C
       'END:VEVENT',
     ].filter(Boolean).join('\r\n');
   }).join('\r\n');
-  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//SomaTech//Financial Calendar//EN', `X-WR-CALNAME:${escapeIcs(calendarName)}`, 'CALSCALE:GREGORIAN', body, 'END:VCALENDAR', ''].join('\r\n');
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//TW Ventures//Financial Calendar//EN', `X-WR-CALNAME:${escapeIcs(calendarName)}`, 'CALSCALE:GREGORIAN', body, 'END:VCALENDAR', ''].join('\r\n');
 }
 
 export function downloadCalendar(events: FinancialEvent[], fileName = 'tw-calendar.ics') {

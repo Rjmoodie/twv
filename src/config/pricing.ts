@@ -16,10 +16,10 @@ export interface PricingPlanDetails {
 }
 
 const baseDescriptions: Record<SubscriptionTier, string> = {
-  free: "Get started with budgeting, journey planning, and personal finance basics.",
-  tier1: "For people focused on their financial life — coaching, real estate, and business valuation tools.",
-  tier2: "For active investors — stocks, options, AI tools, earnings, PDUFA, and portfolio management.",
-  tier3: "Everything in Planner and Investor, plus courses and live sessions.",
+  free: "Review the rate environment and manage your TW Ventures account.",
+  tier1: "Underwrite, save, source, and compare real estate opportunities.",
+  tier2: "Legacy source-system entitlement; not offered in the TW Ventures workspace.",
+  tier3: "Legacy source-system entitlement; not offered in the TW Ventures workspace.",
 };
 
 const planIcons: Record<SubscriptionTier, LucideIcon> = {
@@ -29,9 +29,15 @@ const planIcons: Record<SubscriptionTier, LucideIcon> = {
   tier3: Crown,
 };
 
-export const PRICING_PLAN_ORDER: SubscriptionTier[] = ["free", "tier1", "tier2", "tier3"];
+// Only plans backed by a currently shipped TW Ventures workflow are offered.
+// The two higher source-system tiers remain in the entitlement model solely so
+// imported account data can be interpreted until the Investor / PM / Admin role
+// migration replaces subscription tiers.
+export const PRICING_PLAN_ORDER: SubscriptionTier[] = ["free", "tier1"];
 
-export const PRICING_PLANS: Record<SubscriptionTier, PricingPlanDetails> = PRICING_PLAN_ORDER.reduce(
+const ALL_PRICING_PLAN_TIERS: SubscriptionTier[] = ["free", "tier1", "tier2", "tier3"];
+
+export const PRICING_PLANS: Record<SubscriptionTier, PricingPlanDetails> = ALL_PRICING_PLAN_TIERS.reduce(
   (acc, tier) => {
     const plan = SUBSCRIPTION_PLANS[tier];
     acc[tier] = {
@@ -41,8 +47,8 @@ export const PRICING_PLANS: Record<SubscriptionTier, PricingPlanDetails> = PRICI
       interval: plan.interval,
       description: baseDescriptions[tier],
       icon: planIcons[tier],
-      highlight: tier === "tier2",
-      badge: tier === "tier2" ? "Most Popular" : undefined,
+      highlight: tier === "tier1",
+      badge: tier === "tier1" ? "Underwriting" : undefined,
       features: plan.features,
       stripePriceId: plan.stripePriceId,
     };

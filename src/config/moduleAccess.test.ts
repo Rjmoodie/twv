@@ -27,7 +27,7 @@ function ctxForTier(tier: 'free' | 'tier1' | 'tier2' | 'tier3'): ModuleAccessCon
   return makeCtx({
     user: STUB_USER,
     subscriptionTier: tier,
-    hasFeature: (f) => features[f] ?? false,
+    hasFeature: (f) => Boolean(features[f]),
   });
 }
 
@@ -52,6 +52,7 @@ describe('getModuleAccessStatus — unauthenticated', () => {
     expect(getModuleAccessStatus('real-estate', makeCtx())).toBe('unauthenticated');
     expect(getModuleAccessStatus('lead-gen', makeCtx())).toBe('unauthenticated');
     expect(getModuleAccessStatus('account', makeCtx())).toBe('unauthenticated');
+    expect(getModuleAccessStatus('portfolio', makeCtx())).toBe('unauthenticated');
   });
 
   it('returns ok for modules with no access rule', () => {
@@ -162,7 +163,7 @@ describe('moduleAccessRules consistency', () => {
   it('names no module that was removed with the non-real-estate cut', () => {
     const cut = [
       'stock-analysis', 'options-dashboard', 'pdufa', 'earnings', 'watchlist',
-      'portfolio', 'business-valuation', 'cash-flow', 'retirement-planning',
+      'business-valuation', 'cash-flow', 'retirement-planning',
       'financial-coach', 'ai-tools', 'journey', 'community', 'personal-finance',
       'courses', 'trades', 'trades-dashboard',
     ];

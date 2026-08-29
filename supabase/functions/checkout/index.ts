@@ -1,4 +1,4 @@
-// SomaTech Stripe Checkout Edge Function
+// TW Ventures Stripe Checkout Edge Function
 // Creates Stripe Checkout Sessions for subscription plans
 
 import Stripe from "npm:stripe@16.6.0";

@@ -69,7 +69,7 @@ serve(async (req) => {
     if (action === "create_link_token") {
       const data = await plaidPost("/link/token/create", {
         user: { client_user_id: user.id },
-        client_name: "SomaTech",
+        client_name: "TW Ventures",
         products: ["transactions"],
         country_codes: ["US"],
         language: "en",

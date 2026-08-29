@@ -17,7 +17,7 @@
  *           slow (annual/quarterly). We retrieve it from EDGAR.
  *   market  priced by the market and supplied by a data vendor. Fast, delayed,
  *           not audited.
- *   model   computed by Somatech from the above. Ours, not anybody's fact —
+ *   model   computed by TW Ventures from the above. Ours, not anybody's fact —
  *           the distinction that matters most for trust.
  *
  * Keep the wording here and nowhere else, so provenance cannot drift again.
@@ -46,7 +46,7 @@ export const PROVENANCE: Record<ProvenanceKind, ProvenanceMeta> = {
   },
   model: {
     label: 'Model',
-    detail: 'Calculated by Somatech from filed and market inputs. An estimate, not a reported figure.',
+    detail: 'Calculated by TW Ventures from filed and market inputs. An estimate, not a reported figure.',
   },
 };
 
@@ -66,7 +66,7 @@ export const SOURCE_NAMES = {
 
 /**
  * Which provenance a given financial field carries.
- * Anything absent here is a Somatech computation — i.e. 'model'.
+ * Anything absent here is a TW Ventures computation — i.e. 'model'.
  */
 const FILED_FIELDS = new Set([
   'revenue', 'gross_profit', 'operating_income', 'net_income',

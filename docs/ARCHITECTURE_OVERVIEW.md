@@ -28,18 +28,15 @@ Routes are thin. Everything of substance lives behind `/`:
 
 | Route | Renders |
 |---|---|
-| `/` | `pages/SomaTech.tsx` — the module shell |
+| `/` | `pages/Workspace.tsx` — the module shell |
 | `/pricing` | Standalone pricing page |
 | `/reset-password` | Password recovery |
 | `/auth/callback` | Email confirmation landing |
 | `/404`, `*` | Not found |
-| `/somatech` | Legacy redirect to `/`, preserving query params |
-
-That last one is inherited from somatech and has no callers in this codebase.
 
 ## The module shell
 
-`pages/SomaTech.tsx` is a single page that swaps modules in place rather than
+`pages/Workspace.tsx` is a single page that swaps modules in place rather than
 routing between them. Three things follow from that, and they trip people up:
 
 1. **The URL is the source of truth.** `?module=<id>` drives `activeModule`. A
@@ -50,7 +47,7 @@ routing between them. Three things follow from that, and they trip people up:
 3. **Navigation history is tracked in state**, not the browser stack, so the
    in-app back button and the Android hardware back button share one path.
 
-Modules are registered in `components/somatech/constants.ts`. The registry is
+Modules are registered in `components/app/constants.ts`. The registry is
 what makes an id routable, what the sidebar renders, and what the document title
 comes from. Adding a module means adding a registry entry **and** a `case` in
 `renderContent`; the two are not wired together.
@@ -70,11 +67,11 @@ parked — see below.
 
 ## Layout
 
-`layout/SomaTechLayout.tsx` composes the chrome around whatever module is
-active: `SomaTechSidebar`, `SomaTechHeader`, `SomaTechContent`, and
-`SomaTechDialogs`, plus `BottomNavigation` and `MobileNavigation` under `lg`.
+`layout/AppLayout.tsx` composes the chrome around whatever module is active:
+`AppSidebar`, `AppHeader`, `AppContent`, and `AppDialogs`, plus
+`BottomNavigation` and `MobileNavigation` under `lg`.
 
-`SomaTechContent` owns the document title and the screen-reader announcement on
+`AppContent` owns the document title and the screen-reader announcement on
 module change. `EDGE_TO_EDGE_MODULES` in the layout is a set of module ids that
 manage their own scroll container; it is currently empty.
 
@@ -143,24 +140,37 @@ with invented copy.
 
 ### Database
 
-`supabase/migrations/` is **empty by design**. TW runs its own Supabase project
-and ports tables one at a time. The 68 inherited migrations sit in
-`supabase/migrations.somatech-reference/` as reference only — and that ledger
-has known drift from the database it came from, so verify DDL against the source
-schema rather than trusting the file. See `supabase/migrations/README.md`.
+`supabase/migrations/` is TW's fresh, dependency-ordered ledger:
 
-`src/integrations/supabase/types.ts` is generated from the *somatech* database
-and still describes tables this project does not have. Treat it as a historical
-artifact until TW's own schema exists and the file is regenerated.
+| Migration | Boundary |
+|---|---|
+| `20260828100000_platform_foundation.sql` | Auth profiles, organizations/memberships, billing, usage, storage |
+| `20260828110000_real_estate_operations.sql` | Properties → deals → underwriting → projects → budgets/costs/draws/milestones |
+| `20260828120000_lead_sourcing.sql` | Service-written public leads and user-private review state |
+| `20260828130000_communications_and_account.sql` | Account operations, consent, notification routing, durable delivery |
+
+Organization-scoped tables use membership-aware RLS. Saved BRRRR analyses are
+more restrictive: they remain visible only to their author even inside a shared
+organization. Lead rows are authenticated reference data written by the service
+role; each user's review state is private. Notification outbox, provider state,
+suppression data, and delivery logs are service-only.
+
+The four migrations replayed successfully on a fresh local Supabase stack. The
+repository is not linked to a hosted TW project, so this is not deployment
+evidence. The old files under `migrations.somatech-reference/` and the current
+generated `src/integrations/supabase/types.ts` remain historical references;
+regenerate the latter after a TW project is linked or local type generation can
+run with database access.
 
 ## Build and quality gates
 
 - **Vite** with manual chunking; the production build **fails** without Supabase
   configuration rather than shipping a bundle that cannot authenticate. Override
   deliberately with `ALLOW_MISSING_SUPABASE=1`.
-- **`npm run typecheck`** runs `scripts/typecheck-gate.mjs`, which fails only on
-  unresolved identifiers (TS2304/TS2552) — the errors that survive bundling and
-  throw at runtime — and reports the remaining backlog without failing on it.
+- **`npm run typecheck`** runs `scripts/typecheck-gate.mjs`, which fails on
+  unresolved identifiers (TS2304/TS2552) and unresolved modules (TS2307) — the
+  errors that survive bundling and throw at runtime — and reports the remaining
+  backlog without failing on it.
   `npm run typecheck:full` shows everything.
 - **Vitest** for unit tests, **Playwright** for e2e, **Lighthouse CI** for
   performance budgets.
@@ -172,11 +182,10 @@ artifact until TW's own schema exists and the file is regenerated.
 Carried over from somatech, none of it load-bearing, all of it worth knowing:
 
 - A type-error backlog the gate reports but does not fail on.
-- `components/somatech/utils.ts` and `types.ts` still carry types and helpers for
-  removed modules; real-estate code imports both, so pruning them is separate
-  surgery.
+- `components/app/types.ts` still carries types for removed modules;
+  real-estate code imports it, so pruning it is separate surgery.
 - `AdminNavigation` links to `/admin` routes that do not exist in `App.tsx`.
-- A handful of files under `components/ui/` and `components/somatech/lead-gen/`
-  are unreferenced or reference missing siblings, and predate the cut.
-- The whole tree is still named `somatech` — the directory, the shell components,
-  storage keys, and user-visible copy.
+- A handful of files under `components/ui/` are unreferenced or reference
+  missing siblings, and predate the cut.
+- The generated Supabase types, parked migrations, and archive documentation
+  intentionally retain source-system names as historical reference.

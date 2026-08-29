@@ -45,7 +45,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   const navigate = useNavigate();
 
   // Keep this context's module in step with the URL, which is the shared source
-  // of truth between it and SomaTech's own module state.
+  // of truth between it and TW Ventures's own module state.
   //
   // The absent-param case matters as much as the present one: the dashboard is
   // addressed by *deleting* `?module=`, so ignoring a null param left this
@@ -54,13 +54,14 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
   // labelled the dashboard with the previous module's name.
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
-    const moduleParam = urlParams.get('module') || 'dashboard';
+    const isPortalPath = ['/investor', '/pm', '/client'].includes(location.pathname);
+    const moduleParam = urlParams.get('module') || (isPortalPath ? 'portfolio' : 'dashboard');
 
     if (moduleParam !== activeModule) {
       setActiveModule(moduleParam);
       addToHistory(moduleParam);
     }
-  }, [location.search]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [location.search, location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addToHistory = useCallback((module: string) => {
     setNavigationHistory(prev => {

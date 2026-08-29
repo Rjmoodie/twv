@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/components/somatech/AuthProvider';
+import { useAuth } from '@/components/app/AuthProvider';
 import { SubscriptionService } from '@/services/subscription';
 import { SubscriptionTier, SubscriptionFeatures, getSubscriptionFeatures } from '@/types/subscription';
 

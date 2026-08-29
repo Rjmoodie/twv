@@ -1,6 +1,6 @@
 import type { User } from '@supabase/supabase-js';
 import type { SubscriptionTier, SubscriptionFeatures } from '@/types/subscription';
-import type { Module } from '@/components/somatech/types';
+import type { Module } from '@/components/app/types';
 
 export interface ModuleAccessRule {
   requiresAuth?: boolean;
@@ -12,7 +12,7 @@ export interface ModuleAccessRule {
 
 export const tierLabels: Record<SubscriptionTier, string> = {
   free: 'Free',
-  tier1: 'Planner',
+  tier1: 'Underwriting',
   tier2: 'Investor',
   tier3: 'Complete',
 };
@@ -41,13 +41,17 @@ export const moduleAccessRules: Record<string, ModuleAccessRule> = {
     requiresAuth: true,
     description: 'Sign in to update your profile, security preferences, and notification settings.',
   },
+  portfolio: {
+    requiresAuth: true,
+    description: 'Sign in to access the projects assigned to your investor, client, or project manager portal.',
+  },
 
-  // ── Planner path ─────────────────────────────────────────────────────────
+  // ── Underwriting path ───────────────────────────────────────────────────
   'real-estate': {
     requiresAuth: true,
     requiredFeature: 'realEstate',
     highlightTier: 'tier1',
-    description: 'Access the BRRRR calculator, deal sourcing, and rental analysis tools — included in the Planner plan.',
+    description: 'Access the BRRRR calculator, deal sourcing, and rental analysis tools — included in the Underwriting plan.',
   },
 
   // ── Investor path ─────────────────────────────────────────────────────────
@@ -121,4 +125,3 @@ export const getRequiredTierLabel = (rule?: ModuleAccessRule): string | null => 
 
 export const moduleRequiresAccessControl = (module: Module): boolean =>
   Boolean(moduleAccessRules[module.id]);
-

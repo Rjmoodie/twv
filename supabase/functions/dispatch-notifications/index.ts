@@ -76,9 +76,9 @@ Deno.serve(async req => {
   if (!url || !serviceKey) return json({ error: 'Service configuration unavailable' }, 503);
 
   const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
-  const siteUrl = Deno.env.get('SITE_URL') ?? 'https://somatech.pro';
+  const siteUrl = Deno.env.get('SITE_URL') ?? '';
   const resendKey = Deno.env.get('RESEND_API_KEY');
-  const from = Deno.env.get('NOTIFICATION_FROM_EMAIL') ?? 'SomaTech <notifications@somatech.pro>';
+  const from = Deno.env.get('NOTIFICATION_FROM_EMAIL') ?? '';
   const postalAddress = Deno.env.get('EMAIL_POSTAL_ADDRESS') ?? undefined;
   const preferencesUrl = Deno.env.get('EMAIL_PREFERENCES_URL') ?? `${siteUrl}/?module=account`;
   // Edge Functions are served from the Supabase host, not the marketing
@@ -86,6 +86,7 @@ Deno.serve(async req => {
   const unsubscribeBaseUrl = Deno.env.get('EMAIL_UNSUBSCRIBE_URL') ?? `${url}/functions/v1/email-unsubscribe`;
   const vapidPublic = Deno.env.get('VAPID_PUBLIC_KEY');
   const vapidPrivate = Deno.env.get('VAPID_PRIVATE_KEY');
+  const vapidSubject = Deno.env.get('VAPID_SUBJECT');
 
   const { data: jobs, error } = await supabase.rpc('claim_notification_outbox', { batch_size: 25 });
   if (error) return json({ error: 'Could not claim notification work' }, 500);
@@ -185,10 +186,10 @@ Deno.serve(async req => {
         pushAllowed = slot.error == null && slot.data === true;
       }
       if (pushAllowed) {
-        if (!vapidPublic || !vapidPrivate) {
+        if (!vapidPublic || !vapidPrivate || !vapidSubject) {
           pushDelivered = false;
         } else {
-          webpush.setVapidDetails('mailto:support@somatech.pro', vapidPublic, vapidPrivate);
+          webpush.setVapidDetails(vapidSubject, vapidPublic, vapidPrivate);
           const results = await Promise.allSettled((subscriptions ?? []).map(async (subscription: any) => {
             try {
               await webpush.sendNotification(
@@ -239,7 +240,7 @@ Deno.serve(async req => {
         continue;
       }
 
-      if (emailDecision.send && (!resendKey
+      if (emailDecision.send && (!resendKey || !siteUrl || !from
         || (emailDecision.variant === 'marketing' && !postalAddress?.trim()))) {
         // Configuration outages are recoverable and must not turn into a
         // permanent "partial" delivery claim. Refund the attempt so the job

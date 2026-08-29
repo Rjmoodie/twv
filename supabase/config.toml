@@ -1,5 +1,5 @@
-# TW Ventures runs its own Supabase project. Fill this in with TW's project ref
-# once it exists, and never with somatech's.
+# TW Ventures runs its own Supabase project. Keep this aligned with the hosted
+# `twv` project and never point it at SomaTech's project.
 #
 # This previously read "dkxqmiamrnphjoaznpuo" — somatech's production project,
 # inherited with the chassis copy. Every CLI command run from this repo
@@ -7,11 +7,11 @@
 # database. The build plan says to use a fresh project and warns off the
 # configured MCP connection for the same reason; this file was the third way in
 # and was not covered by either warning.
-project_id = "TW_PROJECT_REF_NOT_SET"
+project_id = "mtfpwfelsnroslhhmucm"
 
 [api]
 enabled = true
-port = 54321
+port = 55321
 schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
@@ -20,9 +20,26 @@ max_rows = 1000
 enabled = true
 
 [db]
-port = 54322
-shadow_port = 54320
-major_version = 15
+port = 55322
+shadow_port = 55320
+major_version = 17
+
+# Keep TW's local stack isolated from the other Supabase projects commonly
+# running on this workstation. These are development-only ports.
+[studio]
+enabled = true
+port = 55323
+
+[local_smtp]
+enabled = true
+port = 55324
+smtp_port = 55325
+pop3_port = 55326
+
+[analytics]
+enabled = false
+port = 55327
+backend = "postgres"
 
 # Both are called by parties that have no user session: Resend's webhook
 # delivery, and a mailbox provider's one-click unsubscribe POST. Each
@@ -35,8 +52,11 @@ verify_jwt = false
 [functions.email-unsubscribe]
 verify_jwt = false
 
-# NOTE: stripe-webhook, plaid-link, plaid-sync and dispatch-notifications have
-# no block here, so they inherit verify_jwt = true. Stripe and the cron dispatcher
-# call without a Supabase session, so check how those are configured in the
-# project dashboard before the first deploy — a webhook that 401s fails silently
-# from the caller's side.
+# These callers do not have a Supabase user JWT. Each authenticates the request
+# itself before touching data: Stripe verifies the signed raw body and the
+# notification drain verifies NOTIFICATION_DISPATCH_SECRET.
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.dispatch-notifications]
+verify_jwt = false

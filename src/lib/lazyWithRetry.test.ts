@@ -4,7 +4,7 @@ import { isChunkLoadError } from './lazyWithRetry';
 
 describe('isChunkLoadError', () => {
   it.each([
-    'Failed to fetch dynamically imported module: https://somatech.pro/js/PortfolioModule-old.js',
+    'Failed to fetch dynamically imported module: https://app.example.com/js/Workspace-old.js',
     'Importing a module script failed.',
     'error loading dynamically imported module',
     'Unable to preload CSS for /css/PortfolioModule-old.css',

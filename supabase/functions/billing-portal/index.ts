@@ -1,4 +1,4 @@
-// SomaTech Stripe Billing Portal Edge Function
+// TW Ventures Stripe Billing Portal Edge Function
 // Creates Stripe Billing Portal sessions for subscription management
 
 import Stripe from "npm:stripe@16.6.0";
@@ -100,4 +100,3 @@ serve(async (req) => {
     );
   }
 });
-

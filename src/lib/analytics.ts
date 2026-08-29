@@ -34,6 +34,11 @@ export type AnalyticsEvent =
   // Monetisation — where does the paywall bite?
   | 'gate_encountered'
   | 'upgrade_started'
+  // Portfolio loop — are people returning to operate and communicate?
+  | 'portfolio_viewed'
+  | 'portfolio_view_toggled'
+  | 'portfolio_action_completed'
+  | 'project_invitation_created'
   // Trust — did we show a number nobody could use?
   | 'valuation_unavailable';
 

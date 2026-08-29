@@ -7,14 +7,13 @@ import {
   renderEmail,
 } from './emailTemplates.ts';
 
-const ctx = { variant: 'transactional' as const, siteUrl: 'https://somatech.pro' };
+const ctx = { variant: 'transactional' as const, siteUrl: 'https://app.example.com' };
 
 // The registry held seven templates. Six of them — research_published,
 // watchlist_story_update, watchlist_insider_buy, insider_weekly_digest and the
 // two brokerage_* alerts — were rendered for senders removed with the
-// non-real-estate cut, so they went with them. calendar_reminder is the only
-// event anything still enqueues, which is why the compliance and escaping
-// tests below all run through it now.
+// non-real-estate cut, so they went with them. The registry now contains only
+// events emitted by TW's calendar and project operations migrations.
 
 describe('registry', () => {
   it('renders nothing for an unregistered event type instead of inventing copy', () => {
@@ -24,7 +23,7 @@ describe('registry', () => {
   });
 
   it('covers every event type the outbox currently emits', () => {
-    expect(REGISTERED_EVENT_TYPES).toEqual(['calendar_reminder']);
+    expect(REGISTERED_EVENT_TYPES).toEqual(['calendar_reminder', 'project_milestone_due']);
   });
 
   // A template for an event nothing sends is dead copy nobody reviews. The
@@ -59,10 +58,35 @@ describe('calendar_reminder', () => {
   });
 });
 
+describe('project_milestone_due', () => {
+  it('routes to the project dashboard and deduplicates push by milestone', () => {
+    const content = renderContent('project_milestone_due', {
+      title: 'Rough inspection',
+      project_name: 'Maple Street',
+      due_date: '2026-09-02',
+      milestone_id: 'm7',
+    })!;
+    expect(content.title).toBe('Milestone due: Rough inspection');
+    expect(content.message).toContain('Maple Street');
+    expect(content.actionPath).toBe('/?module=dashboard');
+    expect(content.pushTag).toBe('project_milestone-m7');
+  });
+
+  it('escapes project details in email markup', () => {
+    const email = renderEmail('project_milestone_due', {
+      title: 'Inspection',
+      project_name: '<img src=x onerror=1>',
+      due_date: '2026-09-02',
+    }, ctx)!;
+    expect(email.html).not.toContain('<img src=x');
+    expect(email.html).toContain('&lt;img');
+  });
+});
+
 describe('renderEmail', () => {
   it('produces an absolute action URL from a site-relative path', () => {
     const email = renderEmail('calendar_reminder', { title: 'X', action_url: '/?module=financial-calendar' }, ctx)!;
-    expect(email.html).toContain('https://somatech.pro/?module=financial-calendar');
+    expect(email.html).toContain('https://app.example.com/?module=financial-calendar');
   });
 
   it('escapes payload text so it cannot inject markup', () => {
@@ -98,7 +122,7 @@ describe('renderEmail', () => {
     const marketing = renderEmail('calendar_reminder', { title: 'T' }, {
       ...ctx,
       variant: 'marketing',
-      unsubscribeUrl: 'https://somatech.pro/email/unsubscribe?token=t',
+      unsubscribeUrl: 'https://app.example.com/email/unsubscribe?token=t',
       postalAddress: '1 Market St, San Francisco, CA 94105',
     })!;
     expect(marketing.headers['List-Unsubscribe-Post']).toBe('List-Unsubscribe=One-Click');
@@ -107,6 +131,6 @@ describe('renderEmail', () => {
 
 describe('absoluteUrl', () => {
   it('returns null for a null path', () => {
-    expect(absoluteUrl('https://somatech.pro', null)).toBeNull();
+    expect(absoluteUrl('https://app.example.com', null)).toBeNull();
   });
 });

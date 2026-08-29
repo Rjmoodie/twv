@@ -1,5 +1,5 @@
 /**
- * SomaTech Financial Formatting Library
+ * TW Ventures Financial Formatting Library
  *
  * Institutional-grade number formatting aligned with Bloomberg Terminal
  * and buyside conventions.
