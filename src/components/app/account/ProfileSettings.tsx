@@ -117,7 +117,7 @@ const ProfileSettings = ({ profile, onUpdate }: ProfileSettingsProps) => {
     const { error } = await supabase.from('public_profiles').upsert({ user_id: user.id, handle, display_name: publicProfile.display_name.trim(), bio: publicProfile.bio.trim() || null, avatar_url: profile.avatar_url, is_public: publicProfile.is_public, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
     setPublicSaving(false);
     if (error) toast({ title: error.code === '23505' ? 'That handle is already taken' : 'Public profile could not be saved', description: 'Your private account profile was not changed.', variant: 'destructive' });
-    else { setPublicProfile(previous => ({ ...previous, handle })); toast({ title: 'Public research profile saved' }); }
+    else { setPublicProfile(previous => ({ ...previous, handle })); toast({ title: 'Public professional profile saved' }); }
   };
 
   return (
@@ -233,10 +233,10 @@ const ProfileSettings = ({ profile, onUpdate }: ProfileSettingsProps) => {
       </div>
 
       <div className="rounded-2xl border border-border/60 bg-card p-5 space-y-4">
-        <div className="flex items-start justify-between gap-4"><div><h3 className="font-semibold">Public research identity</h3><p className="mt-1 text-sm text-muted-foreground">Used only when you publish named research. Your email and private financial data are never shown.</p></div><Switch checked={publicProfile.is_public} onCheckedChange={is_public => setPublicProfile(previous => ({ ...previous, is_public }))} aria-label="Make research profile public" /></div>
+        <div className="flex items-start justify-between gap-4"><div><h3 className="font-semibold">Public professional identity</h3><p className="mt-1 text-sm text-muted-foreground">Used for your published project portfolio. Your email and private project data are never shown.</p></div><Switch checked={publicProfile.is_public} onCheckedChange={is_public => setPublicProfile(previous => ({ ...previous, is_public }))} aria-label="Make professional profile public" /></div>
         <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-1.5"><Label htmlFor="public-handle">Handle</Label><Input id="public-handle" value={publicProfile.handle} onChange={event => setPublicProfile(previous => ({ ...previous, handle: event.target.value }))} placeholder="long-term-analyst" maxLength={40} /></div><div className="space-y-1.5"><Label htmlFor="public-name">Display name</Label><Input id="public-name" value={publicProfile.display_name} onChange={event => setPublicProfile(previous => ({ ...previous, display_name: event.target.value }))} maxLength={80} /></div></div>
-        <div className="space-y-1.5"><Label htmlFor="public-bio">Research bio</Label><Textarea id="public-bio" value={publicProfile.bio} onChange={event => setPublicProfile(previous => ({ ...previous, bio: event.target.value }))} maxLength={500} placeholder="Describe your research approach and experience without sharing private information." /></div>
-        <div className="flex items-center justify-between gap-3"><p className="text-xs text-muted-foreground">Public profile: /authors/{publicProfile.handle || 'your-handle'}</p><Button size="sm" variant="outline" onClick={savePublicProfile} disabled={publicSaving}>{publicSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Save public profile</Button></div>
+        <div className="space-y-1.5"><Label htmlFor="public-bio">Professional bio</Label><Textarea id="public-bio" value={publicProfile.bio} onChange={event => setPublicProfile(previous => ({ ...previous, bio: event.target.value }))} maxLength={500} placeholder="Describe your project experience, specialties, and approach without sharing private information." /></div>
+        <div className="flex items-center justify-between gap-3"><p className="text-xs text-muted-foreground">Public profile: /professionals/{publicProfile.handle || 'your-handle'}</p><Button size="sm" variant="outline" onClick={savePublicProfile} disabled={publicSaving}>{publicSaving && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}Save public profile</Button></div>
       </div>
     </div>
   );

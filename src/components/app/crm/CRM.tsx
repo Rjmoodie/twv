@@ -47,6 +47,7 @@ interface Activity {
   body: string | null; due_at: string | null; completed_at: string | null; created_at: string;
 }
 interface PortfolioChoice { project_id: string; organization_id: string; project_name: string; can_manage: boolean; }
+interface ContactProject { contact_id: string; project_id: string; relationship: string; }
 
 const pretty = (value: string) => value.replace(/_/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase());
 const dateTime = (value: string | null) => value ? new Date(value).toLocaleString() : 'Not scheduled';
@@ -86,9 +87,19 @@ export default function CRM() {
       return (result.data ?? []) as Activity[];
     },
   });
+  const linksQuery = useQuery({
+    queryKey: ['crm-contact-projects'], enabled: canUseCRM && !accessLoading,
+    queryFn: async () => {
+      const result = await database.from('crm_contact_projects').select('contact_id, project_id, relationship').order('created_at', { ascending: false });
+      if (result.error) throw new Error(result.error.message);
+      return (result.data ?? []) as ContactProject[];
+    },
+  });
 
   const contacts = useMemo(() => contactsQuery.data ?? [], [contactsQuery.data]);
   const activities = useMemo(() => activitiesQuery.data ?? [], [activitiesQuery.data]);
+  const contactLinks = useMemo(() => linksQuery.data ?? [], [linksQuery.data]);
+  const projectNames = useMemo(() => new Map((projectsQuery.data ?? []).map((project) => [project.project_id, project.project_name])), [projectsQuery.data]);
   const dueContactIds = useMemo(() => new Set(activities.filter((activity) => activity.activity_type === 'task' && !activity.completed_at && activity.due_at && new Date(activity.due_at) <= new Date()).map((activity) => activity.contact_id)), [activities]);
 
   // Soonest open task per contact. This is the only real "next action" signal in
@@ -135,10 +146,16 @@ export default function CRM() {
 
   if (accessLoading) return <div className="flex min-h-[420px] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!canUseCRM) return <Card><CardContent className="flex min-h-[380px] flex-col items-center justify-center p-8 text-center"><ShieldAlert className="mb-4 h-10 w-10 text-muted-foreground" /><h1 className="text-xl font-semibold">CRM access is internal</h1><p className="mt-2 max-w-md text-sm text-muted-foreground">Project contacts and communication history are available only to organization administrators and assigned project managers.</p></CardContent></Card>;
-  if (contactsQuery.error || activitiesQuery.error) return <Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8 text-destructive" /><h2 className="font-semibold">CRM could not be loaded</h2><p className="mt-2 text-sm text-muted-foreground">{contactsQuery.error?.message ?? activitiesQuery.error?.message}</p><Button className="mt-5" onClick={() => { contactsQuery.refetch(); activitiesQuery.refetch(); }}>Try again</Button></CardContent></Card>;
+  if (contactsQuery.error || activitiesQuery.error || linksQuery.error) return <Card><CardContent className="p-8 text-center"><ShieldAlert className="mx-auto mb-3 h-8 w-8 text-destructive" /><h2 className="font-semibold">CRM could not be loaded</h2><p className="mt-2 text-sm text-muted-foreground">{contactsQuery.error?.message ?? activitiesQuery.error?.message ?? linksQuery.error?.message}</p><Button className="mt-5" onClick={() => { contactsQuery.refetch(); activitiesQuery.refetch(); linksQuery.refetch(); }}>Try again</Button></CardContent></Card>;
 
   const openTasks = activities.filter((activity) => activity.activity_type === 'task' && !activity.completed_at);
   const overdue = openTasks.filter((activity) => activity.due_at && new Date(activity.due_at) <= new Date());
+  const actionQueue = [...openTasks].sort((a, b) => {
+    if (!a.due_at) return 1;
+    if (!b.due_at) return -1;
+    return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+  }).slice(0, 5);
+  const contactById = new Map(contacts.map((contact) => [contact.id, contact]));
   return <div className="space-y-6 pb-24 lg:pb-8">
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><div className="mb-2 flex gap-2"><Badge variant="outline">Relationship operations</Badge>{hasPersona('project_manager') && !canCreate && <Badge variant="secondary">Assigned projects only</Badge>}</div><h1 className="text-3xl font-bold tracking-tight">CRM</h1><p className="mt-1 text-muted-foreground">Every relationship has an owner, history, and next action.</p></div>{canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add contact</Button>}</header>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -148,10 +165,16 @@ export default function CRM() {
       <Stat icon={CalendarClock} label="Follow-ups due" value={overdue.length} active={filter === 'follow_up'} onClick={() => setFilter('follow_up')} />
     </div>
     <div className="relative max-w-lg"><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" /><Input className="pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search people, companies, email, or phone" /></div>
+    {actionQueue.length > 0 && <Card><CardContent className="p-5"><div className="mb-4 flex items-center justify-between gap-3"><div><h2 className="font-semibold">Next-action queue</h2><p className="text-sm text-muted-foreground">The most urgent open follow-ups across your visible relationships.</p></div><Badge variant={overdue.length ? 'destructive' : 'secondary'}>{overdue.length ? `${overdue.length} overdue` : 'On track'}</Badge></div><div className="divide-y">{actionQueue.map((task) => { const contact = contactById.get(task.contact_id); const isOverdue = !!task.due_at && new Date(task.due_at) <= new Date(); return <button key={task.id} type="button" onClick={() => contact && setSelected(contact)} className="flex w-full items-center gap-3 py-3 text-left transition first:pt-0 last:pb-0 hover:text-primary"><CalendarClock className={cn('h-4 w-4 shrink-0', isOverdue ? 'text-destructive' : 'text-muted-foreground')} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{task.subject}</p><p className="truncate text-xs text-muted-foreground">{contact ? `${contact.first_name} ${contact.last_name}` : 'Contact'} · {dateTime(task.due_at)}</p></div><Badge variant="outline">{isOverdue ? 'Overdue' : 'Upcoming'}</Badge></button>; })}</div></CardContent></Card>}
     {contactsQuery.isLoading ? <div className="flex min-h-[260px] items-center justify-center"><Loader2 className="h-7 w-7 animate-spin" /></div> : contacts.length === 0 ? <Card><CardContent className="flex min-h-[330px] flex-col items-center justify-center p-8 text-center"><Users className="mb-4 h-10 w-10 text-muted-foreground" /><h2 className="text-xl font-semibold">No relationships recorded yet</h2><p className="mt-2 max-w-md text-sm text-muted-foreground">{canCreate ? 'Add an investor, client, lender, broker, or vendor and connect them to a project.' : 'Contacts linked to your assigned projects will appear here.'}</p>{canCreate && <Button className="mt-6" onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add first contact</Button>}</CardContent></Card> : filtered.length === 0 ? <Card><CardContent className="p-10 text-center"><p className="font-medium">No contacts match this view.</p><Button variant="link" onClick={() => { setFilter('all'); setSearch(''); }}>Clear filters</Button></CardContent></Card> : <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{filtered.map((contact) => {
       const contactActivities = activities.filter((activity) => activity.contact_id === contact.id);
-      const nextTask = contactActivities.find((activity) => activity.activity_type === 'task' && !activity.completed_at);
-      return <Card key={contact.id} className="transition hover:border-primary/30 hover:shadow-sm"><CardContent className="p-5"><button className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => setSelected(contact)}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold">{contact.first_name} {contact.last_name}</h2><p className="truncate text-sm text-muted-foreground">{contact.company_name ?? pretty(contact.kind)}</p></div><Badge variant="outline">{pretty(contact.kind)}</Badge></div><div className="mt-4 space-y-1.5 text-sm text-muted-foreground">{contact.email && <p className="flex items-center gap-2 truncate"><Mail className="h-3.5 w-3.5" />{contact.email}</p>}{contact.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{contact.phone}</p>}<p className={cn('flex items-center gap-2', nextTask?.due_at && new Date(nextTask.due_at) <= new Date() && 'font-medium text-destructive')}><CalendarClock className="h-3.5 w-3.5" />{nextTask ? `${nextTask.subject} · ${dateTime(nextTask.due_at)}` : 'No follow-up scheduled'}</p></div></button><div className="mt-4 flex gap-2"><Button size="sm" className="flex-1" onClick={() => { setSelected(contact); setActivityOpen(true); }}><MessageSquarePlus className="mr-2 h-4 w-4" />Log / follow up</Button>{contact.email && <Button size="icon" variant="outline" asChild><a href={`mailto:${contact.email}`} aria-label={`Email ${contact.first_name}`}><Mail className="h-4 w-4" /></a></Button>}</div></CardContent></Card>;
+      const linkedProjects = contactLinks.filter((link) => link.contact_id === contact.id);
+      const nextTask = contactActivities.filter((activity) => activity.activity_type === 'task' && !activity.completed_at).sort((a, b) => {
+        if (!a.due_at) return 1;
+        if (!b.due_at) return -1;
+        return new Date(a.due_at).getTime() - new Date(b.due_at).getTime();
+      })[0];
+      return <Card key={contact.id} className="transition hover:border-primary/30 hover:shadow-sm"><CardContent className="p-5"><button className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => setSelected(contact)}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold">{contact.first_name} {contact.last_name}</h2><p className="truncate text-sm text-muted-foreground">{contact.company_name ?? pretty(contact.kind)}</p></div><Badge variant="outline">{pretty(contact.kind)}</Badge></div>{linkedProjects.length > 0 && <div className="mt-3 flex flex-wrap gap-1.5">{linkedProjects.slice(0, 2).map((link) => <Badge key={`${link.project_id}-${link.relationship}`} variant="secondary">{projectNames.get(link.project_id) ?? 'Assigned project'}</Badge>)}{linkedProjects.length > 2 && <Badge variant="secondary">+{linkedProjects.length - 2}</Badge>}</div>}<div className="mt-4 space-y-1.5 text-sm text-muted-foreground">{contact.email && <p className="flex items-center gap-2 truncate"><Mail className="h-3.5 w-3.5" />{contact.email}</p>}{contact.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{contact.phone}</p>}<p className={cn('flex items-center gap-2', nextTask?.due_at && new Date(nextTask.due_at) <= new Date() && 'font-medium text-destructive')}><CalendarClock className="h-3.5 w-3.5" />{nextTask ? `${nextTask.subject} · ${dateTime(nextTask.due_at)}` : 'No follow-up scheduled'}</p></div></button><div className="mt-4 flex gap-2"><Button size="sm" className="flex-1" onClick={() => { setSelected(contact); setActivityOpen(true); }}><MessageSquarePlus className="mr-2 h-4 w-4" />Log / follow up</Button>{contact.email && <Button size="icon" variant="outline" asChild><a href={`mailto:${contact.email}`} aria-label={`Email ${contact.first_name}`}><Mail className="h-4 w-4" /></a></Button>}</div></CardContent></Card>;
     })}</div>}
     <ContactSheet contact={selected} activities={activities.filter((activity) => activity.contact_id === selected?.id)} isAdmin={canCreate} onClose={() => setSelected(null)} onLog={() => setActivityOpen(true)} onRefresh={refresh} />
     <CreateContactDialog open={createOpen} onOpenChange={setCreateOpen} organizationIds={access.organizations.filter((item) => item.role === 'owner' || item.role === 'admin').map((item) => item.organization_id)} projects={projectsQuery.data ?? []} onCreated={refresh} />

@@ -46,3 +46,37 @@ export interface ProjectUpdate {
   published_at: string | null;
   created_at: string;
 }
+
+export interface ProjectMilestone {
+  id: string;
+  title: string;
+  description: string | null;
+  due_date: string | null;
+  status: string;
+  completed_at: string | null;
+  visibility: string;
+}
+
+export interface ProjectDocument {
+  id: string;
+  name: string;
+  document_type: string;
+  storage_path: string;
+  visibility: string;
+  created_at: string;
+}
+
+export interface ProjectRequest {
+  id: string;
+  request_type: 'question' | 'change_request' | 'approval' | 'document_request';
+  title: string;
+  description: string;
+  status: 'open' | 'in_review' | 'approved' | 'declined' | 'resolved';
+  priority: 'normal' | 'high' | 'urgent';
+  requested_by: string;
+  assigned_to: string | null;
+  resolution_note: string | null;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

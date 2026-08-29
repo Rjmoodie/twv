@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle, Building2, CalendarClock, CircleDollarSign,
-  Copy, LayoutList, Loader2, Map, MapPin, MessageSquarePlus, Plus, Search,
-  Send, Users, WalletCards,
+  BriefcaseBusiness, CheckCircle2, ClipboardPlus, Copy, Download, FileText, LayoutList, Loader2,
+  Map, MapPin, MessageSquarePlus, Plus, Search, Send, Upload, Users, WalletCards,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/app/AuthProvider';
@@ -27,8 +27,10 @@ import {
   Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle,
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PortfolioMap from './PortfolioMap';
-import type { PortfolioHealth, PortfolioProject, ProjectUpdate } from './types';
+import PMPortfolioStudio from './PMPortfolioStudio';
+import type { PortfolioHealth, PortfolioProject, ProjectDocument, ProjectMilestone, ProjectRequest, ProjectUpdate } from './types';
 
 type ViewMode = 'list' | 'map' | 'split';
 type Result = { data: unknown; error: { message: string } | null };
@@ -98,7 +100,8 @@ const Portfolio = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const [portfolioStudioOpen, setPortfolioStudioOpen] = useState(false);
+  const busy = false;
 
   const portfolioQuery = useQuery({
     queryKey: ['portfolio-projects'],
@@ -149,24 +152,15 @@ const Portfolio = () => {
       return;
     }
     if ((project.next_action === 'update_milestone' || project.next_action === 'resolve_overdue') && project.next_milestone_id) {
-      setBusy(true);
-      const result = await database.from('project_milestones').update({
-        status: 'completed', completed_at: new Date().toISOString(),
-      }).eq('id', project.next_milestone_id).eq('project_id', project.project_id);
-      setBusy(false);
-      if (result.error) {
-        toast({ title: 'Milestone was not updated', description: result.error.message, variant: 'destructive' });
-        return;
-      }
-      track('portfolio_action_completed', { action: 'complete_milestone', project_id: project.project_id });
-      toast({ title: 'Milestone completed', description: project.next_milestone_title ?? project.project_name });
-      await refresh();
+      window.setTimeout(() => document.getElementById('project-milestones-panel')?.scrollIntoView({ behavior: 'smooth' }), 100);
       return;
     }
     setUpdateOpen(true);
   };
 
   const canCreate = hasPersona('admin');
+  const portalMode = hasPersona('client') && !hasPersona('admin') && !hasPersona('project_manager')
+    ? 'client' : hasPersona('project_manager') && !hasPersona('admin') ? 'project_manager' : 'operations';
   const counts = {
     all: projects.length,
     at_risk: projects.filter((item) => item.health === 'at_risk').length,
@@ -196,10 +190,10 @@ const Portfolio = () => {
           <div className="mb-2 flex flex-wrap gap-2">
             {access.personas.map((persona) => <Badge key={persona} variant="outline">{pretty(persona)}</Badge>)}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">Portfolio</h1>
-          <p className="mt-1 text-muted-foreground">Properties, project health, capital, and the next action in one operating view.</p>
+          <h1 className="text-3xl font-bold tracking-tight">{portalMode === 'client' ? 'My projects' : portalMode === 'project_manager' ? 'Project command center' : 'Project portfolio'}</h1>
+          <p className="mt-1 text-muted-foreground">{portalMode === 'client' ? 'Follow progress, upcoming milestones, shared documents, and the latest decisions.' : portalMode === 'project_manager' ? 'Prioritize schedule risk, communicate progress, and keep every assignment moving.' : 'Properties, project health, capital, and the next action in one operating view.'}</p>
         </div>
-        {canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add project</Button>}
+        <div className="flex flex-wrap gap-2">{hasPersona('project_manager') && <Button variant="outline" onClick={() => setPortfolioStudioOpen(true)}><BriefcaseBusiness className="mr-2 h-4 w-4" />Public portfolio</Button>}{canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add project</Button>}</div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -263,10 +257,11 @@ const Portfolio = () => {
         </div>
       )}
 
-      <ProjectDetail project={selected} onClose={() => setSelected(null)} onAction={runPrimaryAction} busy={busy} />
+      <ProjectDetail project={selected} onClose={() => setSelected(null)} onAction={runPrimaryAction} busy={busy} onRefresh={refresh} />
       <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} organizationIds={access.organizations.filter((item) => item.role === 'owner' || item.role === 'admin').map((item) => item.organization_id)} onCreated={refresh} />
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} project={selected} onCreated={refresh} />
       <PublishUpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} project={selected} onCreated={refresh} />
+      <PMPortfolioStudio open={portfolioStudioOpen} onOpenChange={setPortfolioStudioOpen} projects={projects} />
     </div>
   );
 };
@@ -289,7 +284,11 @@ const ProjectCard = ({ project, onOpen, onAction, busy }: { project: PortfolioPr
   </CardContent></Card>
 );
 
-const ProjectDetail = ({ project, onClose, onAction, busy }: { project: PortfolioProject | null; onClose: () => void; onAction: (project: PortfolioProject) => void; busy: boolean }) => {
+const ProjectDetail = ({ project, onClose, onAction, busy, onRefresh }: { project: PortfolioProject | null; onClose: () => void; onAction: (project: PortfolioProject) => void; busy: boolean; onRefresh: () => Promise<void> }) => {
+  const { user } = useAuth();
+  const [milestoneOpen, setMilestoneOpen] = useState(false);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [requestOpen, setRequestOpen] = useState(false);
   const updates = useQuery({
     queryKey: ['project-updates', project?.project_id],
     enabled: !!project,
@@ -299,6 +298,50 @@ const ProjectDetail = ({ project, onClose, onAction, busy }: { project: Portfoli
       return (result.data ?? []) as ProjectUpdate[];
     },
   });
+  const milestones = useQuery({
+    queryKey: ['project-milestones', project?.project_id], enabled: !!project,
+    queryFn: async () => {
+      const result = await database.from('project_milestones').select('id, title, description, due_date, status, completed_at, visibility').eq('project_id', project!.project_id).order('due_date', { ascending: true });
+      if (result.error) throw new Error(result.error.message);
+      return (result.data ?? []) as ProjectMilestone[];
+    },
+  });
+  const documents = useQuery({
+    queryKey: ['project-documents', project?.project_id], enabled: !!project,
+    queryFn: async () => {
+      const result = await database.from('project_documents').select('id, name, document_type, storage_path, visibility, created_at').eq('project_id', project!.project_id).order('created_at', { ascending: false }).limit(25);
+      if (result.error) throw new Error(result.error.message);
+      return (result.data ?? []) as ProjectDocument[];
+    },
+  });
+  const requests = useQuery({
+    queryKey: ['project-requests', project?.project_id], enabled: !!project,
+    queryFn: async () => {
+      const result = await database.from('project_requests').select('id, request_type, title, description, status, priority, requested_by, assigned_to, resolution_note, resolved_at, created_at, updated_at').eq('project_id', project!.project_id).order('created_at', { ascending: false }).limit(50);
+      if (result.error) throw new Error(result.error.message);
+      return (result.data ?? []) as ProjectRequest[];
+    },
+  });
+  const completeMilestone = async (milestone: ProjectMilestone) => {
+    if (!project) return;
+    const result = await database.from('project_milestones').update({ status: 'completed', completed_at: new Date().toISOString() }).eq('id', milestone.id).eq('project_id', project.project_id);
+    if (result.error) { toast({ title: 'Milestone was not updated', description: result.error.message, variant: 'destructive' }); return; }
+    track('portfolio_action_completed', { action: 'complete_milestone', project_id: project.project_id });
+    toast({ title: 'Milestone completed', description: milestone.title });
+    await Promise.all([milestones.refetch(), onRefresh()]);
+  };
+  const updateRequestStatus = async (request: ProjectRequest, status: ProjectRequest['status']) => {
+    const closed = ['approved', 'declined', 'resolved'].includes(status);
+    const result = await database.from('project_requests').update({ status, resolved_at: closed ? new Date().toISOString() : null }).eq('id', request.id).eq('project_id', project!.project_id);
+    if (result.error) { toast({ title: 'Request was not updated', description: result.error.message, variant: 'destructive' }); return; }
+    toast({ title: 'Request updated', description: `${request.title} is now ${pretty(status).toLowerCase()}.` });
+    await requests.refetch();
+  };
+  const openDocument = async (document: ProjectDocument) => {
+    const result = await supabase.storage.from('project-documents').createSignedUrl(document.storage_path, 60);
+    if (result.error) { toast({ title: 'Document could not be opened', description: result.error.message, variant: 'destructive' }); return; }
+    window.open(result.data.signedUrl, '_blank', 'noopener,noreferrer');
+  };
   return <Sheet open={!!project} onOpenChange={(open) => { if (!open) onClose(); }}><SheetContent className="w-full overflow-y-auto sm:max-w-xl">
     {project && <>
       <SheetHeader><SheetTitle>{project.project_name}</SheetTitle><SheetDescription>{project.address}, {project.city}, {project.state} {project.postal_code}</SheetDescription></SheetHeader>
@@ -309,14 +352,89 @@ const ProjectDetail = ({ project, onClose, onAction, busy }: { project: Portfoli
         <Metric icon={Users} label="Your access" value={pretty(project.access_role)} />
       </div>
       <Button className="mt-5 w-full" onClick={() => onAction(project)} disabled={busy}>{project.next_action_label}</Button>
-      <div className="mt-7" id="project-updates-panel"><h3 className="font-semibold">Project updates</h3>
-        {updates.isLoading ? <Loader2 className="mt-4 h-5 w-5 animate-spin" /> : updates.data?.length ? <div className="mt-3 space-y-3">{updates.data.map((update) => <article key={update.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><h4 className="font-medium">{update.title}</h4><Badge variant="outline">{pretty(update.visibility)}</Badge></div><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{update.body}</p><p className="mt-3 text-xs text-muted-foreground">{new Date(update.published_at ?? update.created_at).toLocaleString()}</p></article>)}</div> : <p className="mt-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No visible updates yet.</p>}
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {project.can_manage && <Button variant="outline" onClick={() => setMilestoneOpen(true)}><CalendarClock className="mr-2 h-4 w-4" />Add milestone</Button>}
+        {project.can_manage && <Button variant="outline" onClick={() => setUploadOpen(true)}><Upload className="mr-2 h-4 w-4" />Upload file</Button>}
+        {!project.can_manage && <Button className="col-span-2" variant="outline" onClick={() => setRequestOpen(true)}><ClipboardPlus className="mr-2 h-4 w-4" />Ask or request a change</Button>}
       </div>
+      <Tabs key={project.project_id} defaultValue={project.can_manage ? 'schedule' : 'updates'} className="mt-7">
+        <TabsList className="grid h-auto w-full grid-cols-2 sm:grid-cols-4"><TabsTrigger value="schedule">Schedule</TabsTrigger><TabsTrigger value="updates">Updates</TabsTrigger><TabsTrigger value="documents">Documents</TabsTrigger><TabsTrigger value="requests">Requests{requests.data?.filter((item) => item.status === 'open' || item.status === 'in_review').length ? ` (${requests.data.filter((item) => item.status === 'open' || item.status === 'in_review').length})` : ''}</TabsTrigger></TabsList>
+        <TabsContent value="schedule" id="project-milestones-panel" className="mt-4">
+          <div className="mb-3 flex items-center justify-between"><h3 className="font-semibold">Milestones</h3><Badge variant="secondary">{milestones.data?.filter((item) => item.status === 'completed').length ?? 0}/{milestones.data?.length ?? 0} complete</Badge></div>
+          {milestones.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : milestones.error ? <InlineError message={milestones.error.message} onRetry={() => milestones.refetch()} /> : milestones.data?.length ? <div className="space-y-3">{milestones.data.map((milestone) => <article key={milestone.id} className={cn('rounded-xl border p-4', milestone.status === 'completed' && 'bg-muted/30')}><div className="flex items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><h4 className="font-medium">{milestone.title}</h4><Badge variant="outline">{pretty(milestone.status)}</Badge></div><p className="mt-1 text-xs text-muted-foreground">{milestone.due_date ? `Due ${shortDate(milestone.due_date)}` : 'No due date'} · {pretty(milestone.visibility)}</p></div>{project.can_manage && milestone.status !== 'completed' && <Button size="sm" variant="outline" onClick={() => completeMilestone(milestone)}><CheckCircle2 className="mr-2 h-4 w-4" />Complete</Button>}</div>{milestone.description && <p className="mt-3 text-sm text-muted-foreground">{milestone.description}</p>}</article>)}</div> : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No milestones are visible yet. {project.can_manage ? 'Publish an update while the schedule is being prepared.' : 'Your project team will share the schedule here.'}</p>}
+        </TabsContent>
+        <TabsContent value="updates" id="project-updates-panel" className="mt-4"><h3 className="mb-3 font-semibold">Project updates</h3>
+          {updates.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : updates.error ? <InlineError message={updates.error.message} onRetry={() => updates.refetch()} /> : updates.data?.length ? <div className="space-y-3">{updates.data.map((update) => <article key={update.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><h4 className="font-medium">{update.title}</h4><Badge variant="outline">{pretty(update.visibility)}</Badge></div><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{update.body}</p><p className="mt-3 text-xs text-muted-foreground">{new Date(update.published_at ?? update.created_at).toLocaleString()}</p></article>)}</div> : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No visible updates yet.</p>}
+        </TabsContent>
+        <TabsContent value="documents" className="mt-4"><h3 className="mb-3 font-semibold">Shared documents</h3>
+          {documents.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : documents.error ? <InlineError message={documents.error.message} onRetry={() => documents.refetch()} /> : documents.data?.length ? <div className="space-y-2">{documents.data.map((document) => <button type="button" onClick={() => openDocument(document)} key={document.id} className="flex w-full items-center gap-3 rounded-xl border p-3 text-left transition hover:border-primary/40"><FileText className="h-5 w-5 text-muted-foreground" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{document.name}</p><p className="text-xs text-muted-foreground">{pretty(document.document_type)} · {new Date(document.created_at).toLocaleDateString()}</p></div><Badge variant="outline">{pretty(document.visibility)}</Badge><Download className="h-4 w-4 text-muted-foreground" /></button>)}</div> : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No documents have been shared with your role yet.</p>}
+        </TabsContent>
+        <TabsContent value="requests" className="mt-4"><div className="mb-3 flex items-center justify-between"><h3 className="font-semibold">Questions and requests</h3>{!project.can_manage && <Button size="sm" onClick={() => setRequestOpen(true)}><Plus className="mr-2 h-4 w-4" />New</Button>}</div>
+          {requests.isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : requests.error ? <InlineError message={requests.error.message} onRetry={() => requests.refetch()} /> : requests.data?.length ? <div className="space-y-3">{requests.data.map((request) => <article key={request.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><div><div className="flex flex-wrap gap-2"><Badge variant="outline">{pretty(request.request_type)}</Badge>{request.priority !== 'normal' && <Badge variant={request.priority === 'urgent' ? 'destructive' : 'secondary'}>{pretty(request.priority)}</Badge>}</div><h4 className="mt-2 font-medium">{request.title}</h4></div><Badge variant={request.status === 'open' ? 'default' : 'secondary'}>{pretty(request.status)}</Badge></div><p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{request.description}</p>{request.resolution_note && <p className="mt-3 rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Resolution: </span>{request.resolution_note}</p>}{project.can_manage && <div className="mt-4 flex flex-wrap gap-2">{request.status === 'open' && <Button size="sm" variant="outline" onClick={() => updateRequestStatus(request, 'in_review')}>Start review</Button>}{!['approved','declined','resolved'].includes(request.status) && <><Button size="sm" onClick={() => updateRequestStatus(request, request.request_type === 'approval' ? 'approved' : 'resolved')}>{request.request_type === 'approval' ? 'Approve' : 'Resolve'}</Button>{request.request_type === 'approval' && <Button size="sm" variant="outline" onClick={() => updateRequestStatus(request, 'declined')}>Decline</Button>}</>}</div>}</article>)}</div> : <p className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No questions or requests yet. This is the shared decision log for the project.</p>}
+        </TabsContent>
+      </Tabs>
+      <MilestoneDialog open={milestoneOpen} onOpenChange={setMilestoneOpen} project={project} userId={user?.id ?? ''} onCreated={async () => { await milestones.refetch(); await onRefresh(); }} />
+      <DocumentUploadDialog open={uploadOpen} onOpenChange={setUploadOpen} project={project} userId={user?.id ?? ''} onCreated={() => documents.refetch()} />
+      <ProjectRequestDialog open={requestOpen} onOpenChange={setRequestOpen} project={project} userId={user?.id ?? ''} onCreated={() => requests.refetch()} />
     </>}
   </SheetContent></Sheet>;
 };
 
 const Metric = ({ icon: Icon, label, value }: { icon: typeof Building2; label: string; value: string }) => <div className="rounded-xl border bg-muted/20 p-3"><Icon className="mb-2 h-4 w-4 text-muted-foreground" /><p className="text-xs text-muted-foreground">{label}</p><p className="mt-0.5 font-semibold">{value}</p></div>;
+const InlineError = ({ message, onRetry }: { message: string; onRetry: () => void }) => <div className="rounded-xl border border-destructive/30 p-4 text-sm"><p className="text-destructive">{message}</p><Button className="mt-3" size="sm" variant="outline" onClick={onRetry}>Try again</Button></div>;
+
+const MilestoneDialog = ({ open, onOpenChange, project, userId, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; project: PortfolioProject; userId: string; onCreated: () => Promise<unknown> }) => {
+  const [busy, setBusy] = useState(false);
+  const [title, setTitle] = useState(''); const [description, setDescription] = useState(''); const [dueDate, setDueDate] = useState(''); const [visibility, setVisibility] = useState('all_members');
+  useEffect(() => { if (open) { setTitle(''); setDescription(''); setDueDate(''); setVisibility('all_members'); } }, [open]);
+  const submit = async () => {
+    if (!title.trim() || !userId) return;
+    setBusy(true);
+    const result = await database.from('project_milestones').insert({ organization_id: project.organization_id, project_id: project.project_id, title: title.trim(), description: description.trim() || null, due_date: dueDate || null, status: 'planned', visibility, created_by: userId });
+    setBusy(false);
+    if (result.error) { toast({ title: 'Milestone was not created', description: result.error.message, variant: 'destructive' }); return; }
+    track('portfolio_action_completed', { action: 'create_milestone', project_id: project.project_id });
+    toast({ title: 'Milestone added', description: title.trim() }); onOpenChange(false); await onCreated();
+  };
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Add milestone</DialogTitle><DialogDescription>Define one clear outcome. Audience controls keep internal work private.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Milestone *"><Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Final inspection complete" /></Field><Field label="Description"><Textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Success criteria, dependencies, or context" /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Due date"><Input type="date" value={dueDate} onChange={(event) => setDueDate(event.target.value)} /></Field><Field label="Visible to"><AudienceSelect value={visibility} onChange={setVisibility} /></Field></div></div><DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={submit} disabled={busy || !title.trim()}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Add milestone</Button></DialogFooter></DialogContent></Dialog>;
+};
+
+const DocumentUploadDialog = ({ open, onOpenChange, project, userId, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; project: PortfolioProject; userId: string; onCreated: () => Promise<unknown> }) => {
+  const [busy, setBusy] = useState(false); const [file, setFile] = useState<File | null>(null); const [documentType, setDocumentType] = useState('project_file'); const [visibility, setVisibility] = useState('all_members');
+  useEffect(() => { if (open) { setFile(null); setDocumentType('project_file'); setVisibility('all_members'); } }, [open]);
+  const submit = async () => {
+    if (!file || !userId) return;
+    const safeName = file.name.normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '') || 'document';
+    const storagePath = `${project.organization_id}/${project.project_id}/${crypto.randomUUID()}-${safeName}`;
+    setBusy(true);
+    const upload = await supabase.storage.from('project-documents').upload(storagePath, file, { contentType: file.type || undefined, upsert: false });
+    if (upload.error) { setBusy(false); toast({ title: 'Upload failed', description: upload.error.message, variant: 'destructive' }); return; }
+    const metadata = await database.from('project_documents').insert({ organization_id: project.organization_id, project_id: project.project_id, name: file.name, document_type: documentType, storage_path: storagePath, visibility, uploaded_by: userId });
+    if (metadata.error) {
+      await supabase.storage.from('project-documents').remove([storagePath]); setBusy(false);
+      toast({ title: 'Document was not saved', description: metadata.error.message, variant: 'destructive' }); return;
+    }
+    setBusy(false); track('portfolio_action_completed', { action: 'upload_document', project_id: project.project_id, visibility });
+    toast({ title: 'Document shared', description: `${file.name} is available to ${pretty(visibility).toLowerCase()}.` }); onOpenChange(false); await onCreated();
+  };
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Upload project document</DialogTitle><DialogDescription>Files are private and available only to the audience you select.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="File *"><Input type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.csv,.doc,.docx,.xls,.xlsx" onChange={(event) => setFile(event.target.files?.[0] ?? null)} /></Field><div className="grid gap-4 sm:grid-cols-2"><Field label="Document type"><Select value={documentType} onValueChange={setDocumentType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['project_file','contract','invoice','drawing','permit','report','photo'].map((value) => <SelectItem key={value} value={value}>{pretty(value)}</SelectItem>)}</SelectContent></Select></Field><Field label="Visible to"><AudienceSelect value={visibility} onChange={setVisibility} /></Field></div><p className="text-xs text-muted-foreground">PDF, image, Office, text, or CSV files up to 25 MB.</p></div><DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={submit} disabled={busy || !file}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Upload and share</Button></DialogFooter></DialogContent></Dialog>;
+};
+
+const ProjectRequestDialog = ({ open, onOpenChange, project, userId, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; project: PortfolioProject; userId: string; onCreated: () => Promise<unknown> }) => {
+  const [busy, setBusy] = useState(false); const [type, setType] = useState<ProjectRequest['request_type']>('question'); const [priority, setPriority] = useState<ProjectRequest['priority']>('normal'); const [title, setTitle] = useState(''); const [description, setDescription] = useState('');
+  useEffect(() => { if (open) { setType('question'); setPriority('normal'); setTitle(''); setDescription(''); } }, [open]);
+  const submit = async () => {
+    if (!title.trim() || !description.trim() || !userId) return;
+    setBusy(true);
+    const result = await database.from('project_requests').insert({ organization_id: project.organization_id, project_id: project.project_id, request_type: type, title: title.trim(), description: description.trim(), priority, requested_by: userId });
+    setBusy(false);
+    if (result.error) { toast({ title: 'Request was not sent', description: result.error.message, variant: 'destructive' }); return; }
+    track('portfolio_action_completed', { action: 'create_project_request', project_id: project.project_id, request_type: type, priority }); toast({ title: 'Request sent', description: 'Your project team can now review and respond.' }); onOpenChange(false); await onCreated();
+  };
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Ask or request a change</DialogTitle><DialogDescription>Keep questions and decisions attached to the project instead of losing them in email.</DialogDescription></DialogHeader><div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><Field label="Request type"><Select value={type} onValueChange={(value) => setType(value as ProjectRequest['request_type'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="question">Question</SelectItem><SelectItem value="change_request">Change request</SelectItem><SelectItem value="approval">Approval needed</SelectItem><SelectItem value="document_request">Document request</SelectItem></SelectContent></Select></Field><Field label="Priority"><Select value={priority} onValueChange={(value) => setPriority(value as ProjectRequest['priority'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent></Select></Field></div><Field label="Subject *"><Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Confirm kitchen finish selection" /></Field><Field label="Details *"><Textarea rows={6} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Explain the decision, question, or requested outcome." /></Field></div><DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={submit} disabled={busy || !title.trim() || !description.trim()}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send request</Button></DialogFooter></DialogContent></Dialog>;
+};
+
+const AudienceSelect = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => <Select value={value} onValueChange={onChange}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all_members">All project members</SelectItem><SelectItem value="client">Clients</SelectItem><SelectItem value="investor">Investors</SelectItem><SelectItem value="internal">Internal team only</SelectItem></SelectContent></Select>;
 
 const CreateProjectDialog = ({ open, onOpenChange, organizationIds, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; organizationIds: string[]; onCreated: () => Promise<void> }) => {
   const [busy, setBusy] = useState(false);

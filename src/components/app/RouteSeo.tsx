@@ -48,6 +48,8 @@ const routeMetadata: Record<string, { title: string; description: string; index:
  * no invite token reaches a canonical, an og:url, or a link preview.
  */
 const prefixRoutes: [string, (typeof routeMetadata)[string]][] = [
+  ['/professionals', { title: 'Project Manager Portfolio | TW Ventures', description: 'Meet the professionals delivering TW Ventures real estate and construction projects.', index: true }],
+  ['/work', { title: 'Real Estate Project Case Study | TW Ventures', description: 'Explore completed real estate and construction work delivered by TW Ventures professionals.', index: true }],
   ['/investor', { title: 'Investor Portal | TW Ventures', description: 'Your commitments, distributions, and project updates.', index: false }],
   ['/pm',       { title: 'Project Manager | TW Ventures', description: 'Assigned projects, schedule, and job cost.', index: false }],
   ['/client',   { title: 'Client Portal | TW Ventures', description: 'Your project schedule, draws, invoices, and documents.', index: false }],

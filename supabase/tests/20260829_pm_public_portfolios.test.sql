@@ -1,0 +1,14 @@
+begin;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
+select plan(8);
+select has_table('public', 'pm_portfolio_entries', 'PM portfolio entries exist');
+select has_column('public', 'pm_portfolio_entries', 'article_body', 'AI article drafts are persisted');
+select has_column('public', 'pm_portfolio_entries', 'seo_description', 'case studies carry SEO descriptions');
+select ok((select relrowsecurity from pg_class where oid = 'public.pm_portfolio_entries'::regclass), 'portfolio entries enforce RLS');
+select is((select public from storage.buckets where id = 'pm-portfolio'), true, 'published portfolio media is public');
+select ok(exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'pm_portfolio_entries' and policyname = 'pm_portfolio_entries_public_read'), 'published work has a public read policy');
+select ok(exists (select 1 from pg_policies where schemaname = 'public' and tablename = 'pm_portfolio_entries' and policyname = 'pm_portfolio_entries_pm_insert'), 'portfolio creation is restricted to project operators');
+select ok(exists (select 1 from pg_indexes where schemaname = 'public' and tablename = 'pm_portfolio_entries' and indexname = 'pm_portfolio_entries_public_idx'), 'published work has a bounded public index');
+select * from finish();
+rollback;

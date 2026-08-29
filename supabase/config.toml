@@ -60,3 +60,6 @@ verify_jwt = false
 
 [functions.dispatch-notifications]
 verify_jwt = false
+
+[functions.generate-portfolio-story]
+verify_jwt = true

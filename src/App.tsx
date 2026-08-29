@@ -41,6 +41,8 @@ const ClientOnboardingPage = lazyWithRetry(() => import('./pages/ClientOnboardin
 const ResetPasswordPage = lazyWithRetry(() => import('./pages/ResetPasswordPage'));
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'));
 const InviteAcceptancePage = lazyWithRetry(() => import('./pages/InviteAcceptancePage'));
+const PublicPortfolioPage = lazyWithRetry(() => import('./pages/PublicPortfolioPage'));
+const PortfolioStoryPage = lazyWithRetry(() => import('./pages/PortfolioStoryPage'));
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -100,6 +102,8 @@ function App() {
                       <Route path="/pm" element={<Suspense fallback={<div>Loading project manager portal…</div>}><Workspace portalIntent="project_manager" /></Suspense>} />
                       <Route path="/client" element={<Suspense fallback={<div>Loading client portal…</div>}><Workspace portalIntent="client" /></Suspense>} />
                       <Route path="/invite/:token" element={<Suspense fallback={<div>Loading invitation…</div>}><InviteAcceptancePage /></Suspense>} />
+                      <Route path="/professionals/:handle" element={<Suspense fallback={<div>Loading portfolio…</div>}><PublicPortfolioPage /></Suspense>} />
+                      <Route path="/work/:slug" element={<Suspense fallback={<div>Loading case study…</div>}><PortfolioStoryPage /></Suspense>} />
                       <Route 
                         path="/get-started"
                         element={
