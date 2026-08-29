@@ -61,6 +61,10 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        # Full history: the secrets scan below reads the whole repository, and
+        # the default shallow clone would give it a single commit to look at.
+        fetch-depth: 0
       
     - name: Audit production dependencies
       run: npm run security:audit
@@ -69,13 +73,19 @@ jobs:
       continue-on-error: true
       run: npm run security:audit:all
       
+    # Scans the entire repository rather than a commit range. A `base`/`head`
+    # diff is wrong for this repo on two counts: on a push to `main` the two
+    # refs are the same commit, so TruffleHog exits 1 having scanned nothing,
+    # and a range scan only ever sees the newest commits -- while this codebase
+    # was copied wholesale from another project and CI had never run against it,
+    # so anything committed before today had never been scanned at all.
+    # `--only-verified` keeps this to secrets confirmed live, not every string
+    # shaped like a key.
     - name: Check for secrets
       uses: trufflesecurity/trufflehog@main
       with:
         path: ./
-        base: main
-        head: HEAD
-        extra_args: --debug --only-verified
+        extra_args: --only-verified
 
 # Deployment is handled by Vercel's GitHub integration (push to main → build →
 # production). The previous `deploy:` job here used amondnet/vercel-action gated
