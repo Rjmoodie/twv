@@ -80,11 +80,11 @@ communications/account operations. The sequence was replayed against a clean
 local Supabase database; it has not been linked to or deployed on a hosted
 project.
 
-The 68 somatech migrations remain parked in
-`supabase/migrations.somatech-reference/` as reference only. They are not part
-of TW's migration ledger. See
-[supabase/migrations/README.md](./supabase/migrations/README.md) before extending
-the schema.
+The 68 inherited migrations that used to sit in
+`supabase/migrations.somatech-reference/` were removed on 2026-08-29. They were
+never part of TW's ledger; recover one from git history if you need it (see
+[supabase/migrations/README.md](./supabase/migrations/README.md)). Read that file
+before extending the schema.
 
 Do not apply TW migrations through the configured Supabase MCP connection — it
 points at a different project.

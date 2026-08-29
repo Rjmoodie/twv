@@ -162,10 +162,11 @@ suppression data, and delivery logs are service-only.
 
 The four migrations replayed successfully on a fresh local Supabase stack. The
 repository is not linked to a hosted TW project, so this is not deployment
-evidence. The old files under `migrations.somatech-reference/` and the current
-generated `src/integrations/supabase/types.ts` remain historical references;
-regenerate the latter after a TW project is linked or local type generation can
-run with database access.
+evidence. The inherited migrations under `migrations.somatech-reference/` were
+removed on 2026-08-29 and are recoverable from git history; the generated
+`src/integrations/supabase/types.ts` remains a historical reference, and should
+be regenerated once a TW project is linked or local type generation can run with
+database access.
 
 ## Build and quality gates
 

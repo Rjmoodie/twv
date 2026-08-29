@@ -31,10 +31,14 @@ before applying their least-privilege grants, and the hardened sequence replayed
 cleanly from zero. The 26-assertion pgTAP suite still needs a post-hardening
 rerun; do not treat the clean replay alone as proof that every assertion passes.
 
-`../migrations.somatech-reference/` holds the 68 migrations inherited from the
-somatech codebase. They are REFERENCE ONLY — do not apply them as a set.
+The 68 migrations inherited from the somatech codebase used to sit in
+`../migrations.somatech-reference/`. They were removed on 2026-08-29 and live
+only in git history now:
 
-Two reasons:
+    git show :supabase/migrations.somatech-reference/<file>.sql
+    git log --diff-filter=D -- 'supabase/migrations.somatech-reference/*'
+
+Never apply them as a set. Two reasons:
 
 1. Most of them are for modules TW does not have (stocks, options, brokerage,
    LMS, Discord, trades).
