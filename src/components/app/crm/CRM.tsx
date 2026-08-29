@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Building2, CalendarClock, Check, CheckCircle2, Loader2, Mail, MessageSquarePlus,
@@ -29,10 +29,17 @@ interface CRMDatabase { from(table: string): Table; rpc(name: string, args?: Rec
 const database = supabase as unknown as CRMDatabase;
 
 type ContactKind = 'investor' | 'client' | 'vendor' | 'lender' | 'broker' | 'owner' | 'other';
+/**
+ * `crm_contacts` also has `last_contact_at`, `next_follow_up_at` and `tags`.
+ * None of them are selected here, because nothing in the product writes them —
+ * follow-ups live in `crm_activities.due_at`, which is what this screen reads.
+ * The list used to be ordered by `next_follow_up_at`, so every row sorted on
+ * NULL and the order was whatever Postgres felt like returning.
+ */
 interface Contact {
   id: string; organization_id: string; kind: ContactKind; first_name: string; last_name: string;
   company_name: string | null; email: string | null; phone: string | null; status: string;
-  last_contact_at: string | null; next_follow_up_at: string | null; tags: string[];
+  created_at: string;
 }
 interface Activity {
   id: string; organization_id: string; contact_id: string; project_id: string | null;
@@ -58,7 +65,7 @@ export default function CRM() {
   const contactsQuery = useQuery({
     queryKey: ['crm-contacts'], enabled: canUseCRM && !accessLoading,
     queryFn: async () => {
-      const result = await database.from('crm_contacts').select('id, organization_id, kind, first_name, last_name, company_name, email, phone, status, last_contact_at, next_follow_up_at, tags').order('next_follow_up_at', { ascending: true, nullsFirst: false });
+      const result = await database.from('crm_contacts').select('id, organization_id, kind, first_name, last_name, company_name, email, phone, status, created_at').order('created_at', { ascending: false });
       if (result.error) throw new Error(result.error.message);
       return (result.data ?? []) as Contact[];
     },
@@ -83,14 +90,41 @@ export default function CRM() {
   const contacts = useMemo(() => contactsQuery.data ?? [], [contactsQuery.data]);
   const activities = useMemo(() => activitiesQuery.data ?? [], [activitiesQuery.data]);
   const dueContactIds = useMemo(() => new Set(activities.filter((activity) => activity.activity_type === 'task' && !activity.completed_at && activity.due_at && new Date(activity.due_at) <= new Date()).map((activity) => activity.contact_id)), [activities]);
+
+  // Soonest open task per contact. This is the only real "next action" signal in
+  // the data, so it drives ordering: what is due soonest comes first, and
+  // contacts with nothing scheduled fall to the bottom alphabetically rather
+  // than into arbitrary database order.
+  const nextDueByContact = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const activity of activities) {
+      if (activity.activity_type !== 'task' || activity.completed_at || !activity.due_at) continue;
+      const due = new Date(activity.due_at).getTime();
+      if (Number.isNaN(due)) continue;
+      const current = map.get(activity.contact_id);
+      if (current === undefined || due < current) map.set(activity.contact_id, due);
+    }
+    return map;
+  }, [activities]);
+
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase();
-    return contacts.filter((contact) => {
-      if (filter === 'follow_up' && !dueContactIds.has(contact.id)) return false;
-      if (filter !== 'all' && filter !== 'follow_up' && contact.kind !== filter) return false;
-      return !needle || [contact.first_name, contact.last_name, contact.company_name, contact.email, contact.phone].some((value) => value?.toLowerCase().includes(needle));
-    });
-  }, [contacts, filter, search, dueContactIds]);
+    const byName = (contact: Contact) => `${contact.last_name} ${contact.first_name}`.toLowerCase();
+    return contacts
+      .filter((contact) => {
+        if (filter === 'follow_up' && !dueContactIds.has(contact.id)) return false;
+        if (filter !== 'all' && filter !== 'follow_up' && contact.kind !== filter) return false;
+        return !needle || [contact.first_name, contact.last_name, contact.company_name, contact.email, contact.phone].some((value) => value?.toLowerCase().includes(needle));
+      })
+      .sort((a, b) => {
+        const dueA = nextDueByContact.get(a.id);
+        const dueB = nextDueByContact.get(b.id);
+        if (dueA !== undefined && dueB !== undefined) return dueA - dueB;
+        if (dueA !== undefined) return -1;
+        if (dueB !== undefined) return 1;
+        return byName(a).localeCompare(byName(b));
+      });
+  }, [contacts, filter, search, dueContactIds, nextDueByContact]);
 
   const refresh = async () => {
     await Promise.all([
@@ -119,7 +153,7 @@ export default function CRM() {
       const nextTask = contactActivities.find((activity) => activity.activity_type === 'task' && !activity.completed_at);
       return <Card key={contact.id} className="transition hover:border-primary/30 hover:shadow-sm"><CardContent className="p-5"><button className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" onClick={() => setSelected(contact)}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><h2 className="truncate font-semibold">{contact.first_name} {contact.last_name}</h2><p className="truncate text-sm text-muted-foreground">{contact.company_name ?? pretty(contact.kind)}</p></div><Badge variant="outline">{pretty(contact.kind)}</Badge></div><div className="mt-4 space-y-1.5 text-sm text-muted-foreground">{contact.email && <p className="flex items-center gap-2 truncate"><Mail className="h-3.5 w-3.5" />{contact.email}</p>}{contact.phone && <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{contact.phone}</p>}<p className={cn('flex items-center gap-2', nextTask?.due_at && new Date(nextTask.due_at) <= new Date() && 'font-medium text-destructive')}><CalendarClock className="h-3.5 w-3.5" />{nextTask ? `${nextTask.subject} · ${dateTime(nextTask.due_at)}` : 'No follow-up scheduled'}</p></div></button><div className="mt-4 flex gap-2"><Button size="sm" className="flex-1" onClick={() => { setSelected(contact); setActivityOpen(true); }}><MessageSquarePlus className="mr-2 h-4 w-4" />Log / follow up</Button>{contact.email && <Button size="icon" variant="outline" asChild><a href={`mailto:${contact.email}`} aria-label={`Email ${contact.first_name}`}><Mail className="h-4 w-4" /></a></Button>}</div></CardContent></Card>;
     })}</div>}
-    <ContactSheet contact={selected} activities={activities.filter((activity) => activity.contact_id === selected?.id)} onClose={() => setSelected(null)} onLog={() => setActivityOpen(true)} onRefresh={refresh} />
+    <ContactSheet contact={selected} activities={activities.filter((activity) => activity.contact_id === selected?.id)} isAdmin={canCreate} onClose={() => setSelected(null)} onLog={() => setActivityOpen(true)} onRefresh={refresh} />
     <CreateContactDialog open={createOpen} onOpenChange={setCreateOpen} organizationIds={access.organizations.filter((item) => item.role === 'owner' || item.role === 'admin').map((item) => item.organization_id)} projects={projectsQuery.data ?? []} onCreated={refresh} />
     <ActivityDialog open={activityOpen} onOpenChange={setActivityOpen} contact={selected} projects={projectsQuery.data ?? []} userId={user?.id ?? ''} canLogWithoutProject={canCreate} onCreated={refresh} />
   </div>;
@@ -127,21 +161,58 @@ export default function CRM() {
 
 const Stat = ({ icon: Icon, label, value, active, onClick }: { icon: typeof Users; label: string; value: number; active: boolean; onClick: () => void }) => <button type="button" onClick={onClick} className={cn('rounded-xl border bg-card p-4 text-left transition hover:border-primary/50', active && 'border-primary ring-2 ring-primary/10')}><Icon className="mb-3 h-5 w-5 text-muted-foreground" /><p className="text-2xl font-bold">{value}</p><p className="text-sm text-muted-foreground">{label}</p></button>;
 
-const ContactSheet = ({ contact, activities, onClose, onLog, onRefresh }: { contact: Contact | null; activities: Activity[]; onClose: () => void; onLog: () => void; onRefresh: () => Promise<void> }) => {
+const ContactSheet = ({ contact, activities, isAdmin, onClose, onLog, onRefresh }: { contact: Contact | null; activities: Activity[]; isAdmin: boolean; onClose: () => void; onLog: () => void; onRefresh: () => Promise<void> }) => {
   const complete = async (activity: Activity) => { const result = await database.from('crm_activities').update({ completed_at: new Date().toISOString() }).eq('id', activity.id); if (result.error) { toast({ title: 'Task was not completed', description: result.error.message, variant: 'destructive' }); return; } track('crm_task_completed', { activity_id: activity.id }); toast({ title: 'Follow-up completed' }); await onRefresh(); };
-  return <Sheet open={!!contact} onOpenChange={(open) => { if (!open) onClose(); }}><SheetContent className="w-full overflow-y-auto sm:max-w-xl">{contact && <><SheetHeader><SheetTitle>{contact.first_name} {contact.last_name}</SheetTitle><SheetDescription>{contact.company_name ?? pretty(contact.kind)} · {pretty(contact.status)}</SheetDescription></SheetHeader><div className="mt-5 flex flex-wrap gap-2"><Button onClick={onLog}><MessageSquarePlus className="mr-2 h-4 w-4" />Log activity</Button>{contact.email && <Button variant="outline" asChild><a href={`mailto:${contact.email}`}><Mail className="mr-2 h-4 w-4" />Email</a></Button>}{contact.phone && <Button variant="outline" asChild><a href={`tel:${contact.phone}`}><Phone className="mr-2 h-4 w-4" />Call</a></Button>}</div><div className="mt-7"><h3 className="font-semibold">Relationship timeline</h3>{activities.length ? <div className="mt-3 space-y-3">{activities.map((activity) => <article key={activity.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><div><Badge variant="outline">{pretty(activity.activity_type)}</Badge><h4 className="mt-2 font-medium">{activity.subject}</h4></div>{activity.activity_type === 'task' && !activity.completed_at && <Button size="sm" variant="outline" onClick={() => complete(activity)}><Check className="mr-2 h-4 w-4" />Complete</Button>}{activity.completed_at && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}</div>{activity.body && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{activity.body}</p>}<p className="mt-3 text-xs text-muted-foreground">{activity.due_at ? `Due ${dateTime(activity.due_at)} · ` : ''}{new Date(activity.created_at).toLocaleString()}</p></article>)}</div> : <p className="mt-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">No activity logged yet. Record the first conversation or schedule the next follow-up.</p>}</div></>}</SheetContent></Sheet>;
+  return <Sheet open={!!contact} onOpenChange={(open) => { if (!open) onClose(); }}><SheetContent className="w-full overflow-y-auto sm:max-w-xl">{contact && <><SheetHeader><SheetTitle>{contact.first_name} {contact.last_name}</SheetTitle><SheetDescription>{contact.company_name ?? pretty(contact.kind)} · {pretty(contact.status)}</SheetDescription></SheetHeader><div className="mt-5 flex flex-wrap gap-2"><Button onClick={onLog}><MessageSquarePlus className="mr-2 h-4 w-4" />Log activity</Button>{contact.email && <Button variant="outline" asChild><a href={`mailto:${contact.email}`}><Mail className="mr-2 h-4 w-4" />Email</a></Button>}{contact.phone && <Button variant="outline" asChild><a href={`tel:${contact.phone}`}><Phone className="mr-2 h-4 w-4" />Call</a></Button>}</div><div className="mt-7"><h3 className="font-semibold">Relationship timeline</h3>{activities.length ? <div className="mt-3 space-y-3">{activities.map((activity) => <article key={activity.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><div><Badge variant="outline">{pretty(activity.activity_type)}</Badge><h4 className="mt-2 font-medium">{activity.subject}</h4></div>{activity.activity_type === 'task' && !activity.completed_at && <Button size="sm" variant="outline" onClick={() => complete(activity)}><Check className="mr-2 h-4 w-4" />Complete</Button>}{activity.completed_at && <CheckCircle2 className="h-5 w-5 text-emerald-600" />}</div>{activity.body && <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">{activity.body}</p>}<p className="mt-3 text-xs text-muted-foreground">{activity.due_at ? `Due ${dateTime(activity.due_at)} · ` : ''}{new Date(activity.created_at).toLocaleString()}</p></article>)}</div> : <p className="mt-3 rounded-xl border border-dashed p-4 text-sm text-muted-foreground">{isAdmin ? 'No activity logged yet. Record the first conversation or schedule the next follow-up.' : 'No activity you can see. Organization-wide notes are visible only to administrators.'}</p>}{!isAdmin && <p className="mt-3 text-xs text-muted-foreground">This timeline shows activity on your assigned projects. Notes recorded against the organization rather than a project are not shown.</p>}</div></>}</SheetContent></Sheet>;
 };
 
 const CreateContactDialog = ({ open, onOpenChange, organizationIds, projects, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; organizationIds: string[]; projects: PortfolioChoice[]; onCreated: () => Promise<void> }) => {
-  const [busy, setBusy] = useState(false); const [organizationId, setOrganizationId] = useState(organizationIds[0] ?? ''); const [kind, setKind] = useState<ContactKind>('client'); const [projectId, setProjectId] = useState('none'); const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', company_name: '' });
+  const [busy, setBusy] = useState(false); const [organizationId, setOrganizationId] = useState(''); const [kind, setKind] = useState<ContactKind>('client'); const [projectId, setProjectId] = useState('none'); const [form, setForm] = useState({ first_name: '', last_name: '', email: '', phone: '', company_name: '' });
+
+  // `organizationId` was seeded from `organizationIds[0]` at first render only,
+  // so it never picked up a later value and stayed ''. Combined with the early
+  // return in submit, that made "Create contact" a no-op with no feedback.
+  // Re-seed whenever the dialog opens, and refuse to render the form at all
+  // when there is no workspace to create into.
+  useEffect(() => {
+    if (!open) return;
+    setOrganizationId(organizationIds[0] ?? '');
+    setKind('client'); setProjectId('none');
+    setForm({ first_name: '', last_name: '', email: '', phone: '', company_name: '' });
+  }, [open, organizationIds]);
+
   const submit = async () => { if (!organizationId || !form.first_name.trim() || !form.last_name.trim()) return; setBusy(true); const result = await database.rpc('create_crm_contact', { target_organization: organizationId, contact_kind: kind, ...form, target_project: projectId === 'none' ? null : projectId }); setBusy(false); if (result.error) { toast({ title: 'Contact was not created', description: result.error.message, variant: 'destructive' }); return; } track('crm_contact_created', { contact_kind: kind, linked_to_project: projectId !== 'none' }); toast({ title: 'Contact created' }); onOpenChange(false); await onCreated(); };
+
+  if (!organizationIds.length) return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>No workspace available</DialogTitle><DialogDescription>Creating a contact requires owner or administrator rights on a workspace. Your account does not currently hold either, so ask a workspace owner to grant access.</DialogDescription></DialogHeader><DialogFooter><Button onClick={() => onOpenChange(false)}>Close</Button></DialogFooter></DialogContent></Dialog>;
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Add CRM contact</DialogTitle><DialogDescription>Create a relationship record and optionally connect it to a project.</DialogDescription></DialogHeader><div className="grid gap-4 sm:grid-cols-2">{organizationIds.length > 1 && <Field label="Workspace"><Select value={organizationId} onValueChange={setOrganizationId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{organizationIds.map((id, index) => <SelectItem key={id} value={id}>Workspace {index + 1}</SelectItem>)}</SelectContent></Select></Field>}<Field label="Relationship type"><Select value={kind} onValueChange={(value) => setKind(value as ContactKind)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['investor','client','vendor','lender','broker','owner','other'].map((value) => <SelectItem key={value} value={value}>{pretty(value)}</SelectItem>)}</SelectContent></Select></Field><Field label="First name *"><Input value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></Field><Field label="Last name *"><Input value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></Field><Field label="Company"><Input value={form.company_name} onChange={(e) => setForm({ ...form, company_name: e.target.value })} /></Field><Field label="Email"><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></Field><Field label="Phone"><Input type="tel" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></Field><Field label="Initial project"><Select value={projectId} onValueChange={(value) => { setProjectId(value); const project = projects.find((item) => item.project_id === value); if (project) setOrganizationId(project.organization_id); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">No project yet</SelectItem>{projects.map((project) => <SelectItem key={project.project_id} value={project.project_id}>{project.project_name}</SelectItem>)}</SelectContent></Select></Field></div><DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={submit} disabled={busy || !form.first_name.trim() || !form.last_name.trim()}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Create contact</Button></DialogFooter></DialogContent></Dialog>;
 };
 
 const ActivityDialog = ({ open, onOpenChange, contact, projects, userId, canLogWithoutProject, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; contact: Contact | null; projects: PortfolioChoice[]; userId: string; canLogWithoutProject: boolean; onCreated: () => Promise<void> }) => {
-  const [busy, setBusy] = useState(false); const [type, setType] = useState<Activity['activity_type']>('note'); const [subject, setSubject] = useState(''); const [body, setBody] = useState(''); const [dueAt, setDueAt] = useState(''); const availableProjects = projects.filter((project) => project.organization_id === contact?.organization_id); const [projectId, setProjectId] = useState('none');
-  const submit = async () => { if (!contact || !subject.trim() || !userId) return; const chosenProject = projectId === 'none' ? (canLogWithoutProject ? null : availableProjects[0]?.project_id ?? null) : projectId; setBusy(true); const result = await database.from('crm_activities').insert({ organization_id: contact.organization_id, contact_id: contact.id, project_id: chosenProject, activity_type: type, subject: subject.trim(), body: body.trim() || null, due_at: type === 'task' && dueAt ? new Date(dueAt).toISOString() : null, assigned_to: type === 'task' ? userId : null, created_by: userId }); setBusy(false); if (result.error) { toast({ title: 'Activity was not recorded', description: result.error.message, variant: 'destructive' }); return; } track('crm_activity_created', { activity_type: type, project_id: chosenProject }); toast({ title: type === 'task' ? 'Follow-up scheduled' : 'Activity recorded' }); setSubject(''); setBody(''); setDueAt(''); onOpenChange(false); await onCreated(); };
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Log activity for {contact?.first_name}</DialogTitle><DialogDescription>Capture what happened or assign the next concrete follow-up.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Activity"><Select value={type} onValueChange={(value) => setType(value as Activity['activity_type'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['note','call','email','meeting','task'].map((value) => <SelectItem key={value} value={value}>{pretty(value)}</SelectItem>)}</SelectContent></Select></Field>{availableProjects.length > 0 && <Field label="Project"><Select value={projectId} onValueChange={setProjectId}><SelectTrigger><SelectValue placeholder="Select project" /></SelectTrigger><SelectContent><SelectItem value="none">{canLogWithoutProject ? 'No project' : 'Default assigned project'}</SelectItem>{availableProjects.map((project) => <SelectItem key={project.project_id} value={project.project_id}>{project.project_name}</SelectItem>)}</SelectContent></Select></Field>}<Field label="Subject *"><Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={type === 'task' ? 'Follow up on financing documents' : 'Quarterly project check-in'} /></Field><Field label="Details"><Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></Field>{type === 'task' && <Field label="Due"><Input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></Field>}</div><DialogFooter><Button onClick={submit} disabled={busy || !subject.trim() || (!canLogWithoutProject && availableProjects.length === 0)}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{type === 'task' ? 'Schedule follow-up' : 'Record activity'}</Button></DialogFooter>{!canLogWithoutProject && availableProjects.length === 0 && <p className="text-xs text-destructive">Connect this contact to an assigned project before logging activity.</p>}</DialogContent></Dialog>;
+  const [busy, setBusy] = useState(false); const [type, setType] = useState<Activity['activity_type']>('note'); const [subject, setSubject] = useState(''); const [body, setBody] = useState(''); const [dueAt, setDueAt] = useState('');
+  const availableProjects = useMemo(() => projects.filter((project) => project.organization_id === contact?.organization_id), [projects, contact?.organization_id]);
+  const [projectId, setProjectId] = useState('');
+
+  // Every field resets when the dialog opens on a different contact.
+  //
+  // Previously only subject/body/due were cleared on success, so `projectId`
+  // and `type` survived. Logging a call for one contact and then opening the
+  // dialog for another in the same organization silently filed the second
+  // activity against the first contact's project — no error, wrong data. Across
+  // organizations the (project_id, organization_id) foreign key caught it, but
+  // as a raw Postgres error in a toast.
+  useEffect(() => {
+    if (!open) return;
+    setType('note'); setSubject(''); setBody(''); setDueAt('');
+    // An admin may log against no project at all. A project manager may not, so
+    // preselect only when the choice is unambiguous and otherwise make them pick.
+    setProjectId(canLogWithoutProject ? 'none' : (availableProjects.length === 1 ? availableProjects[0].project_id : ''));
+  }, [open, contact?.id, canLogWithoutProject, availableProjects]);
+
+  const chosenProject = projectId === 'none' ? null : projectId;
+  const projectMissing = !canLogWithoutProject && !chosenProject;
+
+  const submit = async () => { if (!contact || !subject.trim() || !userId || projectMissing) return; setBusy(true); const result = await database.from('crm_activities').insert({ organization_id: contact.organization_id, contact_id: contact.id, project_id: chosenProject, activity_type: type, subject: subject.trim(), body: body.trim() || null, due_at: type === 'task' && dueAt ? new Date(dueAt).toISOString() : null, assigned_to: type === 'task' ? userId : null, created_by: userId }); setBusy(false); if (result.error) { toast({ title: 'Activity was not recorded', description: result.error.message, variant: 'destructive' }); return; } track('crm_activity_created', { activity_type: type, project_id: chosenProject }); toast({ title: type === 'task' ? 'Follow-up scheduled' : 'Activity recorded' }); onOpenChange(false); await onCreated(); };
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Log activity for {contact?.first_name}</DialogTitle><DialogDescription>Capture what happened or assign the next concrete follow-up.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Activity"><Select value={type} onValueChange={(value) => setType(value as Activity['activity_type'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{['note','call','email','meeting','task'].map((value) => <SelectItem key={value} value={value}>{pretty(value)}</SelectItem>)}</SelectContent></Select></Field>{(availableProjects.length > 0 || canLogWithoutProject) && <Field label={canLogWithoutProject ? 'Project' : 'Project *'}><Select value={projectId} onValueChange={setProjectId}><SelectTrigger><SelectValue placeholder="Select a project" /></SelectTrigger><SelectContent>{canLogWithoutProject && <SelectItem value="none">No project</SelectItem>}{availableProjects.map((project) => <SelectItem key={project.project_id} value={project.project_id}>{project.project_name}</SelectItem>)}</SelectContent></Select></Field>}<Field label="Subject *"><Input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder={type === 'task' ? 'Follow up on financing documents' : 'Quarterly project check-in'} /></Field><Field label="Details"><Textarea rows={5} value={body} onChange={(e) => setBody(e.target.value)} /></Field>{type === 'task' && <Field label="Due"><Input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></Field>}</div><DialogFooter><Button onClick={submit} disabled={busy || !subject.trim() || projectMissing}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{type === 'task' ? 'Schedule follow-up' : 'Record activity'}</Button></DialogFooter>{!canLogWithoutProject && availableProjects.length === 0 ? <p className="text-xs text-destructive">Connect this contact to an assigned project before logging activity.</p> : projectMissing && <p className="text-xs text-muted-foreground">Choose which project this belongs to.</p>}</DialogContent></Dialog>;
 };
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => <div className="space-y-2"><Label>{label}</Label>{children}</div>;
