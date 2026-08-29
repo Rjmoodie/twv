@@ -270,11 +270,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
     subscription.userProfile?.role
   ]);
 
-  const requestedModuleMeta = useMemo<Module | null>(
-    () => (pendingUpgradeModule ? modules.find((module) => module.id === pendingUpgradeModule) ?? null : null),
-    [pendingUpgradeModule]
-  );
-
   const handleUpgradeRequest = (moduleId: string) => {
     if (!modules.some((module) => module.id === moduleId)) {
       return;
@@ -479,14 +474,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
           open={showPricingDialog}
           onOpenChange={handlePricingDialogChange}
           subscription={subscription}
-          requestedModule={
-            pendingUpgradeModule
-              ? {
-                  id: pendingUpgradeModule,
-                  name: requestedModuleMeta?.name ?? formatTierLabel(pendingUpgradeModule),
-                }
-              : null
-          }
         />
         
       </ErrorBoundary>

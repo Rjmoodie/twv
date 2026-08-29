@@ -1,5 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
-import { SubscriptionTier, UserRole, UserProfile, getSubscriptionFeatures, SubscriptionFeatures, SUBSCRIPTION_PLANS } from '@/types/subscription';
+import { SubscriptionTier, UserRole, UserProfile, SUBSCRIPTION_PLANS } from '@/types/subscription';
 import { StripeAPI } from '@/api/stripe';
 
 // A single render pass fans out into ~6 getUserProfile calls (AuthProvider,
@@ -43,7 +43,7 @@ export class SubscriptionService {
       const { data, error } = await supabase
         .from('user_profiles')
         .select(
-          'id, email, name, subscription_tier, role, stripe_customer_id, discord_id, discord_username, subscription_status, subscription_ends_at, created_at, updated_at'
+          'id, email, name, subscription_tier, role, stripe_customer_id, subscription_status, subscription_ends_at, created_at, updated_at'
         )
         .eq('id', userId)
         .maybeSingle();
@@ -60,7 +60,6 @@ export class SubscriptionService {
           subscriptionTier: 'free',
           role: 'user',
           stripeCustomerId: null,
-          discordId: null,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
           subscriptionStatus: 'active',
@@ -80,8 +79,6 @@ export class SubscriptionService {
         subscriptionTier: (data.subscription_tier ?? 'free') as SubscriptionTier,
         role: (data.role ?? 'user') as UserRole,
         stripeCustomerId: data.stripe_customer_id ?? null,
-        discordId: data.discord_id ?? null,
-        discordUsername: data.discord_username ?? undefined,
         createdAt: data.created_at,
         updatedAt: data.updated_at,
         subscriptionStatus: (data.subscription_status ?? 'active') as UserProfile['subscriptionStatus'],
@@ -90,36 +87,6 @@ export class SubscriptionService {
     } catch (error) {
       console.error('Error getting user profile:', error);
       return null;
-    }
-  }
-
-  /**
-   * Derive feature flags from the user's real tier + role.
-   */
-  static async getUserFeatures(userId: string): Promise<SubscriptionFeatures> {
-    const profile = await this.getUserProfile(userId);
-    if (!profile) return getSubscriptionFeatures('free', 'user');
-
-    // Subscriptions that are past_due still retain access during grace period;
-    // canceled/unpaid subscriptions fall back to free.
-    const effectiveTier: SubscriptionTier =
-      profile.subscriptionStatus === 'canceled' || profile.subscriptionStatus === 'unpaid'
-        ? 'free'
-        : profile.subscriptionTier;
-
-    return getSubscriptionFeatures(effectiveTier, profile.role);
-  }
-
-  /**
-   * Check if user has access to a specific feature.
-   */
-  static async hasFeature(userId: string, feature: keyof SubscriptionFeatures): Promise<boolean> {
-    try {
-      const features = await this.getUserFeatures(userId);
-      return features[feature] ?? false;
-    } catch (error) {
-      console.error('Error checking feature access:', error);
-      return false;
     }
   }
 
@@ -162,18 +129,11 @@ export class SubscriptionService {
     tier: SubscriptionTier;
     status: string;
     isActive: boolean;
-    features: SubscriptionFeatures;
   }> {
     const profile = await this.getUserProfile(userId);
-    const features = await this.getUserFeatures(userId);
 
     if (!profile) {
-      return {
-        tier: 'free',
-        status: 'inactive',
-        isActive: false,
-        features: getSubscriptionFeatures('free')
-      };
+      return { tier: 'free', status: 'inactive', isActive: false };
     }
 
     const isActive =
@@ -184,52 +144,7 @@ export class SubscriptionService {
       tier: profile.subscriptionTier,
       status: profile.subscriptionStatus,
       isActive,
-      features
     };
-  }
-
-  /**
-   * Check if user can access a specific module.
-   */
-  static async canAccessModule(userId: string, module: string): Promise<boolean> {
-    const features = await this.getUserFeatures(userId);
-
-    switch (module) {
-      case 'stock-analysis':
-        return features.stockAnalysis;
-      case 'retirement-calculator':
-      case 'watchlist':
-      case 'earnings-calendar':
-      case 'personal-finance':
-      case 'net-worth':
-      case 'cash-flow-personal':
-        return true; // Free tier features
-      case 'pdufa':
-      case 'pdufa-calendar':
-        return features.pdufaCalendar;
-      case 'trades-dashboard':
-        return features.tradesDashboard;
-      case 'options-trading-discord':
-        return features.optionsTradingDiscord;
-      case 'discord-chat':
-        return features.discordChat;
-      case 'advanced-analytics':
-        return features.advancedAnalytics;
-      case 'course-access':
-      case 'lms':
-        return features.courseAccess;
-      case 'live-sessions':
-        return features.liveSessions;
-      case 'backtesting-tool':
-        return features.backtestingTool;
-      case 'ai-tools':
-      case 'thesis':
-      case 'risk-scan':
-      case 'screener':
-        return features.aiTools;
-      default:
-        return false;
-    }
   }
 
   /**

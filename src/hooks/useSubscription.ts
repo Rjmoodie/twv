@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/app/AuthProvider';
 import { SubscriptionService } from '@/services/subscription';
-import { SubscriptionTier, SubscriptionFeatures, getSubscriptionFeatures } from '@/types/subscription';
+import { SubscriptionTier } from '@/types/subscription';
 
 export interface UseSubscriptionReturn {
   // User data
@@ -9,10 +9,7 @@ export interface UseSubscriptionReturn {
   subscriptionTier: SubscriptionTier;
   subscriptionStatus: string;
   isActive: boolean;
-  
-  // Features
-  features: SubscriptionFeatures;
-  
+
   // Loading states
   loading: boolean;
   error: string | null;
@@ -20,8 +17,6 @@ export interface UseSubscriptionReturn {
   // Actions
   subscribeToTier: (tier: SubscriptionTier) => Promise<void>;
   openCustomerPortal: () => Promise<void>;
-  canAccessModule: (module: string) => Promise<boolean>;
-  hasFeature: (feature: keyof SubscriptionFeatures) => boolean;
   refreshSubscription: () => Promise<void>;
   
   // Upgrade options
@@ -42,8 +37,6 @@ export function useSubscription(): UseSubscriptionReturn {
   const [subscriptionTier, setSubscriptionTier] = useState<SubscriptionTier>('free');
   const [subscriptionStatus, setSubscriptionStatus] = useState<string>('inactive');
   const [isActive, setIsActive] = useState<boolean>(false);
-  // Default to free-tier features while loading — never over-grant access
-  const [features, setFeatures] = useState<SubscriptionFeatures>(getSubscriptionFeatures('free'));
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [upgradeOptions, setUpgradeOptions] = useState<any>(null);
@@ -68,7 +61,6 @@ export function useSubscription(): UseSubscriptionReturn {
       setSubscriptionTier(status.tier);
       setSubscriptionStatus(status.status);
       setIsActive(status.isActive);
-      setFeatures(status.features);
       setUserProfile(profile);
       setUpgradeOptions(upgrades);
 
@@ -110,21 +102,6 @@ export function useSubscription(): UseSubscriptionReturn {
     }
   };
 
-  const canAccessModule = async (module: string): Promise<boolean> => {
-    if (!user) return false;
-    
-    try {
-      return await SubscriptionService.canAccessModule(user.id, module);
-    } catch (err) {
-      console.error('Error checking module access:', err);
-      return false;
-    }
-  };
-
-  const hasFeature = (feature: keyof SubscriptionFeatures): boolean => {
-    return features[feature];
-  };
-
   const refreshSubscription = async () => {
     await loadSubscriptionData();
   };
@@ -149,13 +126,10 @@ export function useSubscription(): UseSubscriptionReturn {
     subscriptionTier,
     subscriptionStatus,
     isActive,
-    features,
     loading,
     error,
     subscribeToTier,
     openCustomerPortal,
-    canAccessModule,
-    hasFeature,
     refreshSubscription,
     upgradeOptions
   };

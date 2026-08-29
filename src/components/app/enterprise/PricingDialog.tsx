@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,17 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check, X, Lock, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Check, X, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import type { SubscriptionTier } from "@/types/subscription";
 import type { UseSubscriptionReturn } from "@/hooks/useSubscription";
-import { PRICING_PLAN_ORDER, PRICING_PLANS, formatMonthlyPrice, getPlanDetails } from "@/config/pricing";
+import { PRICING_PLAN_ORDER, PRICING_PLANS } from "@/config/pricing";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PricingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   subscription: UseSubscriptionReturn;
-  requestedModule?: { id: string; name: string } | null;
 }
 
 // Feature comparison rows: label → which tiers have it
@@ -36,7 +35,6 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
   open,
   onOpenChange,
   subscription,
-  requestedModule,
 }) => {
   const { subscriptionTier, subscribeToTier, openCustomerPortal } = subscription;
   const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
@@ -48,17 +46,10 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
   const [stepUpError, setStepUpError] = useState('');
   const [stepUpLoading, setStepUpLoading] = useState(false);
 
-  // Modules no longer map to a billing tier — access follows persona — so there
-  // is no "the module you wanted needs plan X" hint to show. The dialog is now
-  // purely a plan chooser.
-  const requiredTier: SubscriptionTier | null = null;
-  const requiredPlan = useMemo(() => getPlanDetails(undefined), []);
-  const requiredTierLabel: string | null = null;
-
-  // Features the user is currently locked out of
-  const missingFeatures = FEATURE_ROWS.filter(
-    (row) => !row.tiers.includes(subscriptionTier) && row.tiers.length > 0
-  );
+  // Modules no longer map to a billing tier — access follows persona — so the
+  // dialog is purely a plan chooser. The "the module you wanted needs plan X"
+  // banner that used to sit here was gated on a hardcoded null and could never
+  // render; it went with the tier-gating it described.
 
   // 60 min matches Supabase's default access-token TTL — use JWT iat (issued-at) so that
   // token refreshes reset the clock rather than last_sign_in_at which never updates mid-session.
@@ -144,34 +135,13 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        {/* "What you're missing right now" banner */}
-        {requestedModule && requiredTierLabel && (
-          <div className="rounded-xl border border-warning/20 bg-warning/10 dark:bg-warning/15/30 dark:border-warning/20 p-4 mb-2">
-            <div className="flex items-start gap-3">
-              <Lock className="h-4 w-4 text-warning mt-0.5 shrink-0" />
-              <div className="space-y-1 text-sm">
-                <p className="font-semibold text-warning dark:text-warning">
-                  <span className="font-bold">{requestedModule.name}</span> requires {requiredTierLabel}
-                  {requiredPlan && <span className="font-normal text-warning dark:text-warning ml-1">({formatMonthlyPrice(requiredPlan.tier)}/mo)</span>}
-                </p>
-                {missingFeatures.length > 0 && (
-                  <p className="text-warning dark:text-warning">
-                    You're also missing: {missingFeatures.slice(0, 3).map(f => f.label).join(", ")}
-                    {missingFeatures.length > 3 && ` and ${missingFeatures.length - 3} more`}.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Plan cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {PRICING_PLAN_ORDER.map((tier) => {
             const plan = PRICING_PLANS[tier];
             const Icon = plan.icon;
             const isCurrentPlan = subscriptionTier === tier;
-            const isRecommended = requiredTier ? tier === requiredTier : plan.highlight;
+            const isRecommended = plan.highlight;
             const isLowerThan = tierOrder[tier] < tierOrder[subscriptionTier];
 
             return (

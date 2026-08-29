@@ -194,14 +194,9 @@ Carried over from somatech, none of it load-bearing, all of it worth knowing:
 - Twenty-six files under `components/ui/` are unreferenced. They are the
   vendored shadcn kit and are kept deliberately: they are the source you copy a
   primitive from, not dead product code.
-- `SubscriptionFeatures` in `types/subscription.ts` is still somatech's product
-  catalogue — options dashboards, PDUFA calendars, course access, Discord. It
-  drives nothing: `hasFeature` is never called with a key and
-  `SubscriptionService.canAccessModule` has no callers. It is being replaced by
-  the persona model in `config/moduleAccess.ts`; prune it when that lands.
-- `scripts/admin/grant-tier3-legacy.sql` is a one-off that hardcodes a real
-  user's email and UUID, and its comments reference `enterprise/
-  SubscriptionStatus`, which no longer exists.
+- One personal email and user id were committed in an early admin script. The
+  script is gone, but **both are still reachable in git history** — removing
+  them needs a history rewrite and a force push, which has not been done.
 - The generated Supabase types, parked migrations, and archive documentation
   intentionally retain source-system names as historical reference.
 
@@ -218,6 +213,20 @@ Financial Calendar. All three were removed, along with the `plaid-link` and
 
 Account Settings' readiness score was rebalanced from `banks 35 / profile 30 /
 discord 25 / security 10` to `profile 70 / security 30`.
+
+A second pass, once persona gating had landed, removed the subscription feature
+apparatus that gating used to run on: the `SubscriptionFeatures` interface,
+`getSubscriptionFeatures`, `SubscriptionService.getUserFeatures` / `hasFeature`
+/ `canAccessModule`, and the `features` / `hasFeature` / `canAccessModule`
+members of `useSubscription`. None of it had a caller — `hasFeature` was never
+invoked with a key anywhere in the tree. `getSubscriptionStatus` now reads the
+profile once instead of twice.
+
+`SUBSCRIPTION_PLANS` stays, because Stripe still bills against it, but tier2 and
+tier3 no longer carry the source platform's product copy — they exist only so an
+imported account row resolves to a plan, and `PRICING_PLAN_ORDER` never offers
+them. `subscription.test.ts` now asserts that no tier, offered or not, mentions
+a module this platform does not have.
 
 No `somatech` identifier remains in `src/`, `api/`, `scripts/` or `public/`.
 The remaining mentions are provenance notes in documentation and the parked
