@@ -18,6 +18,47 @@ max_rows = 1000
 
 [auth]
 enabled = true
+# The site the codes and links belong to. Left at the Supabase default this
+# ends up in emails and in any fallback redirect.
+site_url = "https://twv-llc.com"
+additional_redirect_urls = ["https://twv-llc.com/auth/callback", "https://www.twv-llc.com/auth/callback"]
+
+[auth.email]
+# Sign-in is a six-digit code, not a link. A link mailed to a mistyped address
+# is a working credential in a stranger's inbox; a code is useless to whoever
+# receives it, because it only completes a session already begun elsewhere.
+enable_signup = true
+enable_confirmations = true
+otp_length = 6
+otp_expiry = 600
+
+# Auth email goes through Resend, not Supabase's shared sender.
+#
+# Two reasons. Supabase refuses template edits on the free tier while the
+# default provider is in use -- "Email template modification is not available
+# for free tier projects using the default email provider" -- so the sign-in
+# mail cannot be turned into a code without this. And the default sender puts
+# "Supabase Auth" and a Supabase opt-out footer in front of the reader, which is
+# the one email every new person sees first.
+#
+# The password is the Resend API key, read from the environment so it is never
+# committed. Set RESEND_API_KEY in .env.local before `supabase config push`.
+[auth.email.smtp]
+enabled = true
+host = "smtp.resend.com"
+port = 465
+user = "resend"
+pass = "env(RESEND_API_KEY)"
+admin_email = "services@twv-llc.com"
+sender_name = "TW Ventures"
+
+[auth.email.template.magic_link]
+subject = "Your TW Ventures sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Your TW Ventures sign-in code"
+content_path = "./supabase/templates/confirmation.html"
 
 [db]
 port = 55322
