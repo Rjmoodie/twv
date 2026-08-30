@@ -118,6 +118,17 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
 
   const handleOAuth = async (provider: 'google') => {
     setOauthLoading(provider);
+    // OAuth leaves the page, so whatever the reader was trying to reach has to
+    // survive the round trip. Signing in with a code does not need this -- that
+    // happens in this dialog without navigating -- which is why the gap only
+    // showed on the Google path: a deep link like ?module=portfolio&studio=open
+    // came back as the bare dashboard.
+    try {
+      const here = `${window.location.pathname}${window.location.search}`;
+      if (here !== '/') window.sessionStorage.setItem('tw-post-auth-return', here);
+    } catch {
+      /* private mode with storage disabled: fall back to the default landing */
+    }
     try {
       const { error } = await signInWithOAuth(provider);
       if (error) throw error;

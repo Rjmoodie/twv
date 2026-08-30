@@ -11,7 +11,19 @@ export default function AuthCallbackPage() {
     let active = true;
     const returnPath = () => {
       const invitation = window.sessionStorage.getItem('tw-pending-project-invite');
-      return invitation ? `/invite/${encodeURIComponent(invitation)}` : '/';
+      if (invitation) return `/invite/${encodeURIComponent(invitation)}`;
+      // Anything else the reader was heading for before OAuth took over.
+      try {
+        const stored = window.sessionStorage.getItem('tw-post-auth-return');
+        window.sessionStorage.removeItem('tw-post-auth-return');
+        // Same-origin, relative only: this value decides where someone lands
+        // immediately after authenticating, so it must not be able to point off
+        // the site.
+        if (stored && stored.startsWith('/') && !stored.startsWith('//')) return stored;
+      } catch {
+        /* storage unavailable — fall through */
+      }
+      return '/';
     };
     const finish = async () => {
       const params = new URLSearchParams(window.location.search);
