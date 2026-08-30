@@ -51,12 +51,13 @@ export function useSubscription(): UseSubscriptionReturn {
       setLoading(true);
       setError(null);
 
-      // Parallel fetch — all three are independent
-      const [status, profile, upgrades] = await Promise.all([
-        SubscriptionService.getSubscriptionStatus(user.id),
-        SubscriptionService.getUserProfile(user.id),
-        SubscriptionService.getUpgradeOptions(user.id),
-      ]);
+      // One read. These were three parallel calls, but two of them only
+      // fetched the same profile in order to derive from it, so the "parallel"
+      // fetch was three identical reads of user_profiles racing each other --
+      // on every mount, and again on every return to the tab.
+      const profile = await SubscriptionService.getUserProfile(user.id);
+      const status = SubscriptionService.deriveSubscriptionStatus(profile);
+      const upgrades = SubscriptionService.deriveUpgradeOptions(profile);
 
       setSubscriptionTier(status.tier);
       setSubscriptionStatus(status.status);

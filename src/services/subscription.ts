@@ -127,12 +127,19 @@ export class SubscriptionService {
   /**
    * Get subscription status for display in UI.
    */
-  static async getSubscriptionStatus(userId: string): Promise<{
+  /**
+   * Derived from a profile the caller already has.
+   *
+   * This and getUpgradeOptions each used to fetch the profile themselves, so a
+   * caller wanting all three -- which useSubscription does -- issued three
+   * identical reads of user_profiles in parallel, on every mount and again on
+   * every tab focus. Neither needs anything the profile does not already carry.
+   */
+  static deriveSubscriptionStatus(profile: UserProfile | null): {
     tier: SubscriptionTier;
     status: string;
     isActive: boolean;
-  }> {
-    const profile = await this.getUserProfile(userId);
+  } {
 
     if (!profile) {
       return { tier: 'free', status: 'inactive', isActive: false };
@@ -152,7 +159,7 @@ export class SubscriptionService {
   /**
    * Get available upgrade options for the user's current tier.
    */
-  static async getUpgradeOptions(userId: string): Promise<{
+  static deriveUpgradeOptions(profile: UserProfile | null): {
     currentTier: SubscriptionTier;
     availableUpgrades: Array<{
       tier: SubscriptionTier;
@@ -160,8 +167,7 @@ export class SubscriptionService {
       price: number;
       features: string[];
     }>;
-  }> {
-    const profile = await this.getUserProfile(userId);
+  } {
     const currentTier = profile?.subscriptionTier ?? 'free';
 
     const upgradeMap: Record<SubscriptionTier, SubscriptionTier[]> = {
