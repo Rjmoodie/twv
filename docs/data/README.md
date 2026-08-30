@@ -11,6 +11,6 @@ is used.
 
 Four inherited files were removed on 2026-08-29: timesheet logs from an
 unrelated project, a UX audit written for consumer finance apps, a 725 KB
-duplicate of `public/logo.png`, and a lead-generation flowchart describing
+duplicate of `assets/brand/logo-master.png`, and a lead-generation flowchart describing
 components (`SearchPage`, `SearchContextProvider`, `SimpleMapTest`) that have
 never existed in this codebase.

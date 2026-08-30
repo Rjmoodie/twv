@@ -47,7 +47,8 @@ export interface ShellOptions extends FooterOptions {
  *
  * That only works if it stays small: Gmail clips a message past ~102KB and
  * hides everything after the cut. The source PNG is 537KB; this is the same
- * mark cropped to its ink and resized to 280px, then written as an indexed PNG
+ * mark -- assets/brand/logo-master.png -- cropped to its ink and resized to
+ * 280px, then written as an indexed PNG
  * whose palette is a single navy repeated 16 times, with a tRNS alpha ramp
  * carrying the anti-aliasing. That keeps the background transparent -- a white
  * matte read as a pasted rectangle against the card -- and lands at 3.3KB.
