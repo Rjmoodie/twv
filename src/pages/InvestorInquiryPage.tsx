@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowRight, Building2, CheckCircle2, Hammer, LineChart, LogIn, MapPin, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import AuthDialog from '@/components/app/AuthDialog';
-import Logo from '@/components/app/Logo';
+import PublicBrandHeader from '@/components/app/PublicBrandHeader';
 import { useAuth } from '@/components/app/AuthProvider';
 import { supabase } from '@/integrations/supabase/client';
 import { track } from '@/lib/analytics';
@@ -97,31 +97,16 @@ export default function InvestorInquiryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f5f7fa] text-[#071a33]">
-      <nav className="border-b border-slate-200/80 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <button onClick={() => navigate('/')} className="flex items-center gap-3" aria-label="TW Ventures home">
-            <span className="h-11 w-11 overflow-hidden rounded-full border border-slate-200 shadow-sm"><Logo width={44} height={44} /></span>
-            <span className="text-left">
-              <span className="block text-lg font-bold leading-tight">TW Ventures</span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">Investor Relations</span>
-            </span>
-          </button>
-          <Button variant="ghost" className="gap-2 text-[#071a33]" onClick={enterPortal}>
-            <LogIn className="h-4 w-4" />
-            {user ? 'Open portal' : 'Investor sign in'}
-          </Button>
-        </div>
-      </nav>
+    <main className="public-page">
+      <PublicBrandHeader section="Investor Partnerships" actions={<Button variant="ghost" className="gap-2 text-[#071a33]" onClick={enterPortal}><LogIn className="h-4 w-4" /><span className="brand-nav-label">{user ? 'Open portal' : 'Project access'}</span></Button>} />
 
-      <section className="relative overflow-hidden bg-[#07111f] px-5 py-20 text-white sm:px-8 sm:py-28">
-        <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 75% 25%, #244f7a 0, transparent 35%), linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px)', backgroundSize: 'auto, 44px 44px, 44px 44px' }} />
+      <section className="brand-hero px-5 py-20 text-white sm:px-8 sm:py-28">
         <div className="relative mx-auto max-w-7xl">
-          <p className="mb-5 text-xs font-semibold uppercase tracking-[0.28em] text-blue-200">Investor relations · Philadelphia</p>
-          <h1 className="max-w-3xl text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">We acquire, build, and hold Philadelphia real estate.</h1>
+          <p className="brand-kicker mb-5">Investor relations · Philadelphia</p>
+          <h1 className="brand-serif max-w-4xl text-5xl leading-[1.02] sm:text-7xl">Built to hold value.<br />Managed to create it.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-            TW Ventures runs the whole lifecycle in-house — sourcing, entitlement, construction, and long-term management.
-            If you are considering investing alongside us, start with a conversation.
+            TW Ventures acquires, develops, builds, and operates Philadelphia real estate through one accountable platform.
+            For prospective investment relationships, the first step is a direct conversation.
           </p>
           <div className="mt-9">
             <Button size="lg" className="gap-2 bg-white text-[#071a33] hover:bg-slate-100" asChild>
@@ -132,17 +117,18 @@ export default function InvestorInquiryPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">One asset, four stages, one team</h2>
+        <p className="brand-kicker !text-[#9a7b4f]">Vertically aligned execution</p>
+        <h2 className="brand-serif mt-3 text-4xl sm:text-5xl">One asset. Four stages. One team.</h2>
         <p className="mt-3 max-w-2xl text-slate-600">
           Most sponsors assemble a different party at every stage. We hold them together, which is where the margin and the
           schedule control come from.
         </p>
         <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {STAGES.map(({ icon: Icon, title, body }) => (
-            <Card key={title} className="border-slate-200">
+            <Card key={title} className="brand-card">
               <CardContent className="p-6">
-                <Icon className="mb-4 h-6 w-6 text-[#244f7a]" />
-                <h3 className="font-semibold">{title}</h3>
+                <Icon className="mb-4 h-6 w-6 text-[#9a7b4f]" />
+                <h3 className="brand-serif text-xl">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
               </CardContent>
             </Card>
@@ -150,10 +136,10 @@ export default function InvestorInquiryPage() {
         </div>
       </section>
 
-      <section id="enquire" className="scroll-mt-8 border-t border-slate-200 bg-white px-5 py-16 sm:px-8">
+      <section id="enquire" className="scroll-mt-8 border-t border-[#071a33]/10 bg-[#fbfaf7] px-5 py-16 sm:px-8">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_1.1fr]">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Start a conversation</h2>
+            <p className="brand-kicker !text-[#9a7b4f]">Private and direct</p><h2 className="brand-serif mt-3 text-4xl">Start a conversation.</h2>
             <p className="mt-3 text-slate-600">
               Tell us a little about what you are looking for and we will follow up personally. Nothing on this page is an
               offer to sell or a solicitation to buy a security.
@@ -183,7 +169,7 @@ export default function InvestorInquiryPage() {
           </div>
 
           {sent ? (
-            <Card className="border-slate-200">
+            <Card className="brand-card">
               <CardContent className="flex min-h-[420px] flex-col items-center justify-center p-10 text-center">
                 <CheckCircle2 className="mb-5 h-12 w-12 text-emerald-600" />
                 <h3 className="text-xl font-semibold">Thank you — we have your enquiry.</h3>
@@ -194,7 +180,7 @@ export default function InvestorInquiryPage() {
               </CardContent>
             </Card>
           ) : (
-            <Card className="border-slate-200">
+            <Card className="brand-card brand-form">
               <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
                 <Field label="Full name *"><Input value={form.full_name} onChange={(e) => set('full_name')(e.target.value)} autoComplete="name" /></Field>
                 <Field label="Email *"><Input type="email" value={form.email} onChange={(e) => set('email')(e.target.value)} autoComplete="email" /></Field>
@@ -242,7 +228,7 @@ export default function InvestorInquiryPage() {
         </div>
       </section>
 
-      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} onAuthSuccess={() => { setAuthOpen(false); navigate('/investor'); }} message="Sign in to your investor portal." />
+      <AuthDialog open={authOpen} onOpenChange={setAuthOpen} onAuthSuccess={() => { setAuthOpen(false); navigate('/investor'); }} message="Use the email connected to your TW Ventures invitation. We will route you to the projects and investor information assigned to your account." />
     </main>
   );
 }

@@ -41,6 +41,7 @@ export type AnalyticsEvent =
   | 'project_invitation_created'
   // Investor funnel — does anyone actually raise their hand?
   | 'investor_inquiry_submitted'
+  | 'project_inquiry_submitted'
   | 'crm_contact_created'
   | 'crm_activity_created'
   | 'crm_task_completed'

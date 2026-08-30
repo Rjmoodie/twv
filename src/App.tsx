@@ -15,6 +15,7 @@ import { CookieConsent } from '@/components/app/CookieConsent';
 import { setAnalyticsSink } from '@/lib/analytics';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import RouteSeo from '@/components/app/RouteSeo';
+import PortalRouteGuard from '@/components/app/PortalRouteGuard';
 
 // ─── Analytics sink ───────────────────────────────────────────────────────────
 //
@@ -38,6 +39,7 @@ const Workspace = lazyWithRetry(() => import('./pages/Workspace'));
 const InvestorInquiryPage = lazyWithRetry(() => import('./pages/InvestorInquiryPage'));
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ClientOnboardingPage = lazyWithRetry(() => import('./pages/ClientOnboardingPage'));
+const ProjectIntakePage = lazyWithRetry(() => import('./pages/ProjectIntakePage'));
 const ResetPasswordPage = lazyWithRetry(() => import('./pages/ResetPasswordPage'));
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'));
 const InviteAcceptancePage = lazyWithRetry(() => import('./pages/InviteAcceptancePage'));
@@ -98,14 +100,14 @@ function App() {
                               </div>
                             </div>
                           }>
-                            <Workspace />
+                            <ClientOnboardingPage />
                           </Suspense>
                         } 
                       />
                       <Route path="/investors" element={<Suspense fallback={<div>Loading…</div>}><InvestorInquiryPage /></Suspense>} />
-                      <Route path="/investor" element={<Suspense fallback={<div>Loading investor portal…</div>}><Workspace portalIntent="investor" /></Suspense>} />
-                      <Route path="/pm" element={<Suspense fallback={<div>Loading project manager portal…</div>}><Workspace portalIntent="project_manager" /></Suspense>} />
-                      <Route path="/client" element={<Suspense fallback={<div>Loading client portal…</div>}><Workspace portalIntent="client" /></Suspense>} />
+                      <Route path="/investor" element={<PortalRouteGuard intent="investor"><Suspense fallback={<div>Loading investor portal…</div>}><Workspace portalIntent="investor" /></Suspense></PortalRouteGuard>} />
+                      <Route path="/pm" element={<PortalRouteGuard intent="project_manager"><Suspense fallback={<div>Loading project manager portal…</div>}><Workspace portalIntent="project_manager" /></Suspense></PortalRouteGuard>} />
+                      <Route path="/client" element={<PortalRouteGuard intent="client"><Suspense fallback={<div>Loading client portal…</div>}><Workspace portalIntent="client" /></Suspense></PortalRouteGuard>} />
                       <Route path="/invite/:token" element={<Suspense fallback={<div>Loading invitation…</div>}><InviteAcceptancePage /></Suspense>} />
                       <Route path="/professionals/:handle" element={<Suspense fallback={<div>Loading portfolio…</div>}><PublicPortfolioPage /></Suspense>} />
                       <Route path="/work/:slug" element={<Suspense fallback={<div>Loading case study…</div>}><PortfolioStoryPage /></Suspense>} />
@@ -113,7 +115,7 @@ function App() {
                         path="/get-started"
                         element={
                           <Suspense fallback={<div>Loading...</div>}>
-                            <ClientOnboardingPage />
+                            <ProjectIntakePage />
                           </Suspense>
                         } 
                       />

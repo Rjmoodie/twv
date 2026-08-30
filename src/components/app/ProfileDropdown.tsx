@@ -58,7 +58,7 @@ function Avatar({ initials, avatarUrl, size = 'sm' }: { initials: string; avatar
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const ProfileDropdown = ({ username, userEmail, avatarUrl, onModuleChange }: ProfileDropdownProps) => {
-  const { signOut } = useAuth();
+  const { signOut, access } = useAuth();
   const { toast } = useToast();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains('dark'));
@@ -78,6 +78,13 @@ export const ProfileDropdown = ({ username, userEmail, avatarUrl, onModuleChange
   };
 
   const initials = getInitials(username, userEmail);
+  const roleLabel = access.personas.includes('admin')
+    ? 'Organization administrator'
+    : access.personas.includes('project_manager')
+      ? 'Project manager'
+      : access.personas.includes('investor') || access.personas.includes('client')
+        ? 'Investor partner'
+        : 'Secure project account';
 
   const handleSignOut = async () => {
     try {
@@ -120,7 +127,7 @@ export const ProfileDropdown = ({ username, userEmail, avatarUrl, onModuleChange
               <span className="text-[13px] font-medium text-foreground leading-none truncate max-w-[100px]">
                 {username || userEmail.split('@')[0]}
               </span>
-              <span className="text-[10px] text-muted-foreground leading-none mt-0.5">Pro</span>
+              <span className="text-[10px] text-muted-foreground leading-none mt-0.5">Operations</span>
             </div>
 
             <ChevronsUpDown className="hidden sm:block h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
@@ -131,7 +138,7 @@ export const ProfileDropdown = ({ username, userEmail, avatarUrl, onModuleChange
         <DropdownMenuContent
           align="end"
           sideOffset={6}
-          className="w-60 p-0 overflow-hidden rounded-xl shadow-lg border border-border/60"
+          className="operations-profile-menu w-72 p-0 overflow-hidden shadow-lg border border-border/60"
         >
           {/* Identity header */}
           <div className="flex items-center gap-3 px-4 py-3.5 bg-muted/30 border-b border-border/40">
@@ -147,8 +154,8 @@ export const ProfileDropdown = ({ username, userEmail, avatarUrl, onModuleChange
                 {userEmail}
               </p>
               <div className="mt-1.5">
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 rounded-full px-2 py-0.5 leading-none">
-                  Pro Member
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-primary bg-primary/10 px-2 py-1 leading-none">
+                  {roleLabel}
                 </span>
               </div>
             </div>

@@ -12,28 +12,17 @@ const Logo: React.FC<LogoProps> = ({
   height = 32,
 }) => {
   return (
-    <span
-      role="img"
-      aria-label="TWV"
+    <img
+      src="/logo-192.png"
+      alt="TW Ventures — Acquire, Build, Manage"
       className={className}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        display: 'block',
         width,
         height,
-        backgroundColor: '#fff',
-        color: '#071a33',
-        fontFamily: 'Georgia, "Times New Roman", serif',
-        fontSize: `calc(${typeof height === 'number' ? `${height}px` : String(height)} * 0.46)`,
-        fontWeight: 700,
-        letterSpacing: '-0.12em',
-        lineHeight: 1,
-        paddingRight: '0.12em',
+        objectFit: 'contain',
       }}
-    >
-      TWV
-    </span>
+    />
   );
 };
 

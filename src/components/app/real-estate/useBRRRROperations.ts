@@ -88,6 +88,12 @@ export const useBRRRROperations = (userId: string | undefined) => {
           description: `"${dealName}" has been updated successfully.`,
         });
       } else {
+        // organization_id is omitted on purpose. It is `not null`, but a BEFORE
+        // INSERT trigger (private.assign_default_brrrr_organization) resolves it
+        // from the caller's membership, and a pgTAP test pins that -- "the
+        // shipped calculator can save without supplying organization_id".
+        // Generated types cannot see triggers, so the cast tells the compiler
+        // what the database already guarantees.
         const { error } = await supabase
           .from('brrrr_deals')
           .insert([{
@@ -96,8 +102,8 @@ export const useBRRRROperations = (userId: string | undefined) => {
             inputs: inputs as any,
             results: encodeResults(results) as any,
             notes: notes,
-          }]);
-        
+          }] as never);
+
         if (error) throw error;
         
         toast({

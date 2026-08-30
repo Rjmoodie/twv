@@ -9,11 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Mail, Eye, EyeOff, CheckCircle, ArrowLeft,
-  Shield, Sparkles, AlertCircle, Loader2,
+  Building2, Sparkles, AlertCircle, Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./AuthProvider";
 import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
+import Logo from "./Logo";
 
 // SVG icons for OAuth providers — inline to avoid dependency on icon packs
 const GoogleIcon = () => (
@@ -94,7 +95,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
   // On mobile, auto-focus triggers the keyboard before the user sees the form.
   useEffect(() => {
     if (open && window.innerWidth >= 640) setTimeout(() => emailRef.current?.focus(), 80);
-  }, [view]);
+  }, [view, open]);
 
   const validateEmail = () => {
     if (!email.trim()) { setEmailError('Email is required'); return false; }
@@ -344,7 +345,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
       <p className="text-center text-sm text-muted-foreground pt-2">
         No account?{' '}
         <button type="button" onClick={() => { clearErrors(); setView('signup'); }} className="text-primary hover:underline underline-offset-2 font-medium">
-          Create one free
+          Create an account
         </button>
       </p>
     </>
@@ -360,7 +361,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
         {renderFormError()}
         <Button type="submit" disabled={loading || !!oauthLoading} className="w-full h-11 font-medium">
           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-          {loading ? 'Creating account…' : 'Create Free Account'}
+          {loading ? 'Creating account…' : 'Create Account'}
         </Button>
       </form>
       <p className="text-center text-sm text-muted-foreground pt-2">
@@ -419,57 +420,44 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     : view === 'signup' ? 'Create Your Account'
     : 'Welcome to TW Ventures';
 
+  const accessLabel = message?.toLowerCase().includes('investor') ? 'Investor partnerships'
+    : message?.toLowerCase().includes('project manager') ? 'Project delivery'
+      : message?.toLowerCase().includes('client') || message?.toLowerCase().includes('project invitation') ? 'Investor partnerships'
+        : 'Secure project access';
+
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!loading && !oauthLoading) onOpenChange(v); }}>
       {/* Mobile: bottom sheet that lifts above the keyboard.
           keyboardHeight is tracked from Capacitor keyboard events and applied as bottom offset. */}
       <DialogContent
-        className="sm:max-w-md max-sm:max-h-[85dvh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        className="max-sm:max-h-[90dvh] overflow-y-auto border-[#071a33]/20 bg-[#fbfaf7] p-0 pb-[max(0rem,env(safe-area-inset-bottom))] sm:max-w-[760px] sm:grid-cols-[.82fr_1.18fr] sm:gap-0 sm:overflow-hidden sm:rounded-lg"
         style={keyboardHeight > 0 ? { bottom: keyboardHeight, transition: 'bottom 0.25s ease-out' } : undefined}
       >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2.5 text-lg">
-            <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shrink-0">
-              <Shield className="h-4 w-4 text-primary-foreground" />
-            </div>
-            {title}
-          </DialogTitle>
-          <DialogDescription>
-            {view === 'signin'
-              ? 'Sign in to access your financial workspace.'
-              : view === 'signup'
-                ? 'Create an account to save your progress across devices.'
-                : 'Enter your email and we will send a secure reset link.'}
-          </DialogDescription>
-        </DialogHeader>
+        <aside className="relative hidden overflow-hidden bg-[#071a33] p-8 text-white sm:flex sm:flex-col sm:justify-between">
+          <div className="absolute inset-0 opacity-[.07]" style={{ backgroundImage: 'linear-gradient(90deg, white 1px, transparent 1px), linear-gradient(white 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+          <div className="relative"><div className="inline-flex bg-white p-2"><Logo width={92} height={72} /></div><p className="mt-8 text-[10px] font-bold uppercase tracking-[.28em] text-[#cfbd9b]">{accessLabel}</p><h3 className="brand-serif mt-4 text-3xl leading-tight">One accountable view of the work.</h3><p className="mt-4 text-sm leading-6 text-slate-300">Secure access to the projects, decisions, documents, and next actions assigned to you.</p></div>
+          <div className="relative"><div className="mb-4 h-px bg-gradient-to-r from-[#cfbd9b] to-transparent" /><p className="text-[10px] font-semibold uppercase tracking-[.24em] text-slate-300">Acquire · Build · Manage</p></div>
+        </aside>
 
-        {/* Context message (e.g. "This module requires sign-in") */}
-        {message && view === 'signin' && (
-          <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 text-sm">
-            <Shield className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-            <p className="text-foreground">{message}</p>
+        <div className="brand-form p-6 sm:p-8">
+          <div className="mb-6 flex items-center gap-3 sm:hidden"><Logo width={62} height={48} /><div><p className="brand-serif text-xl">TW Ventures</p><p className="text-[9px] font-bold uppercase tracking-[.2em] text-[#9a7b4f]">{accessLabel}</p></div></div>
+          <DialogHeader>
+            <DialogTitle className="brand-serif text-3xl font-normal leading-tight">{title}</DialogTitle>
+            <DialogDescription className="leading-6">
+              {view === 'signin' ? 'Use the email connected to your TW Ventures relationship.' : view === 'signup' ? 'Create a secure account. Project access is assigned separately.' : 'Enter your email and we will send a secure reset link.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {message && view === 'signin' && <div className="mt-5 flex items-start gap-2.5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-sm"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-[#9a7b4f]" /><p>{message}</p></div>}
+          {view === 'signup' && <div className="mt-5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-xs leading-5 text-muted-foreground"><p className="font-semibold text-foreground">Access follows a verified invitation</p><p>Each account sees only the projects and tools assigned to it.</p></div>}
+
+          <div className="mt-6">
+            {view === 'signin' && renderSignIn()}
+            {view === 'signup' && renderSignUp()}
+            {view === 'forgot' && renderForgot()}
+            {view === 'forgot-sent' && renderCheckEmail(false)}
+            {view === 'signup-sent' && renderCheckEmail(true)}
           </div>
-        )}
-
-        {/* Free tier value prop — only show on sign-up */}
-        {view === 'signup' && (
-          <div className="rounded-lg bg-muted/50 border border-border px-3 py-2.5 text-xs text-muted-foreground space-y-1">
-            <p className="font-medium text-foreground text-sm">Free forever includes:</p>
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-              <li className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-primary inline-block" />Dashboard</li>
-              <li className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-primary inline-block" />Watchlist</li>
-              <li className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-primary inline-block" />Earnings Calendar</li>
-              <li className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-primary inline-block" />AI Financial Coach</li>
-            </ul>
-          </div>
-        )}
-
-        <div className="mt-1">
-          {view === 'signin' && renderSignIn()}
-          {view === 'signup' && renderSignUp()}
-          {view === 'forgot' && renderForgot()}
-          {view === 'forgot-sent' && renderCheckEmail(false)}
-          {view === 'signup-sent' && renderCheckEmail(true)}
         </div>
       </DialogContent>
     </Dialog>

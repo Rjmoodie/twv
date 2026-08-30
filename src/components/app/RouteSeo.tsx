@@ -5,8 +5,8 @@ const SITE_URL = 'https://twv-llc.com';
 
 const routeMetadata: Record<string, { title: string; description: string; index: boolean }> = {
   '/': {
-    title: 'Philadelphia Real Estate Development & General Contracting | TW Ventures',
-    description: 'TW Ventures acquires, develops, and builds real estate in Philadelphia. In-house general contracting from off-market acquisition through construction to stabilized, cash-flowing assets.',
+    title: 'Philadelphia Real Estate Investment & Development | TW Ventures',
+    description: 'TW Ventures partners with investors to acquire, develop, build, and manage Philadelphia real estate through one accountable platform.',
     index: true,
   },
   '/investors': {
@@ -15,8 +15,8 @@ const routeMetadata: Record<string, { title: string; description: string; index:
     index: true,
   },
   '/get-started': {
-    title: 'Client Portal & Project Onboarding | TW Ventures',
-    description: 'Access your TW Ventures projects, follow construction and development updates, view documents, and start your next real estate project.',
+    title: 'Start a Real Estate or Construction Project | TW Ventures',
+    description: 'Tell TW Ventures about your acquisition, development, construction, renovation, or property-management project.',
     index: true,
   },
   '/reset-password': {

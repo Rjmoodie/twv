@@ -5,7 +5,6 @@ import NotificationBell from '@/components/app/NotificationBell';
 import { ProfileDropdown } from '@/components/app/ProfileDropdown';
 import { CommandPalette } from '@/components/app/CommandPalette';
 import { useNavigate } from 'react-router-dom';
-import Logo from '@/components/app/Logo';
 
 interface AppHeaderProps {
   activeModule: string;
@@ -21,6 +20,7 @@ interface AppHeaderProps {
 }
 
 const AppHeader: React.FC<AppHeaderProps> = ({
+  activeModule,
   user,
   profile,
   authLoading,
@@ -33,6 +33,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const navigate = useNavigate();
+  const moduleLabel = activeModule === 'crm'
+    ? 'Relationship Desk'
+    : activeModule === 'portfolio'
+      ? 'Portfolio Desk'
+      : activeModule.replace(/-/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
 
   return (
     <>
@@ -43,7 +48,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         aria-hidden="true"
       />
       <header
-        className="z-40 border-b border-border/40 bg-background backdrop-blur-2xl"
+        className="operations-header z-40 border-b bg-background backdrop-blur-2xl"
         style={{
           paddingTop: 'env(safe-area-inset-top)',
           boxShadow: '0 1px 0 hsl(var(--border) / 0.4)',
@@ -114,7 +119,7 @@ const AppHeader: React.FC<AppHeaderProps> = ({
         {/* ── Desktop layout ────────────────────────────────────────────── */}
         <div className="hidden xl:flex h-16 items-center justify-between gap-4 px-4">
 
-          {/* Left: logo + brand */}
+          {/* Left: current operating desk. The permanent brand lives in the sidebar. */}
           <div className="flex items-center gap-2.5 min-w-0">
             {canGoBack && (
               <Button variant="ghost" size="sm" onClick={onGoBack} className="gap-1 text-muted-foreground">
@@ -122,12 +127,9 @@ const AppHeader: React.FC<AppHeaderProps> = ({
                 <span className="text-sm">Back</span>
               </Button>
             )}
-            <div className="h-9 w-9 rounded-2xl overflow-hidden shadow-elev-1 ring-1 ring-primary/20 shrink-0">
-              <Logo width={36} height={36} />
-            </div>
-            <div className="leading-tight">
-              <div className="text-sm font-bold text-foreground">TW Ventures</div>
-              <div className="text-muted-foreground" style={{ fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Real Estate Operations</div>
+            <div className="hidden lg:block leading-tight">
+              <div className="operations-header__kicker">TW Ventures / Operations</div>
+              <div className="operations-header__desk">{moduleLabel}</div>
             </div>
           </div>
 

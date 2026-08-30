@@ -42,7 +42,7 @@ const MobileNavigation = ({
 
       {/* Drawer */}
       <div
-        className={`fixed left-0 top-0 h-full w-[304px] bg-background/90 backdrop-blur-xl border-r border-border/60 shadow-elev-3 z-50 lg:hidden flex flex-col transition-transform duration-200 ease-out ${
+        className={`operations-mobile-nav fixed left-0 top-0 h-full w-[304px] bg-background/95 backdrop-blur-xl border-r border-border/60 shadow-elev-3 z-50 lg:hidden flex flex-col transition-transform duration-200 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -52,12 +52,13 @@ const MobileNavigation = ({
           style={{ paddingTop: 'env(safe-area-inset-top)', minHeight: 'calc(64px + env(safe-area-inset-top))' }}
         >
           <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-2xl overflow-hidden shadow-elev-1 ring-1 ring-border/40">
-              <Logo width={36} height={36} />
+            <div className="operations-sidebar__mark overflow-hidden">
+              <Logo width={48} height={40} />
             </div>
             <div className="leading-tight">
-              <div className="text-sm font-semibold text-foreground">TW Ventures</div>
-              <div className="text-xs text-muted-foreground">Real Estate Operations</div>
+              <div className="operations-sidebar__name text-sm">TW Ventures</div>
+              <span className="operations-sidebar__rule" />
+              <div className="operations-sidebar__section">Asset Operations</div>
             </div>
           </div>
           <button

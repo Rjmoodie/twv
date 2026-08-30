@@ -67,6 +67,13 @@ const healthClasses: Record<PortfolioHealth, string> = {
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const pretty = (value: string) => value.replace(/_/g, ' ').replace(/\b\w/g, (letter: string) => letter.toUpperCase());
+const personaLabel = (value: string) => value === 'admin'
+  ? 'Organization administrator'
+  : value === 'project_manager'
+    ? 'Project manager'
+    : value === 'client' || value === 'investor'
+      ? 'Investor partner'
+      : pretty(value);
 const shortDate = (value: string | null) => value
   ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(`${value}T12:00:00`))
   : 'Not scheduled';
@@ -184,13 +191,14 @@ const Portfolio = () => {
   }
 
   return (
-    <div className="space-y-6 pb-24 lg:pb-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="operations-module space-y-6 pb-24 lg:pb-8">
+      <header className="operations-module__header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="mb-2 flex flex-wrap gap-2">
-            {access.personas.map((persona) => <Badge key={persona} variant="outline">{pretty(persona)}</Badge>)}
+            <span className="operations-eyebrow">Asset operations</span>
+            {access.personas.map((persona) => <Badge key={persona} variant="outline">{personaLabel(persona)}</Badge>)}
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">{portalMode === 'client' ? 'My projects' : portalMode === 'project_manager' ? 'Project command center' : 'Project portfolio'}</h1>
+          <h1 className="operations-title text-4xl tracking-tight">{portalMode === 'client' ? 'My projects' : portalMode === 'project_manager' ? 'Project command center' : 'Project portfolio'}</h1>
           <p className="mt-1 text-muted-foreground">{portalMode === 'client' ? 'Follow progress, upcoming milestones, shared documents, and the latest decisions.' : portalMode === 'project_manager' ? 'Prioritize schedule risk, communicate progress, and keep every assignment moving.' : 'Properties, project health, capital, and the next action in one operating view.'}</p>
         </div>
         <div className="flex flex-wrap gap-2">{hasPersona('project_manager') && <Button variant="outline" onClick={() => setPortfolioStudioOpen(true)}><BriefcaseBusiness className="mr-2 h-4 w-4" />Public portfolio</Button>}{canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add project</Button>}</div>
@@ -204,7 +212,7 @@ const Portfolio = () => {
           ['needs_plan', 'Needs plan', counts.needs_plan, MapPin],
         ] as const).map(([key, label, count, Icon]) => (
           <button key={key} type="button" onClick={() => setHealth(key)} className={cn(
-            'rounded-xl border bg-card p-4 text-left transition hover:border-primary/50 hover:shadow-sm',
+            'operations-stat border bg-card p-4 text-left transition hover:border-primary/50 hover:shadow-sm',
             health === key && 'border-primary ring-2 ring-primary/10',
           )}>
             <Icon className="mb-3 h-5 w-5 text-muted-foreground" />
@@ -218,7 +226,7 @@ const Portfolio = () => {
           <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search projects or locations" className="pl-9" />
         </div>
-        <div className="grid grid-cols-2 rounded-xl border bg-card p-1 sm:grid-cols-3">
+        <div className="operations-view-toggle grid grid-cols-2 border bg-card p-1 sm:grid-cols-3">
           <Button size="sm" variant={view === 'list' ? 'secondary' : 'ghost'} onClick={() => changeView('list')}><LayoutList className="mr-2 h-4 w-4" />List</Button>
           <Button size="sm" variant={view === 'map' ? 'secondary' : 'ghost'} onClick={() => changeView('map')}><Map className="mr-2 h-4 w-4" />Map</Button>
           {!isMobile && <Button size="sm" variant={view === 'split' ? 'secondary' : 'ghost'} onClick={() => changeView('split')}>Split</Button>}
@@ -226,14 +234,15 @@ const Portfolio = () => {
       </div>
 
       {projects.length === 0 ? (
-        <Card><CardContent className="flex min-h-[360px] flex-col items-center justify-center p-8 text-center">
-          <Building2 className="mb-4 h-10 w-10 text-muted-foreground" />
-          <h2 className="text-xl font-semibold">Your portfolio starts with a project</h2>
+        <Card className="operations-empty-state"><CardContent className="flex min-h-[390px] flex-col items-center justify-center p-8 text-center">
+          <div className="operations-empty-state__icon"><Building2 className="h-9 w-9" /></div>
+          <span className="operations-eyebrow mt-5">Property record 01</span>
+          <h2 className="operations-title mt-2 text-3xl">Establish your first asset</h2>
           <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            {canCreate ? 'Create the property and project together, then invite the project manager, investors, and clients.' : 'You will see a project here as soon as an administrator grants you project access.'}
+            {canCreate ? 'Create the property and operating record together, then assign the project team and investor partners.' : 'Your assigned properties will appear here as soon as an administrator grants project access.'}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-2">
-            {canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add first project</Button>}
+            {canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add first asset</Button>}
             {canCreate && <Button variant="outline" onClick={() => navigateToModule('real-estate')}>Underwrite a deal</Button>}
           </div>
         </CardContent></Card>
@@ -434,7 +443,7 @@ const ProjectRequestDialog = ({ open, onOpenChange, project, userId, onCreated }
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Ask or request a change</DialogTitle><DialogDescription>Keep questions and decisions attached to the project instead of losing them in email.</DialogDescription></DialogHeader><div className="space-y-4"><div className="grid gap-4 sm:grid-cols-2"><Field label="Request type"><Select value={type} onValueChange={(value) => setType(value as ProjectRequest['request_type'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="question">Question</SelectItem><SelectItem value="change_request">Change request</SelectItem><SelectItem value="approval">Approval needed</SelectItem><SelectItem value="document_request">Document request</SelectItem></SelectContent></Select></Field><Field label="Priority"><Select value={priority} onValueChange={(value) => setPriority(value as ProjectRequest['priority'])}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="normal">Normal</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="urgent">Urgent</SelectItem></SelectContent></Select></Field></div><Field label="Subject *"><Input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Confirm kitchen finish selection" /></Field><Field label="Details *"><Textarea rows={6} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Explain the decision, question, or requested outcome." /></Field></div><DialogFooter><Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button><Button onClick={submit} disabled={busy || !title.trim() || !description.trim()}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Send request</Button></DialogFooter></DialogContent></Dialog>;
 };
 
-const AudienceSelect = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => <Select value={value} onValueChange={onChange}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all_members">All project members</SelectItem><SelectItem value="client">Clients</SelectItem><SelectItem value="investor">Investors</SelectItem><SelectItem value="internal">Internal team only</SelectItem></SelectContent></Select>;
+const AudienceSelect = ({ value, onChange }: { value: string; onChange: (value: string) => void }) => <Select value={value} onValueChange={onChange}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all_members">All project members</SelectItem><SelectItem value="client">Investor partners · project access</SelectItem><SelectItem value="investor">Investor partners · capital access</SelectItem><SelectItem value="internal">Internal team only</SelectItem></SelectContent></Select>;
 
 const CreateProjectDialog = ({ open, onOpenChange, organizationIds, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; organizationIds: string[]; onCreated: () => Promise<void> }) => {
   const [busy, setBusy] = useState(false);
@@ -476,14 +485,14 @@ const InviteDialog = ({ open, onOpenChange, project, onCreated }: { open: boolea
   const [email, setEmail] = useState(''); const [role, setRole] = useState('project_manager'); const [busy, setBusy] = useState(false); const [link, setLink] = useState(''); const [emailSent, setEmailSent] = useState(false);
   const submit = async () => { if (!project || !email.trim()) return; setBusy(true); const result = await database.rpc('create_project_invitation', { target_project: project.project_id, invite_email: email.trim(), invite_role: role }); if (result.error) { setBusy(false); toast({ title: 'Invitation was not created', description: result.error.message, variant: 'destructive' }); return; } const rows = result.data as Array<{ invitation_token: string }>; const token = rows[0].invitation_token; const invitationLink = `${window.location.origin}/invite/${token}`; setLink(invitationLink); track('project_invitation_created', { project_id: project.project_id, role }); const delivery = await supabase.functions.invoke('send-project-invitation', { body: { invitationToken: token } }); setBusy(false); if (delivery.error) { setEmailSent(false); toast({ title: 'Invitation created—copy the link to deliver it', description: delivery.error.message, variant: 'destructive' }); } else { setEmailSent(true); toast({ title: 'Invitation email sent', description: `Secure ${pretty(role)} access was sent to ${email.trim()}.` }); } await onCreated(); };
   const copy = async () => { await navigator.clipboard.writeText(link); toast({ title: 'Invitation link copied' }); };
-  return <Dialog open={open} onOpenChange={(next) => { onOpenChange(next); if (!next) { setLink(''); setEmailSent(false); } }}><DialogContent><DialogHeader><DialogTitle>Invite to {project?.project_name}</DialogTitle><DialogDescription>Access is scoped to this project and bound to the invited email address.</DialogDescription></DialogHeader>{link ? <div className="space-y-3"><div className={cn('rounded-xl border p-3 text-sm', emailSent ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800')}>{emailSent ? `Invitation email sent to ${email}.` : 'Email delivery was unavailable. Copy and send the secure link below.'}</div><Label>Secure invitation link</Label><div className="flex gap-2"><Input readOnly value={link} /><Button onClick={copy} size="icon"><Copy className="h-4 w-4" /></Button></div><p className="text-xs text-muted-foreground">This link expires in seven days and can only be accepted by {email}.</p></div> : <div className="space-y-4"><Field label="Email address"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field><Field label="Portal role"><Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="project_manager">Project manager</SelectItem><SelectItem value="investor">Investor</SelectItem><SelectItem value="client">Client</SelectItem><SelectItem value="viewer">Viewer</SelectItem></SelectContent></Select></Field></div>}<DialogFooter>{!link && <Button onClick={submit} disabled={busy || !email.trim()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Create and send invitation</Button>}</DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={open} onOpenChange={(next) => { onOpenChange(next); if (!next) { setLink(''); setEmailSent(false); } }}><DialogContent><DialogHeader><DialogTitle>Invite to {project?.project_name}</DialogTitle><DialogDescription>Access is scoped to this project and bound to the invited email address.</DialogDescription></DialogHeader>{link ? <div className="space-y-3"><div className={cn('rounded-xl border p-3 text-sm', emailSent ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-amber-200 bg-amber-50 text-amber-800')}>{emailSent ? `Invitation email sent to ${email}.` : 'Email delivery was unavailable. Copy and send the secure link below.'}</div><Label>Secure invitation link</Label><div className="flex gap-2"><Input readOnly value={link} /><Button onClick={copy} size="icon"><Copy className="h-4 w-4" /></Button></div><p className="text-xs text-muted-foreground">This link expires in seven days and can only be accepted by {email}.</p></div> : <div className="space-y-4"><Field label="Email address"><Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} /></Field><Field label="Access profile"><Select value={role} onValueChange={setRole}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="project_manager">Project manager · operating access</SelectItem><SelectItem value="investor">Investor partner · capital access</SelectItem><SelectItem value="client">Investor partner · project access</SelectItem><SelectItem value="viewer">Advisor · view only</SelectItem></SelectContent></Select></Field><p className="text-xs text-muted-foreground">Investor partners use one project-access identity. Choose the information scope that matches the relationship.</p></div>}<DialogFooter>{!link && <Button onClick={submit} disabled={busy || !email.trim()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}Create and send invitation</Button>}</DialogFooter></DialogContent></Dialog>;
 };
 
 const PublishUpdateDialog = ({ open, onOpenChange, project, onCreated }: { open: boolean; onOpenChange: (open: boolean) => void; project: PortfolioProject | null; onCreated: () => Promise<void> }) => {
   const { user } = useAuth();
   const [title, setTitle] = useState(''); const [body, setBody] = useState(''); const [visibility, setVisibility] = useState('all_members'); const [busy, setBusy] = useState(false);
   const submit = async () => { if (!project || !title.trim() || !body.trim()) return; setBusy(true); const result = await database.from('project_updates').insert({ organization_id: project.organization_id, project_id: project.project_id, title: title.trim(), body: body.trim(), visibility, status: 'published', published_at: new Date().toISOString(), created_by: user?.id }); setBusy(false); if (result.error) { toast({ title: 'Update was not published', description: result.error.message, variant: 'destructive' }); return; } track('portfolio_action_completed', { action: 'publish_update', project_id: project.project_id, visibility }); toast({ title: 'Project update published' }); setTitle(''); setBody(''); onOpenChange(false); await onCreated(); };
-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Publish project update</DialogTitle><DialogDescription>Make progress visible to the right project audience.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Permits approved" /></Field><Field label="Update"><Textarea rows={6} value={body} onChange={(e) => setBody(e.target.value)} placeholder="What changed, why it matters, and what happens next?" /></Field><Field label="Visible to"><Select value={visibility} onValueChange={setVisibility}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all_members">All project members</SelectItem><SelectItem value="investor">Investors</SelectItem><SelectItem value="client">Clients</SelectItem><SelectItem value="internal">Internal team only</SelectItem></SelectContent></Select></Field></div><DialogFooter><Button onClick={submit} disabled={busy || !title.trim() || !body.trim()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquarePlus className="mr-2 h-4 w-4" />}Publish update</Button></DialogFooter></DialogContent></Dialog>;
+  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Publish project update</DialogTitle><DialogDescription>Make progress visible to the right project audience.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Permits approved" /></Field><Field label="Update"><Textarea rows={6} value={body} onChange={(e) => setBody(e.target.value)} placeholder="What changed, why it matters, and what happens next?" /></Field><Field label="Visible to"><AudienceSelect value={visibility} onChange={setVisibility} /></Field></div><DialogFooter><Button onClick={submit} disabled={busy || !title.trim() || !body.trim()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquarePlus className="mr-2 h-4 w-4" />}Publish update</Button></DialogFooter></DialogContent></Dialog>;
 };
 
 const Field = ({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) => <div className={cn('space-y-2', wide && 'sm:col-span-2')}><Label>{label}</Label>{children}</div>;

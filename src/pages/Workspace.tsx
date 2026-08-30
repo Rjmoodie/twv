@@ -16,6 +16,7 @@ import { NavigationProvider } from "@/contexts/NavigationContext";
 import { ActionGuardProvider } from "@/contexts/ActionGuardContext";
 import { savePendingAction, loadPendingAction, clearPendingAction } from "@/lib/pendingAction";
 import type { PendingAction } from "@/lib/pendingAction";
+import { canEnterPortal } from "@/lib/portalRouting";
 
 import { useSubscription } from "@/hooks/useSubscription";
 import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from "@/config/moduleAccess";
@@ -107,7 +108,7 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
   const [authDialogMessage, setAuthDialogMessage] = useState<string | null>(null);
   const [showPricingDialog, setShowPricingDialog] = useState(false);
   const [pendingUpgradeModule, setPendingUpgradeModule] = useState<string | null>(null);
-  const { user, loading: authLoading, access, accessLoading, hasPersona } = useAuth();
+  const { user, loading: authLoading, access, accessLoading } = useAuth();
   const portalPromptedRef = useRef(false);
   const subscription = useSubscription();
   const { reportError } = useError();
@@ -128,13 +129,13 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
 
   useEffect(() => {
     if (!portalIntent || !user || authLoading || accessLoading) return;
-    if (!hasPersona(portalIntent)) {
+    if (!canEnterPortal(portalIntent, access.personas)) {
       toast({
         title: 'Project access not assigned',
         description: 'Ask a workspace administrator for a project invitation for this portal.',
       });
     }
-  }, [portalIntent, user, authLoading, accessLoading, hasPersona]);
+  }, [portalIntent, user, authLoading, accessLoading, access.personas]);
 
   useEffect(() => {
     if (!user) return;
