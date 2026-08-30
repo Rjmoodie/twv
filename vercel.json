@@ -12,10 +12,6 @@
     { "source": "/pricing", "destination": "/get-started", "permanent": true }
   ],
 
-  "crons": [
-    { "path": "/api/dispatch-notifications", "schedule": "*/5 * * * *" }
-  ],
-
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/(.*)", "destination": "/index.html" }
