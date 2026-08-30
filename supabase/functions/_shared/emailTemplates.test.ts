@@ -25,9 +25,14 @@ describe('registry', () => {
   it('covers every event type the outbox currently emits', () => {
     // Order-independent: the registry is a map, and asserting insertion order
     // made this fail whenever a template was added anywhere but the end.
+    // project_inquiry_received was emitted by submit_project_inquiry from the
+    // day it shipped while this list said otherwise, so the dispatcher
+    // dead-lettered every project enquiry and the test agreed with the gap
+    // rather than catching it. The list must track what the outbox emits.
     expect([...REGISTERED_EVENT_TYPES].sort()).toEqual([
       'calendar_reminder',
       'investor_inquiry_received',
+      'project_inquiry_received',
       'project_invitation',
       'project_milestone_due',
     ]);

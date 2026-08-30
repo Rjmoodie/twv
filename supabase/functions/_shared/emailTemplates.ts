@@ -98,6 +98,38 @@ const TEMPLATES: Record<string, Template> = {
         + `<p style="margin:16px 0 0;color:#667085;font-size:13px">You set this reminder in TW Ventures. Provider dates can change after a reminder is scheduled.</p>`;
     },
   },
+  // submit_project_inquiry has queued this since it shipped, but no template
+  // was registered -- so the dispatcher dead-lettered every one of them with
+  // "No template registered" and the project funnel notified nobody.
+  project_inquiry_received: {
+    content: payload => {
+      const name = str(payload.full_name, 'Someone');
+      const kind = str(payload.project_type).replace(/_/g, ' ');
+      return {
+        title: `New project enquiry: ${name}`,
+        message: kind
+          ? `${name} enquired about ${kind} work through the project page.`
+          : `${name} enquired through the project page.`,
+        actionPath: '/?module=crm',
+        actionLabel: 'Open CRM',
+        category: 'project',
+        pushTag: `project_inquiry-${str(payload.inquiry_id, 'unknown')}`,
+      };
+    },
+    body: (content, actionUrl, payload) => {
+      const email = str(payload.email);
+      const kind = str(payload.project_type).replace(/_/g, ' ');
+      return `<p style="margin:0 0 12px">${escapeHtml(content.message)}</p>`
+        + ((email || kind)
+          ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0;border:1px solid #e4e7ec;border-radius:10px;padding:14px 16px">`
+            + (email ? `<tr><td style="font-size:13px;color:#667085">Email</td><td style="padding-left:18px;font-size:13px;font-weight:600">${escapeHtml(email)}</td></tr>` : '')
+            + (kind ? `<tr><td style="font-size:13px;color:#667085;padding-top:6px">Work</td><td style="padding-left:18px;padding-top:6px;font-size:13px;font-weight:600">${escapeHtml(kind)}</td></tr>` : '')
+            + `</table>`
+          : '')
+        + (actionUrl ? emailButton(content.actionLabel, actionUrl) : '')
+        + `<p style="margin:16px 0 0;color:#667085;font-size:13px">Everything they submitted -- phone, budget, timeline, property and their full message -- is on the enquiry in the CRM.</p>`;
+    },
+  },
   investor_inquiry_received: {
     content: payload => {
       const name = str(payload.full_name, 'Someone');
