@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect } from "react";
+import { Suspense, useState, useCallback, useEffect } from "react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, RefreshCw, FolderOpen, TrendingDown, MapPin } from "lucide-react";
+import { Calculator, RefreshCw, FolderOpen, TrendingDown, MapPin, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { BRRRRInputs, BRRRRResults, SavedDeal } from "./real-estate/brrrrCalculations";
 import { useBRRRROperations } from "./real-estate/useBRRRROperations";
@@ -10,7 +11,13 @@ import { useAuth } from "./AuthProvider";
 import { TraditionalCalculator } from "./real-estate/TraditionalCalculator";
 import { BRRRRCalculator } from "./real-estate/BRRRRCalculator";
 import { SavedDealsManager } from "./real-estate/SavedDealsManager";
-import { AmortizationVisualizer } from "./real-estate/AmortizationVisualizer";
+// recharts is 364KB, and this is the only thing that needs it. The tab already
+// waits for a visit before rendering; without a dynamic import the bundle
+// arrived anyway, so anyone who only wanted the numbers still paid for the
+// chart library.
+const AmortizationVisualizer = lazyWithRetry(() =>
+  import("./real-estate/AmortizationVisualizer").then((m) => ({ default: m.AmortizationVisualizer })),
+);
 import { EnhancedSaveDialog } from "./real-estate/EnhancedSaveDialog";
 import RealEstateDealSourcing from "./real-estate/RealEstateDealSourcing";
 import { NavigationWrapper } from "./navigation/NavigationWrapper";
@@ -211,7 +218,15 @@ const RealEstateCalculatorContainer = () => {
         </TabsContent>
 
         <TabsContent value="amortization" className="mt-0">
-          {visited.has("amortization") && <AmortizationVisualizer />}
+          {visited.has("amortization") && (
+            <Suspense fallback={
+              <div className="flex min-h-[320px] items-center justify-center rounded-xl border bg-muted/30">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            }>
+              <AmortizationVisualizer />
+            </Suspense>
+          )}
         </TabsContent>
 
         <TabsContent value="saved-deals" className="mt-0">
