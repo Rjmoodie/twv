@@ -166,6 +166,11 @@ const Portfolio = () => {
   };
 
   const canCreate = hasPersona('admin');
+  // The public-portfolio studio was gated on the project_manager persona alone,
+  // but an organization owner gets the admin persona and not that one -- so the
+  // person who owns the company could not open the studio, while the RLS insert
+  // policy on pm_portfolio_entries accepts owner, admin and project_manager
+  // alike. The button now matches what the database actually permits.
   const portalMode = hasPersona('client') && !hasPersona('admin') && !hasPersona('project_manager')
     ? 'client' : hasPersona('project_manager') && !hasPersona('admin') ? 'project_manager' : 'operations';
   const counts = {
@@ -201,7 +206,7 @@ const Portfolio = () => {
           <h1 className="operations-title text-4xl tracking-tight">{portalMode === 'client' ? 'My projects' : portalMode === 'project_manager' ? 'Project command center' : 'Project portfolio'}</h1>
           <p className="mt-1 text-muted-foreground">{portalMode === 'client' ? 'Follow progress, upcoming milestones, shared documents, and the latest decisions.' : portalMode === 'project_manager' ? 'Prioritize schedule risk, communicate progress, and keep every assignment moving.' : 'Properties, project health, capital, and the next action in one operating view.'}</p>
         </div>
-        <div className="flex flex-wrap gap-2">{hasPersona('project_manager') && <Button variant="outline" onClick={() => setPortfolioStudioOpen(true)}><BriefcaseBusiness className="mr-2 h-4 w-4" />Public portfolio</Button>}{canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add project</Button>}</div>
+        <div className="flex flex-wrap gap-2">{(hasPersona('project_manager') || hasPersona('admin')) && <Button variant="outline" onClick={() => setPortfolioStudioOpen(true)}><BriefcaseBusiness className="mr-2 h-4 w-4" />Public portfolio</Button>}{canCreate && <Button onClick={() => setCreateOpen(true)}><Plus className="mr-2 h-4 w-4" />Add project</Button>}</div>
       </header>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
