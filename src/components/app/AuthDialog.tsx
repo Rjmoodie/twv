@@ -296,7 +296,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
         </Button>
       </form>
       <p className="pt-2 text-center text-xs text-muted-foreground">
-        No password needed. We send a six-digit code that signs you in.
+        No password needed — we email you a one-time sign-in.
       </p>
     </>
   );
@@ -305,13 +305,21 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     <form onSubmit={(e) => { e.preventDefault(); handleVerifyCode(); }} className="space-y-4" noValidate>
       <div className="flex items-start gap-2.5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-sm">
         <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#9a7b4f]" />
-        <p>We sent a six-digit code to <strong>{email}</strong>. It expires shortly.</p>
+        {/* Supabase blocks template edits on the free tier while its own sender
+            is in use, so until custom SMTP is configured the mail arrives as a
+            link rather than a code. Both sign in, and both are described here
+            rather than promising one and delivering the other. This copy stays
+            correct after SMTP lands, when the code becomes the only form. */}
+        <p>
+          We emailed <strong>{email}</strong>. If it contains a six-digit code, enter it below.
+          If it contains a sign-in link, open that instead — either signs you in, and both expire shortly.
+        </p>
       </div>
       {renderCodeField()}
       {renderFormError()}
       <Button type="submit" disabled={loading} className="h-11 w-full font-medium">
         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-        {loading ? 'Verifying…' : 'Sign in'}
+        {loading ? 'Verifying…' : 'Sign in with code'}
       </Button>
       <div className="flex items-center justify-between">
         <button
@@ -345,7 +353,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
       {/* Mobile: bottom sheet that lifts above the keyboard.
           keyboardHeight is tracked from Capacitor keyboard events and applied as bottom offset. */}
       <DialogContent
-        className="max-sm:max-h-[90dvh] overflow-y-auto border-[#071a33]/20 bg-[#fbfaf7] p-0 pb-[max(0rem,env(safe-area-inset-bottom))] sm:max-w-[760px] sm:grid-cols-[.82fr_1.18fr] sm:gap-0 sm:overflow-hidden sm:rounded-lg"
+        className="brand-dialog max-sm:max-h-[90dvh] overflow-y-auto border-[#071a33]/20 bg-[#fbfaf7] p-0 pb-[max(0rem,env(safe-area-inset-bottom))] sm:max-w-[760px] sm:grid-cols-[.82fr_1.18fr] sm:gap-0 sm:overflow-hidden sm:rounded-lg"
         style={keyboardHeight > 0 ? { bottom: keyboardHeight, transition: 'bottom 0.25s ease-out' } : undefined}
       >
         <aside className="relative hidden overflow-hidden bg-[#071a33] p-8 text-white sm:flex sm:flex-col sm:justify-between">

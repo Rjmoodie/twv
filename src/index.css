@@ -658,6 +658,49 @@ textarea {
   min-height: 100vh;
   color: var(--public-ink);
   background: var(--public-stone);
+  /* Public pages intentionally use a light editorial palette even when the
+     signed-in workspace preference is dark. Keep every token-driven control
+     on that same palette so typed text cannot become light-on-light. */
+  --background: 42 24% 97%;
+  --foreground: 213 58% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 213 58% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 213 58% 12%;
+  --muted: 40 18% 93%;
+  --muted-foreground: 214 14% 42%;
+  --border: 210 17% 83%;
+  --input: 210 17% 80%;
+  --ring: 213 72% 14%;
+  --primary: 213 72% 14%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 38 35% 43%;
+  --accent-foreground: 0 0% 100%;
+  color-scheme: light;
+}
+
+/* AuthDialog is portalled outside .public-page, so it needs the same explicit
+   token boundary on its fixed-light panel. */
+.brand-dialog,
+.brand-select-content {
+  --public-ink: #071a33;
+  --background: 42 24% 97%;
+  --foreground: 213 58% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 213 58% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 213 58% 12%;
+  --muted: 40 18% 93%;
+  --muted-foreground: 214 14% 42%;
+  --border: 210 17% 83%;
+  --input: 210 17% 80%;
+  --ring: 213 72% 14%;
+  --primary: 213 72% 14%;
+  --primary-foreground: 0 0% 100%;
+  --accent: 38 35% 43%;
+  --accent-foreground: 0 0% 100%;
+  color: hsl(var(--foreground));
+  color-scheme: light;
 }
 
 .brand-serif {
@@ -727,7 +770,23 @@ textarea {
 .brand-form input, .brand-form textarea, .brand-form button[role="combobox"] {
   border-radius: .25rem !important;
   border-color: rgba(7,26,51,.2);
-  background: rgba(255,255,255,.78);
+  background: #fff;
+  color: #0d1d30;
+  caret-color: #0d1d30;
+}
+.brand-form input::placeholder,
+.brand-form textarea::placeholder { color: #5c697a; opacity: 1; }
+.brand-form button[role="combobox"][data-placeholder] { color: #5c697a; }
+.brand-form input:disabled,
+.brand-form textarea:disabled,
+.brand-form button[role="combobox"]:disabled { opacity: .68; }
+.brand-form input:-webkit-autofill,
+.brand-form input:-webkit-autofill:hover,
+.brand-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #0d1d30;
+  caret-color: #0d1d30;
+  box-shadow: 0 0 0 1000px #fff inset;
+  transition: background-color 9999s ease-out 0s;
 }
 .brand-form label { color: var(--public-ink); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 

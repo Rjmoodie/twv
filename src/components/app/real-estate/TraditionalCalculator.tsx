@@ -71,6 +71,7 @@ export const TraditionalCalculator = ({ onResultCalculated }: TraditionalCalcula
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input
+        aria-label={label}
         type={type}
         step={step}
         value={value}

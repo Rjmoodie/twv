@@ -519,6 +519,6 @@ const PublishUpdateDialog = ({ open, onOpenChange, project, onCreated }: { open:
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent><DialogHeader><DialogTitle>Publish project update</DialogTitle><DialogDescription>Make progress visible to the right project audience.</DialogDescription></DialogHeader><div className="space-y-4"><Field label="Title"><Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Permits approved" /></Field><Field label="Update"><Textarea rows={6} value={body} onChange={(e) => setBody(e.target.value)} placeholder="What changed, why it matters, and what happens next?" /></Field><Field label="Visible to"><AudienceSelect value={visibility} onChange={setVisibility} /></Field></div><DialogFooter><Button onClick={submit} disabled={busy || !title.trim() || !body.trim()}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <MessageSquarePlus className="mr-2 h-4 w-4" />}Publish update</Button></DialogFooter></DialogContent></Dialog>;
 };
 
-const Field = ({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) => <div className={cn('space-y-2', wide && 'sm:col-span-2')}><Label>{label}</Label>{children}</div>;
+const Field = ({ label, children, wide = false }: { label: string; children: React.ReactNode; wide?: boolean }) => <Label className={cn('block space-y-2', wide && 'sm:col-span-2')}><span className="block">{label}</span>{children}</Label>;
 
 export default Portfolio;

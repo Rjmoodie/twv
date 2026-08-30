@@ -46,6 +46,7 @@ function NumInput({
     <div className="space-y-1.5">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       <Input
+        aria-label={label}
         type="number"
         step={step}
         value={inputs[field]}

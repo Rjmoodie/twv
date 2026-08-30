@@ -182,40 +182,41 @@ export default function InvestorInquiryPage() {
           ) : (
             <Card className="brand-card brand-form">
               <CardContent className="grid gap-4 p-6 sm:grid-cols-2">
-                <Field label="Full name *"><Input value={form.full_name} onChange={(e) => set('full_name')(e.target.value)} autoComplete="name" /></Field>
-                <Field label="Email *"><Input type="email" value={form.email} onChange={(e) => set('email')(e.target.value)} autoComplete="email" /></Field>
-                <Field label="Phone"><Input type="tel" value={form.phone} onChange={(e) => set('phone')(e.target.value)} autoComplete="tel" /></Field>
-                <Field label="How did you hear about us?"><Input value={form.heard_via} onChange={(e) => set('heard_via')(e.target.value)} /></Field>
+                <Field id="investor-full-name" label="Full name *"><Input id="investor-full-name" required aria-required="true" value={form.full_name} onChange={(e) => set('full_name')(e.target.value)} autoComplete="name" /></Field>
+                <Field id="investor-email" label="Email *"><Input id="investor-email" required aria-required="true" type="email" value={form.email} onChange={(e) => set('email')(e.target.value)} autoComplete="email" /></Field>
+                <Field id="investor-phone" label="Phone"><Input id="investor-phone" type="tel" value={form.phone} onChange={(e) => set('phone')(e.target.value)} autoComplete="tel" /></Field>
+                <Field id="investor-referral" label="How did you hear about us?"><Input id="investor-referral" value={form.heard_via} onChange={(e) => set('heard_via')(e.target.value)} /></Field>
 
-                <Field label="Do you consider yourself an accredited investor?">
+                <Field id="investor-accreditation" label="Do you consider yourself an accredited investor?">
                   <Select value={form.accreditation_self_report} onValueChange={set('accreditation_self_report')}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
+                    <SelectTrigger id="investor-accreditation"><SelectValue /></SelectTrigger>
+                    <SelectContent className="brand-select-content">
                       <SelectItem value="accredited">Yes</SelectItem>
                       <SelectItem value="not_accredited">No</SelectItem>
                       <SelectItem value="unsure">I am not sure</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
-                <Field label="Typical investment size">
+                <Field id="investor-size" label="Typical investment size">
                   <Select value={form.investment_range} onValueChange={set('investment_range')}>
-                    <SelectTrigger><SelectValue placeholder="Select a range" /></SelectTrigger>
-                    <SelectContent>{RANGES.map((range) => <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>)}</SelectContent>
+                    <SelectTrigger id="investor-size"><SelectValue placeholder="Select a range" /></SelectTrigger>
+                    <SelectContent className="brand-select-content">{RANGES.map((range) => <SelectItem key={range.value} value={range.value}>{range.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
-                <Field label="Timeframe">
+                <Field id="investor-timeframe" label="Timeframe">
                   <Select value={form.timeframe} onValueChange={set('timeframe')}>
-                    <SelectTrigger><SelectValue placeholder="Select a timeframe" /></SelectTrigger>
-                    <SelectContent>{TIMEFRAMES.map((frame) => <SelectItem key={frame.value} value={frame.value}>{frame.label}</SelectItem>)}</SelectContent>
+                    <SelectTrigger id="investor-timeframe"><SelectValue placeholder="Select a timeframe" /></SelectTrigger>
+                    <SelectContent className="brand-select-content">{TIMEFRAMES.map((frame) => <SelectItem key={frame.value} value={frame.value}>{frame.label}</SelectItem>)}</SelectContent>
                   </Select>
                 </Field>
 
                 <div className="sm:col-span-2">
-                  <Field label="Anything you would like us to know"><Textarea rows={4} value={form.message} onChange={(e) => set('message')(e.target.value)} /></Field>
+                  <Field id="investor-message" label="Anything you would like us to know"><Textarea id="investor-message" rows={4} value={form.message} onChange={(e) => set('message')(e.target.value)} /></Field>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <Button className="w-full" size="lg" disabled={!ready || busy} onClick={submit}>
+                  <p id="investor-form-status" className="mb-3 text-xs leading-5 text-slate-600" aria-live="polite">{ready ? 'Your enquiry is ready to send.' : 'Enter your full name and a valid email address to continue.'}</p>
+                  <Button className="w-full" size="lg" disabled={!ready || busy} onClick={submit} aria-describedby="investor-form-status">
                     {busy ? 'Sending…' : 'Send enquiry'}
                   </Button>
                   <p className="mt-3 text-xs leading-5 text-slate-500">
@@ -233,6 +234,6 @@ export default function InvestorInquiryPage() {
   );
 }
 
-const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-  <div className="space-y-2"><Label>{label}</Label>{children}</div>
+const Field = ({ id, label, children }: { id: string; label: string; children: React.ReactNode }) => (
+  <div className="space-y-2"><Label htmlFor={id}>{label}</Label>{children}</div>
 );
