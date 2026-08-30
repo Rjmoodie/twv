@@ -44,6 +44,7 @@ export type AnalyticsEvent =
   | 'project_inquiry_submitted'
   | 'crm_contact_created'
   | 'crm_activity_created'
+  | 'inquiry_status_changed'
   | 'crm_task_completed'
   // Trust — did we show a number nobody could use?
   | 'valuation_unavailable';
