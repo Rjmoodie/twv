@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
-  ChevronDown, ChevronRight, Lock, Loader2,
+  ChevronDown, Lock, Loader2,
   LayoutDashboard, TrendingUp, Activity, Calendar, DollarSign,
   Eye, Building2, Database, RefreshCw, Home,
   User as LucideUser, Crown, GraduationCap, PieChart, Brain,
@@ -16,11 +16,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel
 } from '@/components/ui/dropdown-menu';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 import { modules } from './constants';
 import { cn } from '@/lib/utils';
 import type { User } from '@supabase/supabase-js';
@@ -49,9 +44,12 @@ interface GroupedNavigationProps {
 }
 
 // Define the order and labels for nav groups.
-// 'overview' renders as a flat non-collapsible section at the top.
-const navGroupOrder: { key: string; name: string; flat?: boolean }[] = [
-  { key: 'overview',    name: '',            flat: true },
+// Every section renders flat. The groups were collapsible, which meant a nav of
+// six items could hide four of them behind two chevrons and remember that state
+// across visits -- cost with no benefit at this size. `overview` has no label
+// and carries a divider instead.
+const navGroupOrder: { key: string; name: string }[] = [
+  { key: 'overview',    name: ''           },
   { key: 'investor',    name: 'Investor'   },
   { key: 'real-estate', name: 'Real Estate'},
   { key: 'planner',     name: 'Planner'    },
@@ -82,26 +80,6 @@ const GroupedNavigation = ({
   authLoading,
   onRequestAuth,
 }: GroupedNavigationProps) => {
-  // Determine which group the active module belongs to so it starts expanded
-  const activeGroup = useMemo(() => {
-    const mod = modules.find(m => m.id === activeModule);
-    return mod?.navGroup ?? null;
-  }, [activeModule]);
-
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => ({
-    investor:      activeGroup === 'investor'     || activeGroup === null,
-    'real-estate': activeGroup === 'real-estate',
-    planner:       activeGroup === 'planner',
-    account:       activeGroup === 'account',
-  }));
-
-  const toggleGroup = (groupKey: string) => {
-    setOpenGroups(prev => ({
-      ...prev,
-      [groupKey]: !prev[groupKey]
-    }));
-  };
-
   const { access, accessLoading, userProfile } = useAuth();
   const isSuperAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
@@ -205,49 +183,20 @@ const GroupedNavigation = ({
   if (variant === 'desktop') {
     return (
       <nav className={cn('space-y-2', className)}>
-        {navGroupOrder.map(({ key, name, flat }) => {
+        {navGroupOrder.map(({ key, name }) => {
           const group = groups[key];
           if (!group || group.length === 0) return null;
 
-          // Flat group (overview) — no collapsible, no section label, with a bottom divider
-          if (flat) {
-            return (
-              <div key={key}>
-                <div className="space-y-0.5">
-                  {group.map(renderNavItem)}
-                </div>
-                <div className="my-2 h-px bg-border/40" />
-              </div>
-            );
-          }
-
           return (
-            <Collapsible
-              key={key}
-              open={openGroups[key]}
-              onOpenChange={() => toggleGroup(key)}
-            >
-              <CollapsibleTrigger asChild>
-                <button
-                  className={cn(
-                    'w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors duration-150 font-medium text-sm',
-                    openGroups[key]
-                      ? 'text-foreground'
-                      : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'
-                  )}
-                >
-                  <span className="nav-section-label !px-0 !py-0">{name}</span>
-                  {openGroups[key] ? (
-                    <ChevronDown className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-0.5 space-y-0.5">
+            <div key={key}>
+              {name
+                ? <div className="nav-section-label px-3 pt-3 pb-1">{name}</div>
+                : null}
+              <div className="space-y-0.5">
                 {group.map(renderNavItem)}
-              </CollapsibleContent>
-            </Collapsible>
+              </div>
+              {name ? null : <div className="my-2 h-px bg-border/40" />}
+            </div>
           );
         })}
       </nav>
@@ -324,48 +273,20 @@ const GroupedNavigation = ({
   // Mobile Navigation (same as desktop but more compact)
   return (
     <nav className={cn('space-y-1', className)}>
-      {navGroupOrder.map(({ key, name, flat }) => {
+      {navGroupOrder.map(({ key, name }) => {
         const group = groups[key];
         if (!group || group.length === 0) return null;
 
-        if (flat) {
-          return (
-            <div key={key}>
-              <div className="space-y-0.5">
-                {group.map(renderNavItem)}
-              </div>
-              <div className="my-2 h-px bg-border/40" />
-            </div>
-          );
-        }
-
         return (
-          <Collapsible
-            key={key}
-            open={openGroups[key]}
-            onOpenChange={() => toggleGroup(key)}
-          >
-            <CollapsibleTrigger asChild>
-              <button
-                className={cn(
-                  'w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors duration-150 text-sm font-medium',
-                  openGroups[key]
-                    ? 'text-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/70'
-                )}
-              >
-                <span className="nav-section-label !px-0 !py-0">{name}</span>
-                {openGroups[key] ? (
-                  <ChevronDown className="h-3.5 w-3.5" />
-                ) : (
-                  <ChevronRight className="h-3.5 w-3.5" />
-                )}
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-0.5 space-y-0.5">
+          <div key={key}>
+            {name
+              ? <div className="nav-section-label px-3 pt-3 pb-1">{name}</div>
+              : null}
+            <div className="space-y-0.5">
               {group.map(renderNavItem)}
-            </CollapsibleContent>
-          </Collapsible>
+            </div>
+            {name ? null : <div className="my-2 h-px bg-border/40" />}
+          </div>
         );
       })}
     </nav>

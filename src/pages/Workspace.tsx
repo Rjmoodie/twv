@@ -102,7 +102,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
     return () => { handle?.remove(); };
   }, [navHistory.length]);
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authDialogMessage, setAuthDialogMessage] = useState<string | null>(null);
   const [showPricingDialog, setShowPricingDialog] = useState(false);
@@ -445,8 +444,6 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
       <ErrorBoundary>
         <AppLayout
           activeModule={activeModule}
-          sidebarCollapsed={sidebarCollapsed}
-          setSidebarCollapsed={setSidebarCollapsed}
           onModuleChange={handleModuleChange}
           onGoBack={handleGoBack}
           canGoBack={canGoBack}
