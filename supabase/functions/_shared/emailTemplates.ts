@@ -74,7 +74,11 @@ const TEMPLATES: Record<string, Template> = {
       return {
         title: `Reminder: ${eventTitle}`,
         message: str(payload.message, 'You have an upcoming calendar event.'),
-        actionPath: str(payload.action_url, '/?module=financial-calendar'),
+        // `financial-calendar` was removed with the non-real-estate cut, and
+        // this pointed at it -- Workspace's isRoutableModule guard silently
+        // dropped the reader on the dashboard instead of the reminder they
+        // clicked. Portfolio is where project dates actually live today.
+        actionPath: str(payload.action_url, '/?module=portfolio'),
         actionLabel: 'Open calendar',
         category: 'calendar',
         pushTag: `calendar_reminder-${str(payload.reminder_id, str(payload.event_key, 'unknown'))}`,
