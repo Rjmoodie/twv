@@ -77,7 +77,14 @@ const when = (value: string | null) =>
   value ? new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
 
 export default function InquiryInbox() {
-  const { user } = useAuth();
+  const { user, hasPersona } = useAuth();
+  // The CRM opens for admins and project managers, but the inquiry policies are
+  // `is_organization_admin` -- owner and admin only, deliberately, because a
+  // lead carries a name, an email and how much someone said they would invest.
+  // Without this a project manager met a raw "permission denied for table
+  // investor_inquiries" on every CRM visit. The gate matches the policy rather
+  // than the surrounding screen.
+  const canSeeInquiries = hasPersona('admin');
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<Inquiry | null>(null);
   const [notes, setNotes] = useState('');
@@ -86,6 +93,7 @@ export default function InquiryInbox() {
 
   const inquiries = useQuery({
     queryKey: ['crm-inquiries'],
+    enabled: canSeeInquiries,
     queryFn: async (): Promise<Inquiry[]> => {
       const [investor, project] = await Promise.all([
         supabase.from('investor_inquiries').select('*').order('created_at', { ascending: false }),
@@ -151,6 +159,8 @@ export default function InquiryInbox() {
     setSelected((current) => (current ? { ...current, ...changes } : current));
     await queryClient.invalidateQueries({ queryKey: ['crm-inquiries'] });
   };
+
+  if (!canSeeInquiries) return null;
 
   if (inquiries.isLoading) {
     return <Card><CardContent className="flex min-h-[160px] items-center justify-center p-6"><Loader2 className="h-6 w-6 animate-spin" /></CardContent></Card>;
