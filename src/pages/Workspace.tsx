@@ -65,6 +65,7 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const initialModule = useMemo(() => portalIntent ? 'portfolio' : getInitialModule(), [portalIntent]);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeModule, setActiveModule] = useState(initialModule);
 
   // Navigation history for back button support
@@ -444,6 +445,8 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
       <ErrorBoundary>
         <AppLayout
           activeModule={activeModule}
+          sidebarCollapsed={sidebarCollapsed}
+          setSidebarCollapsed={setSidebarCollapsed}
           onModuleChange={handleModuleChange}
           onGoBack={handleGoBack}
           canGoBack={canGoBack}

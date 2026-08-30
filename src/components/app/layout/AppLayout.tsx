@@ -11,6 +11,8 @@ import BottomNavigation from "@/components/app/BottomNavigation";
 import MobileNavigation from "@/components/app/MobileNavigation";
 import NetworkStatus from "@/components/app/NetworkStatus";
 import { useAuth } from "@/components/app/AuthProvider";
+import { useError } from "@/components/app/ErrorProvider";
+import { usePerformance } from "@/components/app/PerformanceProvider";
 
 // Modules that should fill the full available height with their own internal scroll.
 // For these, we skip the px-4/py-4 outer wrapper and set main to overflow-hidden
@@ -19,6 +21,8 @@ const EDGE_TO_EDGE_MODULES = new Set<string>([]);
 
 interface AppLayoutProps {
   activeModule: string;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   onModuleChange: (module: string) => void;
   onGoBack: () => void;
   canGoBack: boolean;
@@ -31,6 +35,8 @@ interface AppLayoutProps {
 
 const AppLayout: React.FC<AppLayoutProps> = ({
   activeModule,
+  sidebarCollapsed,
+  setSidebarCollapsed,
   onModuleChange,
   onGoBack,
   canGoBack,
@@ -42,6 +48,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { profile } = useAuth();
+  const { reportError } = useError();
+  const { trackPerformance } = usePerformance();
+
+  const handleSidebarToggle = () => {
+    try {
+      trackPerformance("sidebarToggle", () => setSidebarCollapsed(!sidebarCollapsed));
+    } catch (error) {
+      reportError(error as Error, "sidebar-toggle");
+    }
+  };
 
   return (
     <ErrorBoundary>
@@ -60,8 +76,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           {/* Sidebar */}
           <AppSidebar
             activeModule={activeModule}
+            sidebarCollapsed={sidebarCollapsed}
             onModuleChange={onModuleChange}
             onRequestAuth={onRequestAuth}
+            onSidebarToggle={handleSidebarToggle}
             user={user}
             authLoading={authLoading}
             subscription={subscription}
