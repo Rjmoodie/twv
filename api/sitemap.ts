@@ -5,7 +5,7 @@ const escapeXml = (value: string) => value.replace(/[<>&'"]/g, (character) => ({
 
 export default async function handler(_request: RequestLike, response: ResponseLike) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL; const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const fixed = ['/', '/investors', '/get-started'];
+  const fixed = ['/', '/investors', '/get-started', '/privacy-policy', '/terms-of-service'];
   const dynamic: Array<{ path: string; updated: string }> = [];
   if (supabaseUrl && anonKey) {
     const headers = { apikey: anonKey, Authorization: `Bearer ${anonKey}` };

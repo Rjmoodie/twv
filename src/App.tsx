@@ -43,6 +43,11 @@ const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'))
 const InviteAcceptancePage = lazyWithRetry(() => import('./pages/InviteAcceptancePage'));
 const PublicPortfolioPage = lazyWithRetry(() => import('./pages/PublicPortfolioPage'));
 const PortfolioStoryPage = lazyWithRetry(() => import('./pages/PortfolioStoryPage'));
+// Legal pages are Workspace modules too, but they need addressable URLs of their
+// own: Google's OAuth consent screen validates the privacy and terms links, and
+// `?module=privacy-policy` renders them inside the signed-in app chrome.
+const PrivacyPolicy = lazyWithRetry(() => import('./components/app/PrivacyPolicy'));
+const TermsOfService = lazyWithRetry(() => import('./components/app/TermsOfService'));
 
 // Create a new QueryClient instance
 const queryClient = new QueryClient({
@@ -129,6 +134,8 @@ function App() {
                         } 
                       />
                       <Route path="/auth/callback" element={<Suspense fallback={<div>Confirming account…</div>}><AuthCallbackPage /></Suspense>} />
+                      <Route path="/privacy-policy" element={<Suspense fallback={<div>Loading…</div>}><PrivacyPolicy /></Suspense>} />
+                      <Route path="/terms-of-service" element={<Suspense fallback={<div>Loading…</div>}><TermsOfService /></Suspense>} />
                       <Route 
                         path="/404" 
                         element={
