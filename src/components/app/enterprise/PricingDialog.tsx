@@ -10,6 +10,7 @@ import { Check, X, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import type { SubscriptionTier } from "@/types/subscription";
 import type { UseSubscriptionReturn } from "@/hooks/useSubscription";
 import { PRICING_PLAN_ORDER, PRICING_PLANS } from "@/config/pricing";
+import { useAuth } from "@/components/app/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 
 interface PricingDialogProps {
@@ -37,12 +38,13 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
   subscription,
 }) => {
   const { subscriptionTier, subscribeToTier, openCustomerPortal } = subscription;
+  const { sendLoginCode, verifyLoginCode } = useAuth();
   const [loadingTier, setLoadingTier] = useState<SubscriptionTier | null>(null);
   const [showComparison, setShowComparison] = useState(false);
 
   // Step-up re-auth state
   const [stepUpTier, setStepUpTier] = useState<SubscriptionTier | null>(null);
-  const [stepUpPassword, setStepUpPassword] = useState('');
+  const [stepUpCode, setStepUpCode] = useState('');
   const [stepUpError, setStepUpError] = useState('');
   const [stepUpLoading, setStepUpLoading] = useState(false);
 
@@ -68,8 +70,12 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
         const tokenAgeMs = Date.now() - payload.iat * 1000;
         if (tokenAgeMs > SESSION_FRESHNESS_MS) {
           setStepUpTier(tier);
-          setStepUpPassword('');
+          setStepUpCode('');
           setStepUpError('');
+          // Sign-in is a one-time code now, so re-authentication is too: asking
+          // for a password would ask for something no account has.
+          const { data: { user: current } } = await supabase.auth.getUser();
+          if (current?.email) void sendLoginCode(current.email);
           return;
         }
       } catch {
@@ -92,8 +98,8 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
   };
 
   const handleStepUpConfirm = async () => {
-    if (!stepUpTier || !stepUpPassword.trim()) {
-      setStepUpError('Please enter your password to continue.');
+    if (!stepUpTier || !/^\d{6}$/.test(stepUpCode.trim())) {
+      setStepUpError('Enter the six-digit code we just emailed you.');
       return;
     }
     setStepUpLoading(true);
@@ -102,18 +108,15 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) throw new Error('Could not identify account.');
 
-      const { error } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: stepUpPassword,
-      });
+      const { error } = await verifyLoginCode(user.email, stepUpCode.trim());
       if (error) {
-        setStepUpError('Incorrect password. Please try again.');
+        setStepUpError('That code is not right, or it has expired.');
         return;
       }
       // Re-auth succeeded — proceed
       const tier = stepUpTier;
       setStepUpTier(null);
-      setStepUpPassword('');
+      setStepUpCode('');
       await proceedWithSubscription(tier);
     } catch (err) {
       setStepUpError(err instanceof Error ? err.message : 'Re-authentication failed.');
@@ -256,7 +259,7 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
     </Dialog>
 
     {/* Step-up re-authentication dialog */}
-    <Dialog open={!!stepUpTier} onOpenChange={(v) => { if (!v && !stepUpLoading) { setStepUpTier(null); setStepUpPassword(''); setStepUpError(''); } }}>
+    <Dialog open={!!stepUpTier} onOpenChange={(v) => { if (!v && !stepUpLoading) { setStepUpTier(null); setStepUpCode(''); setStepUpError(''); } }}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -264,20 +267,22 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
             Confirm your identity
           </DialogTitle>
           <DialogDescription>
-            Re-enter your password to authorize the upgrade to{' '}
+            Enter the six-digit code we just emailed you to authorize the upgrade to{' '}
             <strong>{stepUpTier ? PRICING_PLANS[stepUpTier]?.name : ''}</strong>.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 pt-1">
           <div className="space-y-1.5">
-            <Label htmlFor="stepup-password" className="text-sm font-medium">Password</Label>
+            <Label htmlFor="stepup-code" className="text-sm font-medium">Six-digit code</Label>
             <Input
-              id="stepup-password"
-              type="password"
-              value={stepUpPassword}
-              onChange={(e) => { setStepUpPassword(e.target.value); setStepUpError(''); }}
+              id="stepup-code"
+              inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+              value={stepUpCode}
+              onChange={(e) => { setStepUpCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setStepUpError(''); }}
               onKeyDown={(e) => e.key === 'Enter' && handleStepUpConfirm()}
-              placeholder="Your current password"
+              placeholder="000000"
               autoFocus
               disabled={stepUpLoading}
             />
@@ -292,7 +297,7 @@ const PricingDialog: React.FC<PricingDialogProps> = ({
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => { setStepUpTier(null); setStepUpPassword(''); setStepUpError(''); }}
+              onClick={() => { setStepUpTier(null); setStepUpCode(''); setStepUpError(''); }}
               disabled={stepUpLoading}
             >
               Cancel

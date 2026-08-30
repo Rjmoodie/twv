@@ -36,8 +36,8 @@ interface AccessTable { select(columns: string): AccessQuery }
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null; requiresEmailConfirmation: boolean }>;
+  sendLoginCode: (email: string) => Promise<{ error: Error | null }>;
+  verifyLoginCode: (email: string, token: string) => Promise<{ error: Error | null }>;
   signInWithOAuth: (provider: 'google') => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   profile: Tables<'user_profiles'> | null;
@@ -281,25 +281,37 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
     };
   }, [clearSignedOutClientState, loadAccess, loadProfile, loadUserProfile, queryClient]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  /**
+   * Email is a one-time code, not a password.
+   *
+   * A confirmation link mailed to a mistyped address is a working credential
+   * sitting in a stranger's inbox -- which is exactly what happened when an
+   * account was created against `servjces@wv-llc.com`, a real domain with live
+   * MX that nobody here controls. A six-digit code is useless to whoever
+   * receives it by accident, because it only completes a session already
+   * started on this device.
+   *
+   * One call covers both cases: shouldCreateUser means a first-time address
+   * gets an account, and a known one simply signs in.
+   */
+  const sendLoginCode = useCallback(async (email: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true },
+      });
       return { error };
     } catch (error) {
       return { error: error as Error };
     }
   }, []);
 
-  const signUp = useCallback(async (email: string, password: string) => {
+  const verifyLoginCode = useCallback(async (email: string, token: string) => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
-      });
-      return { error, requiresEmailConfirmation: !data.session };
+      const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' });
+      return { error };
     } catch (error) {
-      return { error: error as Error, requiresEmailConfirmation: false };
+      return { error: error as Error };
     }
   }, []);
 
@@ -341,8 +353,8 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
   const value: AuthContextType = {
     user,
     loading,
-    signIn,
-    signUp,
+    sendLoginCode,
+    verifyLoginCode,
     signInWithOAuth,
     signOut,
     profile,

@@ -89,7 +89,7 @@ const TermsOfService = () => {
           </p>
           <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
             <li>Provide accurate and complete information</li>
-            <li>Not share your account access or password</li>
+            <li>Not share your account access or sign-in codes</li>
             <li>Notify us immediately of any unauthorized access</li>
           </ul>
         </CardContent>

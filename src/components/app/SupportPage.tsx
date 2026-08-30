@@ -16,8 +16,8 @@ interface FaqItem {
 const FAQ: FaqItem[] = [
   {
     category: 'Account',
-    q: 'How do I reset my password?',
-    a: 'On the sign-in screen tap "Forgot password?" and enter your email. You\'ll receive a reset link within a few minutes. Check your spam folder if it doesn\'t arrive.',
+      q: 'How do I sign in?',
+      a: 'Enter your email on the sign-in screen and we email you a six-digit code. There is no password to remember or reset. The code expires after a few minutes, and you can request another. You can also continue with Google.',
   },
   {
     category: 'Account',

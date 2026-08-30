@@ -8,12 +8,11 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
-  Mail, Eye, EyeOff, CheckCircle, ArrowLeft,
-  Building2, Sparkles, AlertCircle, Loader2,
+  Mail, CheckCircle, ArrowLeft,
+  Building2, AlertCircle, Loader2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./AuthProvider";
-import PasswordStrengthIndicator from "./PasswordStrengthIndicator";
 import Logo from "./Logo";
 
 // SVG icons for OAuth providers — inline to avoid dependency on icon packs
@@ -34,10 +33,11 @@ interface AuthDialogProps {
   message?: string | null;
 }
 
-type AuthView = 'signin' | 'signup' | 'forgot' | 'forgot-sent' | 'signup-sent';
+// Two steps: ask for the address, then for the code it was sent.
+type AuthView = 'email' | 'code';
 
 const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogProps) => {
-  const { signIn, signUp, signInWithOAuth } = useAuth();
+  const { sendLoginCode, verifyLoginCode, signInWithOAuth } = useAuth();
   const haptics = useHaptics();
   const { dismiss } = useToast();
 
@@ -63,30 +63,28 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     };
   }, []);
 
-  const [view, setView] = useState<AuthView>('signin');
+  const [view, setView] = useState<AuthView>('email');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState<'google' | null>(null);
   const [emailError, setEmailError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [codeError, setCodeError] = useState('');
   const [formError, setFormError] = useState('');
 
   const emailRef = useRef<HTMLInputElement>(null);
-  const passwordRef = useRef<HTMLInputElement>(null);
+  const codeRef = useRef<HTMLInputElement>(null);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (!open) {
-      setView('signin');
+      setView('email');
       setEmail('');
-      setPassword('');
-      setShowPassword(false);
+      setCode('');
       setLoading(false);
       setOauthLoading(null);
       setEmailError('');
-      setPasswordError('');
+      setCodeError('');
       setFormError('');
     }
   }, [open]);
@@ -103,15 +101,16 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     return true;
   };
 
-  const validatePassword = (min = 8) => {
-    if (!password.trim()) { setPasswordError('Password is required'); return false; }
-    if (password.length < min) { setPasswordError(`Password must be at least ${min} characters`); return false; }
+  const validateCode = () => {
+    const trimmed = code.trim();
+    if (!trimmed) { setCodeError('Enter the code from your email'); return false; }
+    if (!/^\d{6}$/.test(trimmed)) { setCodeError('The code is six digits'); return false; }
     return true;
   };
 
   const clearErrors = () => {
     setEmailError('');
-    setPasswordError('');
+    setCodeError('');
     setFormError('');
   };
 
@@ -133,99 +132,72 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     }
   };
 
-  // ── Email sign-in ──────────────────────────────────────────────────────────
+  // ── One-time code ──────────────────────────────────────────────────────────
 
-  const handleSignIn = async () => {
+  const handleSendCode = async () => {
     clearErrors();
-    const emailOk = validateEmail();
-    const pwOk = validatePassword(6);
-    if (!emailOk || !pwOk) { haptics.error(); return; }
+    if (!validateEmail()) { haptics.error(); return; }
 
     haptics.medium();
     setLoading(true);
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await sendLoginCode(email);
       if (error) {
         haptics.error();
-        if (error.message?.includes('Invalid login credentials')) {
-          setFormError('Incorrect email or password. Please try again.');
-        } else {
-          setFormError(error.message || 'Sign in failed.');
-        }
+        setFormError(
+          error.message?.toLowerCase().includes('rate')
+            ? 'Too many requests just now. Wait a moment and try again.'
+            : error.message || 'The code could not be sent.',
+        );
+        return;
+      }
+      setView('code');
+      setCode('');
+      // The same call signs an existing person in and creates a first-time one,
+      // so the copy must not promise either.
+      toast({ title: 'Code sent', description: `Check ${email} for a six-digit code.` });
+    } catch {
+      haptics.error();
+      setFormError('Unable to reach TW Ventures right now. Check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    clearErrors();
+    if (!validateCode()) { haptics.error(); return; }
+
+    haptics.medium();
+    setLoading(true);
+    try {
+      const { error } = await verifyLoginCode(email, code.trim());
+      if (error) {
+        haptics.error();
+        const text = error.message?.toLowerCase() ?? '';
+        setCodeError(
+          text.includes('expired')
+            ? 'That code has expired. Send a new one.'
+            : text.includes('invalid') || text.includes('token')
+              ? 'That code is not right. Check it and try again.'
+              : error.message || 'The code could not be verified.',
+        );
         return;
       }
       haptics.success();
-      toast({ title: 'Welcome back!' });
+      toast({ title: 'Signed in' });
       onOpenChange(false);
       onAuthSuccess?.();
-    } catch (err) {
+    } catch {
       haptics.error();
-      setFormError(
-        'Unable to reach TW Ventures right now. Check your connection and try again.'
-      );
+      setFormError('Unable to reach TW Ventures right now. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
   };
-
-  // ── Email sign-up ──────────────────────────────────────────────────────────
-
-  const handleSignUp = async () => {
-    clearErrors();
-    const emailOk = validateEmail();
-    const pwOk = validatePassword(8);
-    if (!emailOk || !pwOk) return;
-
-    setLoading(true);
-    try {
-      const { error, requiresEmailConfirmation } = await signUp(email, password);
-      if (error) {
-        if (error.message?.includes('User already registered')) {
-          setFormError('An account with this email already exists. Sign in instead.');
-        } else {
-          setFormError(error.message || 'Sign up failed.');
-        }
-        return;
-      }
-      if (requiresEmailConfirmation) {
-        setView('signup-sent');
-      } else {
-        toast({ title: 'Account created', description: 'Welcome to TW Ventures.' });
-        onOpenChange(false);
-        onAuthSuccess?.();
-      }
-    } catch (err) {
-      setFormError(
-        'Unable to reach TW Ventures right now. Check your connection and try again.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Password reset ─────────────────────────────────────────────────────────
-
-  const handleForgotPassword = async () => {
-    clearErrors();
-    if (!validateEmail()) return;
-
-    setLoading(true);
-    try {
-      const { error } = await (await import('@/integrations/supabase/client')).supabase.auth
-        .resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset-password` });
-      if (error) throw error;
-      setView('forgot-sent');
-    } catch (err) {
-      setEmailError(err instanceof Error ? err.message : 'Failed to send reset email.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ── Shared field handlers ──────────────────────────────────────────────────
 
   const onEmailChange = (v: string) => { setEmail(v); setEmailError(''); setFormError(''); };
-  const onPasswordChange = (v: string) => { setPassword(v); setPasswordError(''); setFormError(''); };
+  const onCodeChange = (v: string) => { setCode(v.replace(/\D/g, '').slice(0, 6)); setCodeError(''); setFormError(''); };
 
   // ── Render helpers ─────────────────────────────────────────────────────────
 
@@ -261,7 +233,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
         type="email"
         value={email}
         onChange={(e) => onEmailChange(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && passwordRef.current?.focus()}
+        onKeyDown={(e) => e.key === 'Enter' && !loading && handleSendCode()}
         placeholder="you@example.com"
         autoComplete="email"
         className={emailError ? 'border-destructive' : ''}
@@ -275,36 +247,27 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     </div>
   );
 
-  const renderPasswordField = (onSubmit: () => void, showStrength = false) => (
+  const renderCodeField = () => (
     <div className="space-y-1">
-      <Label htmlFor="auth-password" className="text-sm font-medium">Password</Label>
-      <div className="relative">
-        <Input
-          id="auth-password"
-          ref={passwordRef}
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => onPasswordChange(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && !loading && onSubmit()}
-          placeholder={showStrength ? 'Create a strong password' : 'Your password'}
-          autoComplete={showStrength ? 'new-password' : 'current-password'}
-          className={`pr-10 ${passwordError ? 'border-destructive' : ''}`}
-          disabled={loading}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword((v) => !v)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          tabIndex={-1}
-          aria-label={showPassword ? 'Hide password' : 'Show password'}
-        >
-          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-        </button>
-      </div>
-      {showStrength && <PasswordStrengthIndicator password={password} />}
-      {passwordError && (
+      <Label htmlFor="auth-code" className="text-sm font-medium">Six-digit code</Label>
+      <Input
+        id="auth-code"
+        ref={codeRef}
+        // Numeric so phones show the number pad; one-time-code lets iOS and
+        // Android offer the value straight from the notification.
+        inputMode="numeric"
+        autoComplete="one-time-code"
+        value={code}
+        onChange={(e) => onCodeChange(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && !loading && handleVerifyCode()}
+        placeholder="000000"
+        maxLength={6}
+        className={`text-center text-lg tracking-[0.4em] ${codeError ? 'border-destructive' : ''}`}
+        disabled={loading}
+      />
+      {codeError && (
         <p className="text-xs text-destructive flex items-center gap-1">
-          <AlertCircle className="h-3 w-3 shrink-0" />{passwordError}
+          <AlertCircle className="h-3 w-3 shrink-0" />{codeError}
         </p>
       )}
     </div>
@@ -320,105 +283,57 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
 
   // ── Views ──────────────────────────────────────────────────────────────────
 
-  const renderSignIn = () => (
+  const renderEmailStep = () => (
     <>
       {renderOAuthButtons()}
       {renderDivider()}
-      <form onSubmit={(e) => { e.preventDefault(); handleSignIn(); }} className="space-y-4" noValidate>
+      <form onSubmit={(e) => { e.preventDefault(); handleSendCode(); }} className="space-y-4" noValidate>
         {renderEmailField()}
-        {renderPasswordField(handleSignIn)}
         {renderFormError()}
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => { clearErrors(); setView('forgot'); }}
-            className="text-xs text-primary hover:underline underline-offset-2"
-          >
-            Forgot password?
-          </button>
-        </div>
         <Button type="submit" disabled={loading || !!oauthLoading} className="w-full h-11 font-medium">
           {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-          {loading ? 'Signing in…' : 'Sign In'}
+          {loading ? 'Sending…' : 'Email me a code'}
         </Button>
       </form>
-      <p className="text-center text-sm text-muted-foreground pt-2">
-        No account?{' '}
-        <button type="button" onClick={() => { clearErrors(); setView('signup'); }} className="text-primary hover:underline underline-offset-2 font-medium">
-          Create an account
-        </button>
+      <p className="pt-2 text-center text-xs text-muted-foreground">
+        No password needed. We send a six-digit code that signs you in.
       </p>
     </>
   );
 
-  const renderSignUp = () => (
-    <>
-      {renderOAuthButtons()}
-      {renderDivider()}
-      <form onSubmit={(e) => { e.preventDefault(); handleSignUp(); }} className="space-y-4" noValidate>
-        {renderEmailField()}
-        {renderPasswordField(handleSignUp, true)}
-        {renderFormError()}
-        <Button type="submit" disabled={loading || !!oauthLoading} className="w-full h-11 font-medium">
-          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Sparkles className="h-4 w-4 mr-2" />}
-          {loading ? 'Creating account…' : 'Create Account'}
-        </Button>
-      </form>
-      <p className="text-center text-sm text-muted-foreground pt-2">
-        Already have an account?{' '}
-        <button type="button" onClick={() => { clearErrors(); setView('signin'); }} className="text-primary hover:underline underline-offset-2 font-medium">
-          Sign in
-        </button>
-      </p>
-    </>
-  );
-
-  const renderForgot = () => (
-    <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }} className="space-y-4" noValidate>
-      <p className="text-sm text-muted-foreground">
-        Enter your email and we'll send a link to reset your password.
-      </p>
-      {renderEmailField()}
+  const renderCodeStep = () => (
+    <form onSubmit={(e) => { e.preventDefault(); handleVerifyCode(); }} className="space-y-4" noValidate>
+      <div className="flex items-start gap-2.5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-sm">
+        <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-[#9a7b4f]" />
+        <p>We sent a six-digit code to <strong>{email}</strong>. It expires shortly.</p>
+      </div>
+      {renderCodeField()}
       {renderFormError()}
-      <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={() => { clearErrors(); setView('signin'); }} className="flex-1" disabled={loading}>
-          <ArrowLeft className="h-4 w-4 mr-1.5" />
-          Back
-        </Button>
-        <Button type="submit" disabled={loading} className="flex-1">
-          {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Mail className="h-4 w-4 mr-2" />}
-          {loading ? 'Sending…' : 'Send Link'}
-        </Button>
+      <Button type="submit" disabled={loading} className="h-11 w-full font-medium">
+        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        {loading ? 'Verifying…' : 'Sign in'}
+      </Button>
+      <div className="flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => { clearErrors(); setCode(''); setView('email'); }}
+          className="inline-flex items-center text-xs text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="mr-1 h-3 w-3" />Use a different email
+        </button>
+        <button
+          type="button"
+          disabled={loading}
+          onClick={() => { clearErrors(); handleSendCode(); }}
+          className="text-xs text-primary underline-offset-2 hover:underline disabled:opacity-50"
+        >
+          Resend code
+        </button>
       </div>
     </form>
   );
 
-  const renderCheckEmail = (isSignup: boolean) => {
-    return (
-      <div className="text-center space-y-4 py-2">
-        <div className="w-14 h-14 rounded-full bg-accent/10 dark:bg-accent/30 flex items-center justify-center mx-auto">
-          <CheckCircle className="h-7 w-7 text-accent" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-base">Check your email</h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            We sent a link to <strong>{email}</strong>.
-            {isSignup ? " Click it to confirm your account and sign in." : " Click it to reset your password."}
-          </p>
-        </div>
-        <Button variant="outline" onClick={() => { clearErrors(); setView('signin'); setPassword(''); }} className="w-full">
-          <ArrowLeft className="h-4 w-4 mr-1.5" />
-          Back to Sign In
-        </Button>
-      </div>
-    );
-  };
-
-  const title = view === 'forgot' ? 'Reset Password'
-    : view === 'forgot-sent' ? 'Email Sent'
-    : view === 'signup-sent' ? 'Confirm Your Account'
-    : view === 'signup' ? 'Create Your Account'
-    : 'Welcome to TW Ventures';
+  const title = view === 'code' ? 'Enter your code' : 'Welcome to TW Ventures';
 
   const accessLabel = message?.toLowerCase().includes('investor') ? 'Investor partnerships'
     : message?.toLowerCase().includes('project manager') ? 'Project delivery'
@@ -444,19 +359,17 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
           <DialogHeader>
             <DialogTitle className="brand-serif text-3xl font-normal leading-tight">{title}</DialogTitle>
             <DialogDescription className="leading-6">
-              {view === 'signin' ? 'Use the email connected to your TW Ventures relationship.' : view === 'signup' ? 'Create a secure account. Project access is assigned separately.' : 'Enter your email and we will send a secure reset link.'}
+              {view === 'code'
+                ? 'Enter the six-digit code we just emailed you.'
+                : 'Use the email connected to your TW Ventures relationship. New here? This creates your account.'}
             </DialogDescription>
           </DialogHeader>
 
-          {message && view === 'signin' && <div className="mt-5 flex items-start gap-2.5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-sm"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-[#9a7b4f]" /><p>{message}</p></div>}
-          {view === 'signup' && <div className="mt-5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-xs leading-5 text-muted-foreground"><p className="font-semibold text-foreground">Access follows a verified invitation</p><p>Each account sees only the projects and tools assigned to it.</p></div>}
+          {message && view === 'email' && <div className="mt-5 flex items-start gap-2.5 border-l-2 border-[#9a7b4f] bg-[#071a33]/[.035] px-4 py-3 text-sm"><Building2 className="mt-0.5 h-4 w-4 shrink-0 text-[#9a7b4f]" /><p>{message}</p></div>}
 
           <div className="mt-6">
-            {view === 'signin' && renderSignIn()}
-            {view === 'signup' && renderSignUp()}
-            {view === 'forgot' && renderForgot()}
-            {view === 'forgot-sent' && renderCheckEmail(false)}
-            {view === 'signup-sent' && renderCheckEmail(true)}
+            {view === 'email' && renderEmailStep()}
+            {view === 'code' && renderCodeStep()}
           </div>
         </div>
       </DialogContent>

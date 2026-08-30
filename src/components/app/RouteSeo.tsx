@@ -19,11 +19,6 @@ const routeMetadata: Record<string, { title: string; description: string; index:
     description: 'Tell TW Ventures about your acquisition, development, construction, renovation, or property-management project.',
     index: true,
   },
-  '/reset-password': {
-    title: 'Reset Password | TW Ventures',
-    description: 'Securely reset your TW Ventures account password.',
-    index: false,
-  },
   '/auth/callback': {
     title: 'Confirming Account | TW Ventures',
     description: 'Confirming your TW Ventures account.',

@@ -40,7 +40,6 @@ const InvestorInquiryPage = lazyWithRetry(() => import('./pages/InvestorInquiryP
 const NotFound = lazyWithRetry(() => import('./pages/NotFound'));
 const ClientOnboardingPage = lazyWithRetry(() => import('./pages/ClientOnboardingPage'));
 const ProjectIntakePage = lazyWithRetry(() => import('./pages/ProjectIntakePage'));
-const ResetPasswordPage = lazyWithRetry(() => import('./pages/ResetPasswordPage'));
 const AuthCallbackPage = lazyWithRetry(() => import('./pages/AuthCallbackPage'));
 const InviteAcceptancePage = lazyWithRetry(() => import('./pages/InviteAcceptancePage'));
 const PublicPortfolioPage = lazyWithRetry(() => import('./pages/PublicPortfolioPage'));
@@ -120,21 +119,6 @@ function App() {
                         } 
                       />
                       <Route path="/pricing" element={<Navigate to="/get-started" replace />} />
-                      <Route 
-                        path="/reset-password" 
-                        element={
-                          <Suspense fallback={
-                            <div className="flex items-center justify-center min-h-screen">
-                              <div className="text-center">
-                                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-                                <p className="mt-4 text-muted-foreground">Loading...</p>
-                              </div>
-                            </div>
-                          }>
-                            <ResetPasswordPage />
-                          </Suspense>
-                        } 
-                      />
                       <Route path="/auth/callback" element={<Suspense fallback={<div>Confirming account…</div>}><AuthCallbackPage /></Suspense>} />
                       <Route path="/privacy-policy" element={<Suspense fallback={<div>Loading…</div>}><PrivacyPolicy /></Suspense>} />
                       <Route path="/terms-of-service" element={<Suspense fallback={<div>Loading…</div>}><TermsOfService /></Suspense>} />

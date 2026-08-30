@@ -4,12 +4,10 @@ import { useAuth } from "../AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Shield, Key, AlertTriangle, Download, Trash2, History, Smartphone, Eye } from "lucide-react";
+import { Shield, AlertTriangle, Download, Trash2, History, Smartphone, Eye } from "lucide-react";
 
 interface LoginActivity {
   id: string;
@@ -24,9 +22,6 @@ interface LoginActivity {
 const EnhancedSecuritySettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [loginActivity, setLoginActivity] = useState<LoginActivity[]>([]);
   const [showLoginHistory, setShowLoginHistory] = useState(false);
@@ -58,52 +53,6 @@ const EnhancedSecuritySettings = () => {
     }
   };
 
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (newPassword.length < 8) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 8 characters long",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-
-      if (error) throw error;
-
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-
-      toast({
-        title: "Success",
-        description: "Password updated successfully",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update password",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleRequestDataExport = async () => {
     if (!user) return;
@@ -176,67 +125,6 @@ const EnhancedSecuritySettings = () => {
 
   return (
     <div className="space-y-6">
-      {/* Change Password */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Key className="h-5 w-5" />
-            <CardTitle>Change Password</CardTitle>
-          </div>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form
-            className="space-y-4"
-            onSubmit={(e) => { e.preventDefault(); handleChangePassword(); }}
-          >
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input
-                id="current-password"
-                type="password"
-                autoComplete="current-password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input
-                id="new-password"
-                type="password"
-                autoComplete="new-password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Enter new password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirm New Password</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                autoComplete="new-password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-              />
-            </div>
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={loading || !currentPassword || !newPassword || !confirmPassword}
-              >
-                {loading ? "Updating..." : "Update Password"}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
       {/* Login Activity */}
       <Card>
         <CardHeader>
