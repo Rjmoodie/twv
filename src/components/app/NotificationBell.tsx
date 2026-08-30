@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthProvider";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,6 +24,7 @@ interface Notification {
   type: string;
   read: boolean;
   created_at: string;
+  action_url: string | null;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -87,6 +89,26 @@ function SkeletonRow() {
 const NotificationBell = ({ className }: { className?: string }) => {
   const { user } = useAuth();
   const { navigateToModule } = useNavigation();
+  const navigate = useNavigate();
+
+  // The dispatcher stores an action_url on every notification, but nothing was
+  // reading it -- clicking only marked the row read, so the deep link the email
+  // and the bell share was dead in the bell. Most are `/?module=x`, which has
+  // to go through navigateToModule so Workspace's history and scroll handling
+  // stay correct; anything else is a real route and goes to the router.
+  const openNotification = (actionUrl: string | null) => {
+    setOpen(false);
+    if (!actionUrl) return;
+    try {
+      const target = new URL(actionUrl, window.location.origin);
+      if (target.origin !== window.location.origin) return;
+      const moduleParam = target.searchParams.get('module');
+      if (moduleParam) navigateToModule(moduleParam);
+      else navigate(`${target.pathname}${target.search}`);
+    } catch {
+      /* a malformed action_url should not break the menu */
+    }
+  };
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
@@ -100,7 +122,7 @@ const NotificationBell = ({ className }: { className?: string }) => {
     try {
       const { data, error: err } = await supabase
         .from("notifications")
-        .select("id, title, message, type, read, created_at")
+        .select("id, title, message, type, read, created_at, action_url")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
         .limit(20);
@@ -259,7 +281,7 @@ const NotificationBell = ({ className }: { className?: string }) => {
                 return (
                   <button
                     key={n.id}
-                    onClick={() => { if (!n.read) markOne(n.id); }}
+                    onClick={() => { if (!n.read) markOne(n.id); openNotification(n.action_url ?? null); }}
                     className={cn(
                       "group w-full flex items-start gap-3 px-4 py-3.5 text-left",
                       "transition-colors hover:bg-muted/50 min-h-[56px]",
@@ -307,7 +329,7 @@ const NotificationBell = ({ className }: { className?: string }) => {
         {items.length > 0 && (
           <div className="border-t border-border/50 px-4 py-2.5">
             <button
-              onClick={() => { setOpen(false); navigateToModule("account"); }}
+              onClick={() => { setOpen(false); navigate("/?module=account&tab=notifications"); }}
               className="w-full text-center text-[11px] text-muted-foreground hover:text-foreground transition-colors py-0.5"
             >
               View all notifications →

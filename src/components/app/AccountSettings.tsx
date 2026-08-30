@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./AuthProvider";
@@ -171,12 +172,39 @@ function SetupStep({ step, onNavigate }: { step: ReadinessStep; onNavigate: (tab
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const ACCOUNT_TABS = ['profile', 'security', 'notifications', 'theme', 'account-data', 'admin'];
+
 const AccountSettings: React.FC = () => {
   const { user, userProfile } = useAuth();
   const { toast }             = useToast();
   const queryClient           = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState('profile');
+  // The bell's "View all notifications" and any future deep link need to land
+  // on a specific tab. Without this the tab was always 'profile', so every such
+  // link dropped the reader on the profile form instead of what they clicked.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(
+    requestedTab && ACCOUNT_TABS.includes(requestedTab) ? requestedTab : 'profile',
+  );
+
+  // A later link to the same module must move the tab too, not just the first.
+  useEffect(() => {
+    if (requestedTab && ACCOUNT_TABS.includes(requestedTab) && requestedTab !== activeTab) {
+      setActiveTab(requestedTab);
+    }
+  }, [requestedTab]);
+
+  // Selecting a tab by hand should not leave a stale ?tab= in the URL that
+  // would snap the reader back on the next render.
+  const selectTab = (next: string) => {
+    setActiveTab(next);
+    if (searchParams.get('tab')) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('tab');
+      setSearchParams(params, { replace: true });
+    }
+  };
   const isAdmin = userProfile?.role === 'admin' || userProfile?.role === 'super_admin';
 
   const profileQuery = useQuery({
@@ -374,7 +402,7 @@ const AccountSettings: React.FC = () => {
       )}
 
       {/* ── Tabs ────────────────────────────────────────────────────────────── */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+      <Tabs value={activeTab} onValueChange={selectTab} className="space-y-4">
         {/* Mobile: native select */}
         <div className="sm:hidden">
           <div className="relative">
