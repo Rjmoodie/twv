@@ -19,17 +19,17 @@ test('project invitation preserves the invite flow while requesting authenticati
   await expect(page.getByRole('dialog', { name: 'Welcome to TW Ventures' })).toContainText('email address that received this project invitation');
 });
 
-test('public home is client-first with direct portal and project actions', async ({ page }) => {
+test('public home presents investor project management with direct consultation and portal actions', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Real estate, managed with clarity/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Access your projects/i })).toBeVisible();
-  await page.getByRole('button', { name: /Start a new project/i }).click();
+  await expect(page.getByRole('heading', { name: /Build smarter. Protect your investment/i })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Project access/i })).toBeVisible();
+  await page.getByRole('button', { name: /Get a project consultation/i }).click();
   await expect(page).toHaveURL(/\/get-started$/);
 });
 
 test('get started is a tracked project-intake form', async ({ page }) => {
   await page.goto('/get-started');
-  await expect(page.getByRole('heading', { name: /Every sound project starts with a clear brief/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Start with the right delivery model/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Send project request/i })).toBeDisabled();
 });
 

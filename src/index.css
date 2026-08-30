@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    color-scheme: light;
     /* Keyboard height — set dynamically by useNativeApp on iOS Capacitor.
        Defaults to 0px so CSS consumers always get a valid value. */
     --keyboard-height: 0px;
@@ -83,6 +84,7 @@
   }
 
   .dark {
+    color-scheme: dark;
     /* ─────────────────────────────────────────────
        Premium Dark Theme — deep, low-glare, modern
     ───────────────────────────────────────────── */
@@ -222,6 +224,15 @@
       0 0 0 2px hsl(var(--background)),
       0 0 0 5px hsl(var(--ring) / 0.26);
     border-radius: var(--radius);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1000px hsl(var(--card)) inset;
+    transition: background-color 9999s ease-out 0s;
   }
 
   @media (prefers-reduced-motion: reduce) {

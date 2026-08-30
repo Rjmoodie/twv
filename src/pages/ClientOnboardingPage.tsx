@@ -92,7 +92,7 @@ export default function ClientOnboardingPage() {
 
   return (
     <main className="public-page">
-      <PublicBrandHeader section="Investor Project Management" actions={<><Button variant="ghost" className="gap-2 text-[#071a33]" onClick={() => document.getElementById('model-comparison')?.scrollIntoView({ behavior: 'smooth' })}><HardHat className="h-4 w-4" /><span className="brand-nav-label">How it differs</span></Button><Button variant="ghost" className="gap-2 text-[#071a33]" onClick={enterPortal}><LogIn className="h-4 w-4" /><span className="brand-nav-label">{user ? 'Open portal' : 'Project access'}</span></Button></>} />
+      <PublicBrandHeader section="Investor Project Management" actions={<><Button aria-label="How it differs" variant="ghost" className="gap-2 text-[#071a33]" onClick={() => document.getElementById('model-comparison')?.scrollIntoView({ behavior: 'smooth' })}><HardHat className="h-4 w-4" /><span className="brand-nav-label">How it differs</span></Button><Button aria-label={user ? 'Open portal' : 'Project access'} variant="ghost" className="gap-2 text-[#071a33]" onClick={enterPortal}><LogIn className="h-4 w-4" /><span className="brand-nav-label">{user ? 'Open portal' : 'Project access'}</span></Button></>} />
 
       <section className="brand-hero px-5 py-20 sm:px-8 sm:py-28">
         <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.1fr_.9fr]">

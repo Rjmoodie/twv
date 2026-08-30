@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { useNativeApp } from '@/hooks/useNativeApp';
 import { useStatusBarTheme } from '@/hooks/useStatusBarTheme';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ import { setAnalyticsSink } from '@/lib/analytics';
 import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import RouteSeo from '@/components/app/RouteSeo';
 import PortalRouteGuard from '@/components/app/PortalRouteGuard';
+import PublicBrandHeader from '@/components/app/PublicBrandHeader';
 
 // ─── Analytics sink ───────────────────────────────────────────────────────────
 //
@@ -75,6 +76,15 @@ function NativeAppInit() {
   return null;
 }
 
+function PublicLegalPage({ section, children }: { section: string; children: ReactNode }) {
+  return <main className="public-page">
+    <PublicBrandHeader section={section} />
+    <section className="px-4 py-8 sm:px-6 sm:py-12">
+      {children}
+    </section>
+  </main>;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -120,8 +130,8 @@ function App() {
                       />
                       <Route path="/pricing" element={<Navigate to="/get-started" replace />} />
                       <Route path="/auth/callback" element={<Suspense fallback={<div>Confirming account…</div>}><AuthCallbackPage /></Suspense>} />
-                      <Route path="/privacy-policy" element={<Suspense fallback={<div>Loading…</div>}><PrivacyPolicy /></Suspense>} />
-                      <Route path="/terms-of-service" element={<Suspense fallback={<div>Loading…</div>}><TermsOfService /></Suspense>} />
+                      <Route path="/privacy-policy" element={<Suspense fallback={<div>Loading…</div>}><PublicLegalPage section="Privacy Policy"><PrivacyPolicy /></PublicLegalPage></Suspense>} />
+                      <Route path="/terms-of-service" element={<Suspense fallback={<div>Loading…</div>}><PublicLegalPage section="Terms of Service"><TermsOfService /></PublicLegalPage></Suspense>} />
                       <Route 
                         path="/404" 
                         element={
