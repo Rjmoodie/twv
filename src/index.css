@@ -13,35 +13,35 @@
     ───────────────────────────────────────────── */
 
     /* Canvas */
-    --background: 220 40% 98%;
-    --foreground: 224 28% 10%;
+    --background: 42 24% 97%;
+    --foreground: 213 58% 12%;
 
     /* Surfaces */
     --card: 0 0% 100%;
-    --card-foreground: 224 28% 10%;
+    --card-foreground: 213 58% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 224 28% 10%;
+    --popover-foreground: 213 58% 12%;
 
     /* Brand primary — cobalt #2563EB */
-    --primary: 221 83% 53%;
+    --primary: 213 72% 14%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 221 83% 46%;
-    --primary-muted: 221 100% 95%;
+    --primary-hover: 213 65% 20%;
+    --primary-muted: 210 30% 94%;
 
     /* Secondary — neutral surface */
-    --secondary: 220 24% 95%;
-    --secondary-foreground: 224 28% 12%;
-    --secondary-hover: 220 20% 91%;
+    --secondary: 40 20% 93%;
+    --secondary-foreground: 213 58% 12%;
+    --secondary-hover: 40 16% 88%;
 
     /* Muted */
-    --muted: 220 24% 95%;
-    --muted-foreground: 220 11% 43%;
+    --muted: 40 18% 93%;
+    --muted-foreground: 214 14% 42%;
 
     /* Accent — teal-green #00B894 (gain/positive) */
-    --accent: 168 100% 36%;
+    --accent: 38 35% 43%;
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 168 100% 30%;
-    --accent-muted: 168 80% 93%;
+    --accent-hover: 38 38% 36%;
+    --accent-muted: 38 32% 91%;
 
     /* Gold — warm amber #C9942A (premium / scarcity) */
     --gold: 40 65% 48%;
@@ -61,14 +61,14 @@
     --warning: 38 92% 52%;
 
     /* Structure */
-    --border: 220 20% 88%;
-    --input: 220 20% 88%;
-    --ring: 221 83% 53%;
-    --radius: 0.875rem;
+    --border: 210 17% 83%;
+    --input: 210 17% 80%;
+    --ring: 213 72% 14%;
+    --radius: 0.55rem;
 
     /* Premium surface system */
     --surface-raised: 0 0% 100%;
-    --surface-subtle: 220 36% 97%;
+    --surface-subtle: 42 24% 96%;
     --surface-glass: 0 0% 100% / 0.76;
 
     /* Charts */
@@ -79,11 +79,7 @@
     --chart-5: 0 78% 56%;
 
     /* App background */
-    --app-bg:
-      radial-gradient(ellipse at 10% 0%, hsl(221 83% 90% / 0.7), transparent 40rem),
-      radial-gradient(ellipse at 85% 0%, hsl(168 80% 88% / 0.45), transparent 32rem),
-      radial-gradient(ellipse at 50% 100%, hsl(262 83% 92% / 0.25), transparent 36rem),
-      linear-gradient(180deg, hsl(220 33% 97%), hsl(220 25% 95%));
+    --app-bg: linear-gradient(180deg, hsl(42 24% 98%), hsl(40 18% 94%));
   }
 
   .dark {
@@ -650,4 +646,189 @@ textarea {
 .keyboard-open #bottom-nav {
   opacity: 0;
   pointer-events: none;
+}
+
+/* ── TW Ventures public brand system ─────────────────────────────────────── */
+.public-page {
+  --public-ink: #071a33;
+  --public-ink-soft: #122a45;
+  --public-stone: #f3f0e9;
+  --public-paper: #fbfaf7;
+  --public-brass: #9a7b4f;
+  min-height: 100vh;
+  color: var(--public-ink);
+  background: var(--public-stone);
+}
+
+.brand-serif {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.brand-header {
+  position: relative;
+  z-index: 20;
+  border-bottom: 1px solid rgba(7, 26, 51, 0.14);
+  background: rgba(251, 250, 247, 0.96);
+  backdrop-filter: blur(16px);
+}
+
+.brand-header__inner {
+  display: flex;
+  min-height: 88px;
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.brand-lockup { display: flex; align-items: center; gap: 0.85rem; color: var(--public-ink); text-align: left; }
+.brand-lockup__copy { display: flex; min-width: 10rem; flex-direction: column; }
+.brand-lockup__name { font-family: Georgia, "Times New Roman", serif; font-size: 1.14rem; line-height: 1.15; letter-spacing: 0.01em; }
+.brand-lockup__rule { width: 100%; height: 1px; margin: 0.28rem 0; background: linear-gradient(90deg, var(--public-brass), transparent); }
+.brand-lockup__section { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: #687487; }
+.brand-header__actions { display: flex; align-items: center; gap: 0.35rem; }
+
+.brand-hero {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+    radial-gradient(circle at 78% 18%, #183957 0, transparent 35%),
+    linear-gradient(125deg, #061426, #0a2038 58%, #071a33);
+  background-size: 72px 72px, 72px 72px, auto, auto;
+}
+
+.brand-hero::after {
+  content: "";
+  position: absolute;
+  right: 4%;
+  bottom: -12%;
+  width: min(42vw, 42rem);
+  aspect-ratio: 1.35;
+  opacity: .12;
+  border: 1px solid #fff;
+  background:
+    linear-gradient(90deg, transparent 24%, #fff 24.2%, transparent 24.5%, transparent 49%, #fff 49.2%, transparent 49.5%, transparent 74%, #fff 74.2%, transparent 74.5%),
+    linear-gradient(transparent 33%, #fff 33.3%, transparent 33.6%, transparent 66%, #fff 66.3%, transparent 66.6%);
+  clip-path: polygon(0 100%, 0 44%, 16% 44%, 16% 27%, 34% 27%, 34% 12%, 58% 12%, 58% 35%, 76% 35%, 76% 20%, 100% 20%, 100% 100%);
+}
+
+.brand-kicker { color: #cfbd9b; font-size: .7rem; font-weight: 700; letter-spacing: .3em; text-transform: uppercase; }
+.brand-card { border: 1px solid rgba(7, 26, 51, .14); border-radius: .5rem; background: rgba(255,255,255,.74); box-shadow: 0 18px 50px rgba(7,26,51,.055); }
+.brand-card-dark { border: 1px solid rgba(255,255,255,.17); border-radius: .5rem; background: rgba(255,255,255,.075); box-shadow: 0 24px 70px rgba(0,0,0,.15); backdrop-filter: blur(16px); }
+.brand-rule { height: 1px; background: linear-gradient(90deg, var(--public-brass), rgba(154,123,79,0)); }
+
+.brand-form input, .brand-form textarea, .brand-form button[role="combobox"] {
+  border-radius: .25rem !important;
+  border-color: rgba(7,26,51,.2);
+  background: rgba(255,255,255,.78);
+}
+.brand-form label { color: var(--public-ink); font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+@media (max-width: 640px) {
+  .brand-header__inner { min-height: 72px; padding: 0 1rem; }
+  .brand-lockup img { width: 58px !important; height: 48px !important; }
+  .brand-lockup__copy { min-width: 0; }
+  .brand-lockup__name { font-size: 1rem; }
+  .brand-lockup__section { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .brand-header__actions .brand-nav-label { display: none; }
+}
+
+/* ── TW Ventures authenticated operations system ────────────────────────── */
+.operations-shell {
+  --operations-ink: #071a33;
+  --operations-ink-soft: #102a45;
+  --operations-brass: #9a7b4f;
+  --operations-paper: #fbfaf7;
+  --operations-stone: #f1eee7;
+  background:
+    linear-gradient(90deg, rgba(7,26,51,.025) 1px, transparent 1px),
+    linear-gradient(rgba(7,26,51,.025) 1px, transparent 1px),
+    var(--operations-paper);
+  background-size: 72px 72px;
+}
+
+.operations-sidebar {
+  color: #f7f4ed;
+  border-color: rgba(255,255,255,.12) !important;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    radial-gradient(circle at 25% 0%, #173856, transparent 36%),
+    linear-gradient(160deg, #071a33, #061426 72%);
+  background-size: 52px 52px, 52px 52px, auto, auto;
+}
+
+.operations-sidebar__brand,
+.operations-sidebar__utility { border-color: rgba(255,255,255,.12) !important; }
+.operations-sidebar__mark { padding: .18rem; border: 1px solid rgba(154,123,79,.55); border-radius: .2rem; background: #fbfaf7; }
+.operations-sidebar__name { font-family: Georgia, "Times New Roman", serif; font-size: 1rem; line-height: 1; letter-spacing: .025em; color: #fff; }
+.operations-sidebar__rule { display: block; width: 100%; height: 1px; margin: .3rem 0; background: linear-gradient(90deg, #b69a70, transparent); }
+.operations-sidebar__section { font-size: .55rem; font-weight: 700; line-height: 1; letter-spacing: .2em; text-transform: uppercase; color: #aeb9c7; }
+
+.operations-sidebar .nav-item-premium { border-radius: .2rem; color: #b8c3d0; }
+.operations-sidebar .nav-item-premium:hover { color: #fff; background: rgba(255,255,255,.07); }
+.operations-sidebar .nav-item-premium[data-active="true"] {
+  color: #fff;
+  background: linear-gradient(90deg, rgba(182,154,112,.22), rgba(255,255,255,.055));
+  box-shadow: inset 2px 0 0 #b69a70;
+}
+.operations-sidebar .nav-section-label { color: #8997a8 !important; letter-spacing: .22em; }
+.operations-sidebar .operations-sidebar__utility button { color: #aeb9c7; border-color: rgba(255,255,255,.15); }
+.operations-sidebar .operations-sidebar__utility button:hover { color: #fff; background: rgba(255,255,255,.07); }
+
+.operations-header {
+  border-color: rgba(7,26,51,.12) !important;
+  background: rgba(251,250,247,.94) !important;
+}
+.operations-header__kicker { font-size: .56rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #7d6a4e; }
+.operations-header__desk { margin-top: .15rem; font-family: Georgia, "Times New Roman", serif; font-size: 1rem; color: var(--operations-ink); }
+.operations-content { position: relative; }
+.operations-content::before { content: ""; position: absolute; top: 0; left: 1.75rem; width: 5rem; height: 2px; background: linear-gradient(90deg, var(--operations-brass), transparent); }
+
+.operations-title { font-family: Georgia, "Times New Roman", serif; font-weight: 400 !important; letter-spacing: -.035em; color: var(--operations-ink); }
+.operations-eyebrow { display: inline-flex; align-items: center; font-size: .62rem; font-weight: 750; letter-spacing: .2em; text-transform: uppercase; color: #866b45; }
+.operations-module__header { padding-bottom: 1.35rem; border-bottom: 1px solid rgba(7,26,51,.12); }
+.operations-stat { position: relative; overflow: hidden; border-radius: .28rem !important; box-shadow: 0 12px 34px rgba(7,26,51,.045); }
+.operations-stat::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 2px; background: #aa8c61; opacity: .45; }
+.operations-stat:hover::before,
+.operations-stat[class*="border-primary"]::before { opacity: 1; }
+.operations-view-toggle { border-radius: .28rem !important; }
+.operations-empty-state { position: relative; overflow: hidden; border-radius: .35rem !important; background: rgba(255,255,255,.78) !important; }
+.operations-empty-state::after {
+  content: "";
+  position: absolute;
+  right: -3rem;
+  bottom: -4rem;
+  width: 20rem;
+  height: 15rem;
+  opacity: .055;
+  pointer-events: none;
+  border: 1px solid var(--operations-ink);
+  background:
+    linear-gradient(90deg, transparent 24%, var(--operations-ink) 24.3%, transparent 24.6%, transparent 49%, var(--operations-ink) 49.3%, transparent 49.6%, transparent 74%, var(--operations-ink) 74.3%, transparent 74.6%),
+    linear-gradient(transparent 33%, var(--operations-ink) 33.3%, transparent 33.6%, transparent 66%, var(--operations-ink) 66.3%, transparent 66.6%);
+  clip-path: polygon(0 100%, 0 45%, 18% 45%, 18% 26%, 40% 26%, 40% 8%, 64% 8%, 64% 34%, 82% 34%, 82% 20%, 100% 20%, 100% 100%);
+}
+.operations-empty-state__icon { display: grid; width: 4rem; height: 4rem; place-items: center; border: 1px solid rgba(154,123,79,.48); border-radius: 50%; color: var(--operations-ink); background: var(--operations-stone); }
+.operations-profile-menu { border-radius: .3rem !important; }
+
+.dark .operations-shell { --operations-ink: #f4f0e8; --operations-paper: #07111f; --operations-stone: #101d2b; background-color: #07111f; }
+.dark .operations-header { background: rgba(7,17,31,.94) !important; border-color: rgba(255,255,255,.12) !important; }
+.dark .operations-header__desk { color: #f4f0e8; }
+.dark .operations-content::before { opacity: .8; }
+.dark .operations-module__header { border-color: rgba(255,255,255,.12); }
+.dark .operations-empty-state { background: rgba(12,27,45,.78) !important; }
+
+@media (max-width: 1023px) {
+  .operations-mobile-nav { color: #f7f4ed; background: #071a33 !important; }
+  .operations-mobile-nav .nav-item-premium { color: #b8c3d0; }
+  .operations-mobile-nav .nav-item-premium[data-active="true"] { color: #fff; background: rgba(182,154,112,.2); }
+  .operations-mobile-nav .nav-section-label { color: #8997a8 !important; }
 }
