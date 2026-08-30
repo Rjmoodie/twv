@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle, Building2, CalendarClock, CircleDollarSign,
@@ -28,7 +29,11 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PortfolioMap from './PortfolioMap';
+// Mapbox is 1.6MB minified -- larger than the rest of the application put
+// together -- and the default view is the list, so most sessions never show a
+// map. Loading it eagerly made every visit to Portfolio pay for it.
+// DealSourcingMap already deferred it; Portfolio did not.
+const PortfolioMap = lazyWithRetry(() => import('./PortfolioMap'));
 import PMPortfolioStudio from './PMPortfolioStudio';
 import type { PortfolioHealth, PortfolioProject, ProjectDocument, ProjectMilestone, ProjectRequest, ProjectUpdate } from './types';
 
@@ -272,7 +277,13 @@ const Portfolio = () => {
             </div>
           )}
           {(view === 'map' || (view === 'split' && !isMobile)) && (
-            <PortfolioMap projects={filtered} selectedId={selected?.project_id ?? null} onSelect={setSelected} />
+            <Suspense fallback={
+              <div className="flex min-h-[420px] items-center justify-center rounded-xl border bg-muted/30">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            }>
+              <PortfolioMap projects={filtered} selectedId={selected?.project_id ?? null} onSelect={setSelected} />
+            </Suspense>
           )}
         </div>
       )}
