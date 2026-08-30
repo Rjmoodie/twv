@@ -15,9 +15,6 @@ interface NotificationPreferences {
   in_app: boolean;
   push: boolean;
   marketing: boolean;
-  analysis_complete: boolean;
-  watchlist_alerts: boolean;
-  market_updates: boolean;
 }
 
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
@@ -25,9 +22,6 @@ const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = {
   in_app: true,
   push: true,
   marketing: false,
-  analysis_complete: true,
-  watchlist_alerts: true,
-  market_updates: false,
 };
 
 const mergeStoredPreferences = (value: unknown): NotificationPreferences => {
@@ -42,8 +36,6 @@ const NotificationSettings = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES);
-  const [digestEnabled, setDigestEnabled] = useState(false);
-  const [digestBusy, setDigestBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pushBusy, setPushBusy] = useState(false);
   const [preferencesBusy, setPreferencesBusy] = useState(false);
@@ -55,7 +47,7 @@ const NotificationSettings = () => {
     try {
       const [{ data, error }, { data: emailPreferences, error: emailError }, hasPushSubscription] = await Promise.all([
         supabase.from('system_settings').select('notification_preferences').eq('user_id', userId).maybeSingle(),
-        supabase.from('user_email_preferences').select('digest_enabled,marketing_enabled').eq('user_id', userId).maybeSingle(),
+        supabase.from('user_email_preferences').select('marketing_enabled').eq('user_id', userId).maybeSingle(),
         hasActivePushSubscription().catch(() => false),
       ]);
 
@@ -71,7 +63,6 @@ const NotificationSettings = () => {
         // legacy JSON field is retained only for backward-compatible UI state.
         marketing: emailPreferences?.marketing_enabled === true,
       });
-      setDigestEnabled(emailPreferences?.digest_enabled === true);
     } catch (error) {
       console.error('Error fetching notification preferences:', error);
       if (sequence === requestSequence.current) {
@@ -91,8 +82,6 @@ const NotificationSettings = () => {
     const userId = user?.id ?? null;
     setLoading(true);
     setPreferences(DEFAULT_NOTIFICATION_PREFERENCES);
-    setDigestEnabled(false);
-    setDigestBusy(false);
     setPushBusy(false);
     setPreferencesBusy(false);
     if (userId) void fetchNotificationPreferences(userId, sequence);
@@ -224,38 +213,6 @@ const NotificationSettings = () => {
     }
   };
 
-  const handleDigestToggle = async () => {
-    if (!user || digestBusy) return;
-    const userId = user.id;
-    const nextValue = !digestEnabled;
-    setDigestBusy(true);
-    try {
-      const { error } = await supabase.from('user_email_preferences').upsert({
-        user_id: userId,
-        digest_enabled: nextValue,
-        ...(nextValue ? { unsubscribed: false, unsubscribed_at: null } : {}),
-      }, { onConflict: 'user_id' });
-      if (error) throw error;
-      if (activeUserId.current !== userId) return;
-      setDigestEnabled(nextValue);
-      toast({
-        title: nextValue ? 'Weekly insider digest enabled' : 'Weekly insider digest disabled',
-        description: nextValue
-          ? 'You will receive a summary only when tracked companies have effective Form 4 activity.'
-          : 'No further weekly insider digests will be sent.',
-      });
-    } catch (error) {
-      console.error('Digest preference update failed:', error);
-      if (activeUserId.current !== userId) return;
-      toast({
-        title: 'Digest preference not changed',
-        description: 'Your prior email consent setting remains in effect.',
-        variant: 'destructive',
-      });
-    } finally {
-      if (activeUserId.current === userId) setDigestBusy(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -337,69 +294,6 @@ const NotificationSettings = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Analysis Complete</Label>
-              <p className="text-sm text-muted-foreground">
-                Get notified when your stock analysis is ready
-              </p>
-            </div>
-            <Switch
-              checked={preferences.analysis_complete}
-              disabled={preferencesBusy}
-              onCheckedChange={() => void handleToggle('analysis_complete')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Watchlist Alerts</Label>
-              <p className="text-sm text-muted-foreground">
-                Price alerts and updates for your watchlist stocks
-              </p>
-            </div>
-            <Switch
-              checked={preferences.watchlist_alerts}
-              disabled={preferencesBusy}
-              onCheckedChange={() => void handleToggle('watchlist_alerts')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label>Market Updates</Label>
-              <p className="text-sm text-muted-foreground">
-                Daily market summaries and key economic news
-              </p>
-            </div>
-            <Switch
-              checked={preferences.market_updates}
-              disabled={preferencesBusy}
-              onCheckedChange={() => void handleToggle('market_updates')}
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="weekly-insider-digest">Weekly insider activity digest</Label>
-              <p className="text-sm text-muted-foreground">
-                Opt in to a weekly email of effective SEC Form 4 activity for companies on your watchlist or in your portfolios. Empty weeks are not sent.
-              </p>
-              {!preferences.email && <p className="mt-1 text-xs text-warning">Email Notifications is off; turn it on before enabling this digest.</p>}
-            </div>
-            <Switch
-              id="weekly-insider-digest"
-              checked={digestEnabled}
-              disabled={digestBusy || preferencesBusy || (!preferences.email && !digestEnabled)}
-              onCheckedChange={() => void handleDigestToggle()}
-            />
-          </div>
         </CardContent>
       </Card>
 

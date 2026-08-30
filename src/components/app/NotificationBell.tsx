@@ -9,9 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Bell, CheckCheck, CheckCircle2, AlertTriangle, AlertCircle,
-  Info, DollarSign, BarChart3, RefreshCw, Zap, Shield,
-  CreditCard, Activity, Link2,
+  Bell, CheckCheck, AlertCircle, AlertTriangle, Info, DollarSign, RefreshCw, Shield, Link2, Activity, CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,30 +29,24 @@ interface Notification {
 
 function typeConfig(type: string): { icon: React.ReactNode; bg: string } {
   switch (type) {
-    case "success":
-    case "analysis_complete":
-    case "sync":
-      return { icon: <CheckCircle2 className="h-4 w-4" />, bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
-    case "warning":
-    case "watchlist_alert":
+    // The keys here are `notification_outbox.event_type`, which the dispatcher
+    // copies onto the row. The previous set -- analysis_complete, watchlist_alert,
+    // price_target, coach, plaid, journey -- came from the source platform and
+    // matched nothing this app emits, so every notification fell through to the
+    // generic default.
+    case "investor_inquiry_received":
+    case "project_inquiry_received":
+      return { icon: <DollarSign className="h-4 w-4" />, bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" };
+    case "project_invitation":
+      return { icon: <Link2 className="h-4 w-4" />, bg: "bg-sky-500/10 text-sky-600 dark:text-sky-400" };
+    case "project_milestone_due":
       return { icon: <AlertTriangle className="h-4 w-4" />, bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400" };
-    case "error":
+    case "calendar_reminder":
+      return { icon: <Activity className="h-4 w-4" />, bg: "bg-teal-500/10 text-teal-600 dark:text-teal-400" };
     case "security":
       return { icon: <Shield className="h-4 w-4" />, bg: "bg-destructive/10 text-destructive" };
-    case "price_target":
     case "billing":
       return { icon: <CreditCard className="h-4 w-4" />, bg: "bg-violet-500/10 text-violet-600 dark:text-violet-400" };
-    case "weekly_summary":
-      return { icon: <BarChart3 className="h-4 w-4" />, bg: "bg-primary/10 text-primary" };
-    case "coach":
-      return { icon: <Zap className="h-4 w-4" />, bg: "bg-violet-500/10 text-violet-600 dark:text-violet-400" };
-    case "plaid":
-    case "account":
-      return { icon: <Link2 className="h-4 w-4" />, bg: "bg-sky-500/10 text-sky-600 dark:text-sky-400" };
-    case "journey":
-      return { icon: <Activity className="h-4 w-4" />, bg: "bg-teal-500/10 text-teal-600 dark:text-teal-400" };
-    case "system":
-      return { icon: <DollarSign className="h-4 w-4" />, bg: "bg-primary/10 text-primary" };
     default:
       return { icon: <Info className="h-4 w-4" />, bg: "bg-primary/10 text-primary" };
   }

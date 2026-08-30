@@ -275,12 +275,6 @@ export interface CashFlowReport {
   generatedAt: string;
 }
 
-export interface RetirementResult {
-  futureValue: number;
-  yearsToRetirement: number;
-  recommendedSavings: number;
-  onTrack: boolean;
-}
 
 export interface RealEstateResult {
   monthlyPayment: number;
