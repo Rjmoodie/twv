@@ -21,6 +21,16 @@ from (values
   ('a1000000-0000-4000-8000-000000000005'::uuid, 'portfolio-outsider@example.com')
 ) identity(user_id, email);
 
+-- Signing up no longer conjures a workspace: membership is by invitation, so
+-- the fixture creates the organization the trigger used to create implicitly.
+with seeded as (
+  insert into public.organizations (name, slug, created_by, is_primary)
+  values ('Portal Test Org', 'portal-test-org', 'a1000000-0000-4000-8000-000000000001', true)
+  returning id
+)
+insert into public.organization_members (organization_id, user_id, role)
+select seeded.id, 'a1000000-0000-4000-8000-000000000001', 'owner' from seeded;
+
 create temporary table portal_ids (label text primary key, id uuid not null);
 create temporary table portal_tokens (role text primary key, token text not null);
 grant select, insert, update on portal_ids, portal_tokens to authenticated;

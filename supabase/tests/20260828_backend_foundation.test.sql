@@ -62,14 +62,28 @@ select is(
   2::bigint,
   'signup trigger provisions user profiles'
 );
+-- This asserted the opposite until TW settled on being one company rather than
+-- a host for many. A workspace per signup made every account an owner, and the
+-- inquiry policies only asked whether the caller owned *something* -- so every
+-- registered user could read every investor lead. Signing up now grants no
+-- membership at all; it arrives by invitation.
 select is(
   (select count(*) from public.organization_members where user_id in (
     'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
-  ) and role = 'owner'),
-  2::bigint,
-  'signup trigger provisions one owned workspace per user'
+  )),
+  0::bigint,
+  'signing up grants no organization membership on its own'
 );
+
+-- The workspace the fixture used to receive from the trigger.
+with seeded as (
+  insert into public.organizations (name, slug, created_by, is_primary)
+  values ('Foundation Test Org', 'foundation-test-org', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', true)
+  returning id
+)
+insert into public.organization_members (organization_id, user_id, role)
+select seeded.id, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'owner' from seeded;
 
 create temporary table smoke_ids (
   label text primary key,
@@ -88,7 +102,7 @@ set local request.jwt.claim.role = 'authenticated';
 select is(
   (select count(*) from public.organizations),
   1::bigint,
-  'a user sees only their own organizations'
+  'a member sees only organizations they belong to'
 );
 
 select lives_ok(
