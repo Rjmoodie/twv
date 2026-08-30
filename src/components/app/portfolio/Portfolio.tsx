@@ -107,7 +107,13 @@ const Portfolio = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [portfolioStudioOpen, setPortfolioStudioOpen] = useState(false);
+  // `?studio=open` opens the public-portfolio studio directly. The studio is a
+  // dialog behind a button, so without this the only way to point someone at it
+  // is "go to Portfolio and look for Public portfolio" -- which is exactly the
+  // instruction a first-time owner is given.
+  const [portfolioStudioOpen, setPortfolioStudioOpen] = useState(
+    () => new URLSearchParams(window.location.search).get('studio') === 'open',
+  );
   const busy = false;
 
   const portfolioQuery = useQuery({
@@ -275,7 +281,20 @@ const Portfolio = () => {
       <CreateProjectDialog open={createOpen} onOpenChange={setCreateOpen} organizationIds={access.organizations.filter((item) => item.role === 'owner' || item.role === 'admin').map((item) => item.organization_id)} onCreated={refresh} />
       <InviteDialog open={inviteOpen} onOpenChange={setInviteOpen} project={selected} onCreated={refresh} />
       <PublishUpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} project={selected} onCreated={refresh} />
-      <PMPortfolioStudio open={portfolioStudioOpen} onOpenChange={setPortfolioStudioOpen} projects={projects} />
+      <PMPortfolioStudio
+        open={portfolioStudioOpen}
+        onOpenChange={(next) => {
+          setPortfolioStudioOpen(next);
+          // Drop the param on close, so a refresh or a back-navigation does not
+          // reopen a dialog the reader just dismissed.
+          if (!next && new URLSearchParams(window.location.search).has('studio')) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('studio');
+            window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`);
+          }
+        }}
+        projects={projects}
+      />
     </div>
   );
 };
