@@ -74,18 +74,22 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
   });
   const canGoBack = navHistory.length > 1;
 
+  // Step the browser back rather than rewriting the current entry.
+  //
+  // This used to setSearchParams(..., { replace: true }), which overwrote the
+  // entry the reader was on instead of leaving it. After one in-app Back the
+  // browser's own Back then landed on the module already displayed and appeared
+  // to do nothing, needing a second press. Going back for real keeps one
+  // history, so the header button and the browser button mean the same thing.
+  //
+  // The URL effect below already reacts to the popped address: it sets
+  // activeModule and pops navHistory when the new module is the previous entry.
+  // So nothing is updated here that would then be updated again.
   const handleGoBack = useCallback(() => {
     if (navHistory.length <= 1) return;
-    const destination = navHistory[navHistory.length - 2];
-    setNavHistory(prev => prev.slice(0, -1));
-    setActiveModule(destination);
-    sessionStorage.setItem('tw-active-module', destination);
-    const nextSearchParams = new URLSearchParams(searchParams);
-    if (destination === 'dashboard') nextSearchParams.delete('module');
-    else nextSearchParams.set('module', destination);
-    setSearchParams(nextSearchParams, { replace: true });
+    navigate(-1);
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [navHistory, searchParams, setSearchParams]);
+  }, [navHistory.length, navigate]);
 
   // Native Android back button — uses static import, not dynamic require
   const handleGoBackRef = useRef(handleGoBack);
