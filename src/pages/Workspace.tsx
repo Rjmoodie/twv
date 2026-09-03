@@ -125,7 +125,9 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
     if (!user) {
       const label = portalIntent === 'project_manager' ? 'Project Manager' : portalIntent.charAt(0).toUpperCase() + portalIntent.slice(1);
       savePendingAction({ type: 'module-access', returnTo: 'portfolio', message: `Sign in to your ${label} portal.` });
-      setAuthDialogMessage(`Sign in to your ${label} portal. Access is determined by your project invitation.`);
+      setAuthDialogMessage(portalIntent === 'project_manager'
+        ? 'Kareem: sign in with services@twv-llc.com. Project Manager access is determined by the membership assigned to that exact account.'
+        : `Sign in to your ${label} portal. Access is determined by your project invitation.`);
       setShowAuthDialog(true);
     }
   }, [portalIntent, authLoading, user]);
@@ -467,6 +469,8 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
           onOpenChange={(open) => { setShowAuthDialog(open); if (!open) setAuthDialogMessage(null); }}
           onAuthSuccess={handleAuthSuccess}
           message={authDialogMessage}
+          portalIntent={portalIntent}
+          suggestedEmail={portalIntent === 'project_manager' ? 'services@twv-llc.com' : undefined}
         />
         
         <PricingDialog

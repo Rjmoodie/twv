@@ -14,6 +14,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./AuthProvider";
 import Logo from "./Logo";
+import type { PortalIntent } from "@/lib/portalRouting";
 
 // SVG icons for OAuth providers — inline to avoid dependency on icon packs
 const GoogleIcon = () => (
@@ -31,12 +32,14 @@ interface AuthDialogProps {
   onOpenChange: (open: boolean) => void;
   onAuthSuccess?: () => void;
   message?: string | null;
+  portalIntent?: PortalIntent;
+  suggestedEmail?: string;
 }
 
 // Two steps: ask for the address, then for the code it was sent.
 type AuthView = 'email' | 'code';
 
-const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogProps) => {
+const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message, portalIntent, suggestedEmail }: AuthDialogProps) => {
   const { sendLoginCode, verifyLoginCode, signInWithOAuth } = useAuth();
   const haptics = useHaptics();
   const { dismiss } = useToast();
@@ -77,17 +80,15 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
 
   // Reset state when dialog opens/closes
   useEffect(() => {
-    if (!open) {
-      setView('email');
-      setEmail('');
-      setCode('');
-      setLoading(false);
-      setOauthLoading(null);
-      setEmailError('');
-      setCodeError('');
-      setFormError('');
-    }
-  }, [open]);
+    setView('email');
+    setEmail(open ? suggestedEmail ?? '' : '');
+    setCode('');
+    setLoading(false);
+    setOauthLoading(null);
+    setEmailError('');
+    setCodeError('');
+    setFormError('');
+  }, [open, suggestedEmail]);
 
   // Re-focus email when switching views — desktop only.
   // On mobile, auto-focus triggers the keyboard before the user sees the form.
@@ -255,6 +256,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
           <AlertCircle className="h-3 w-3 shrink-0" />{emailError}
         </p>
       )}
+      {suggestedEmail && !emailError && <p className="text-xs text-muted-foreground">Kareem / Services profile: <strong className="font-semibold text-foreground">{suggestedEmail}</strong></p>}
     </div>
   );
 
@@ -296,6 +298,7 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
 
   const renderEmailStep = () => (
     <>
+      {portalIntent === 'project_manager' && <p className="mb-4 text-sm leading-6 text-muted-foreground">Use <strong className="text-foreground">{suggestedEmail ?? 'the exact address on your PM invitation'}</strong>. If you continue with Google, choose that same account.</p>}
       {renderOAuthButtons()}
       {renderDivider()}
       <form onSubmit={(e) => { e.preventDefault(); handleSendCode(); }} className="space-y-4" noValidate>
@@ -352,9 +355,20 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
     </form>
   );
 
-  const title = view === 'code' ? 'Enter your code' : 'Welcome to TW Ventures';
+  const title = view === 'code'
+    ? 'Enter your code'
+    : portalIntent === 'project_manager'
+      ? 'Project Manager sign in'
+      : portalIntent === 'investor'
+        ? 'Investor sign in'
+        : portalIntent === 'client'
+          ? 'Client sign in'
+          : 'Welcome to TW Ventures';
 
-  const accessLabel = message?.toLowerCase().includes('investor') ? 'Investor partnerships'
+  const accessLabel = portalIntent === 'project_manager' ? 'Project Manager workspace'
+    : portalIntent === 'investor' ? 'Investor partnerships'
+      : portalIntent === 'client' ? 'Client project access'
+        : message?.toLowerCase().includes('investor') ? 'Investor partnerships'
     : message?.toLowerCase().includes('project manager') ? 'Project delivery'
       : message?.toLowerCase().includes('client') || message?.toLowerCase().includes('project invitation') ? 'Investor partnerships'
         : 'Secure project access';
@@ -380,7 +394,9 @@ const AuthDialog = ({ open, onOpenChange, onAuthSuccess, message }: AuthDialogPr
             <DialogDescription className="leading-6">
               {view === 'code'
                 ? 'Enter the six-digit code we just emailed you.'
-                : 'Use the email connected to your TW Ventures relationship. New here? This creates your account.'}
+                : portalIntent === 'project_manager'
+                  ? 'Use the email assigned to your Project Manager access. No password is required.'
+                  : 'Use the email connected to your TW Ventures relationship. New here? This creates your account.'}
             </DialogDescription>
           </DialogHeader>
 

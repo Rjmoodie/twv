@@ -73,7 +73,7 @@ test('mobile sign-in sheet stays within the viewport and its content can scroll'
   await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
   await page.goto('/');
   await dismissConsent(page);
-  await page.getByRole('button', { name: 'Project access' }).click();
+  await page.getByRole('button', { name: 'Portal sign in' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Welcome to TW Ventures' });
   await expect(dialog).toBeVisible();
@@ -112,6 +112,8 @@ test('landing comparison and estimator fit a small phone without clipping contro
     expect(bounds!.x).toBeGreaterThanOrEqual(0);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
   }
+  await expect(page.getByLabel('Assumed traditional GC markup')).toHaveValue('30');
+  await expect(page.getByLabel('Assumed project-management fee')).toHaveValue('5');
 
   await page.getByRole('button', { name: 'How it differs' }).click();
   await expect(page.getByText('A project manager is not simply a lower-cost general contractor.')).toBeInViewport();
