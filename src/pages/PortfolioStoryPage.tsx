@@ -22,6 +22,9 @@ type Author = { handle: string; display_name: string; bio: string | null; avatar
 function StoryState({ title, copy }: { title: string; copy: string }) {
   return (
     <main className="public-page min-h-screen bg-[#f3f0e9]">
+      {/* An unknown slug still answers 200, so without this the miss reads as a
+          real page and every made-up /work/… URL becomes indexable. */}
+      <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
       <PublicBrandHeader section="Project Case Study" />
       <section className="mx-auto flex min-h-[calc(100vh-89px)] max-w-3xl items-center px-5 py-16 text-center sm:px-8">
         <div className="brand-card w-full p-8 sm:p-12">

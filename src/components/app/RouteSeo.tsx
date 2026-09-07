@@ -75,6 +75,11 @@ export default function RouteSeo() {
       <link rel="canonical" href={canonical} />
       <meta property="og:title" content={metadata.title} />
       <meta property="og:description" content={metadata.description} />
+      {/* The static tags in index.html carry data-rh, so Helmet replaces them
+          rather than leaving a duplicate. That also means every tag they used to
+          provide has to be supplied here — a case study overrides this with
+          "article" from its own Helmet. */}
+      <meta property="og:type" content="website" />
       <meta property="og:url" content={canonical} />
       <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
       <meta property="og:image:type" content="image/jpeg" />

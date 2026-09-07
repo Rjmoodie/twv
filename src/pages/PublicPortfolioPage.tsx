@@ -21,6 +21,9 @@ type Entry = { id: string; slug: string; title: string; project_type: string; lo
 function PortfolioState({ title, copy }: { title: string; copy: string }) {
   return (
     <main className="public-page min-h-screen bg-[#f3f0e9]">
+      {/* An unknown or private handle still answers 200, so this keeps the miss
+          out of the index rather than letting it look like a real portfolio. */}
+      <Helmet><meta name="robots" content="noindex, nofollow" /></Helmet>
       <PublicBrandHeader section="Project Portfolio" />
       <section className="mx-auto flex min-h-[calc(100vh-89px)] max-w-3xl items-center px-5 py-16 text-center sm:px-8">
         <div className="brand-card w-full p-8 sm:p-12">
@@ -92,6 +95,9 @@ export default function PublicPortfolioPage() {
   const { profile, entries } = page.data;
   const canonical = `${SITE_URL}/professionals/${profile.handle}`;
   const description = profile.bio || `Explore ${profile.display_name}'s completed real estate and construction projects.`;
+  // Share the newest project photo rather than the generic site card — the work
+  // is the reason to click, and this page always has some.
+  const shareImage = entries.find((entry) => entry.featured_image_url)?.featured_image_url ?? `${SITE_URL}/og-image.jpg`;
 
   return (
     <main className="public-page min-h-screen">
@@ -104,6 +110,8 @@ export default function PublicPortfolioPage() {
         <meta property="og:description" content={description} />
         <meta property="og:url" content={canonical} />
         <meta property="og:type" content="profile" />
+        <meta property="og:image" content={shareImage} />
+        <meta name="twitter:image" content={shareImage} />
       </Helmet>
 
       <PublicBrandHeader
