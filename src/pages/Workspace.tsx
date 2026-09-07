@@ -21,6 +21,7 @@ import { canEnterPortal } from "@/lib/portalRouting";
 import { useSubscription } from "@/hooks/useSubscription";
 import { getModuleAccessStatus, getModuleRule, getAccessRequirementLabel } from "@/config/moduleAccess";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import PortalEntryScreen from "@/components/app/PortalEntryScreen";
 // PageHeader removed — each module renders its own via NavigationWrapper
 
 // Lazy load modules for better performance
@@ -437,6 +438,26 @@ const Workspace = ({ portalIntent }: WorkspaceProps) => {
     setSearchParams(nextSearchParams, { replace: true });
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
+
+  // A direct portal URL is an access journey, not a product demo. Keep the
+  // signed-out state focused on authentication instead of revealing a locked
+  // navigation shell that cannot do anything until a session exists.
+  if (portalIntent && !authLoading && !user) {
+    return (
+      <>
+        {showSplash && <AnimatedSplash onComplete={handleSplashComplete} />}
+        <PortalEntryScreen intent={portalIntent} onSignIn={() => setShowAuthDialog(true)} />
+        <AuthDialog
+          open={showAuthDialog}
+          onOpenChange={(open) => { setShowAuthDialog(open); if (!open) setAuthDialogMessage(null); }}
+          onAuthSuccess={handleAuthSuccess}
+          message={authDialogMessage}
+          portalIntent={portalIntent}
+          suggestedEmail={portalIntent === 'project_manager' ? 'services@twv-llc.com' : undefined}
+        />
+      </>
+    );
+  }
 
   return (
     <>

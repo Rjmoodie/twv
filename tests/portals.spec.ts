@@ -12,6 +12,10 @@ for (const [path, portalName] of [
     if (portalName === 'Project Manager') {
       await expect(dialog).toContainText('services@twv-llc.com');
       await expect(dialog.getByLabel('Email')).toHaveValue('services@twv-llc.com');
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('heading', { name: /Run the work from one clear project record/i })).toBeVisible();
+      await expect(page.getByRole('button', { name: /Sign in to Project Manager portal/i })).toBeVisible();
+      await expect(page.getByText('Rates', { exact: true })).toHaveCount(0);
     } else {
       await expect(dialog).toContainText(`Sign in to your ${portalName} portal`);
     }
@@ -28,7 +32,6 @@ test('public home presents investor project management with direct consultation 
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /Build smarter. Protect your investment/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Portal sign in/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Project Manager sign in/i }).first()).toBeVisible();
   await expect(page.getByRole('heading', { name: /Can TW Ventures pull permits/i })).toBeVisible();
   await expect(page.getByRole('heading', { name: /See the work—not just the promise/i })).toBeVisible();
   await expect(page.getByLabel('Assumed traditional GC markup')).toHaveValue('30');

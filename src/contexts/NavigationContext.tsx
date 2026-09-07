@@ -74,7 +74,10 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
       searchParams.set('module', module);
     }
     
-    const newUrl = `/${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+    // Keep the active portal in the address. Resetting every module change to
+    // `/` silently dropped users out of `/pm`, `/investor`, and `/client`,
+    // which also discarded the role intent used by the route guard.
+    const newUrl = `${location.pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
     
     if (replace) {
       navigate(newUrl, { replace: true });
@@ -86,7 +89,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
     setTimeout(() => {
       restoreScrollPosition(module);
     }, 100);
-  }, [activeModule, location.search, navigate]);
+  }, [activeModule, location.pathname, location.search, navigate]);
 
 
 

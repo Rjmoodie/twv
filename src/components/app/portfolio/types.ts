@@ -80,3 +80,17 @@ export interface ProjectRequest {
   created_at: string;
   updated_at: string;
 }
+
+export interface GalleryPhoto {
+  url: string;
+  caption: string | null;
+  alt: string | null;
+}
+
+export interface PublicProjectPin {
+  slug: string;
+  title: string;
+  project_type: string;
+  latitude: number;
+  longitude: number;
+}

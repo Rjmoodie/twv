@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, BellRing, Building2, Calculator, Check, CheckCircle2, CircleDollarSign, FileText, FolderKanban, HardHat, ImageIcon, Info, LogIn, MapPin, MessageSquareText, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, Building2, Calculator, Check, HardHat, ImageIcon, Info, LogIn, Map, MapPin, ShieldCheck, Users } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import AuthDialog from '@/components/app/AuthDialog';
 import PublicBrandHeader from '@/components/app/PublicBrandHeader';
@@ -11,14 +11,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { estimateProjectManagementSavings, SAVINGS_LIMITS } from '@/lib/projectManagementSavings';
+import { lazyWithRetry } from '@/lib/lazyWithRetry';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { supabase } from '@/integrations/supabase/client';
+import type { PublicProjectPin } from '@/components/app/portfolio/types';
 
-const portalFeatures = [
-  { icon: FolderKanban, title: 'See the whole asset', description: 'Review every active and completed project connected to your investment relationship.' },
-  { icon: BellRing, title: 'Follow execution', description: 'Receive clear milestone, schedule, and status updates from the TW Ventures team.' },
-  { icon: FileText, title: 'Keep decisions together', description: 'Access project documents, decisions, and important information in one secure place.' },
-  { icon: MessageSquareText, title: 'Plan what comes next', description: 'Begin the conversation for your next acquisition, development, or managed project.' },
-];
+const PublicProjectMap = lazyWithRetry(() => import('@/components/app/portfolio/PublicProjectMap'));
 
 const comparisonRows = [
   ['Primary role', 'Contracts to deliver the construction scope', 'Represents and coordinates the investor’s project'],
@@ -93,6 +91,8 @@ type FeaturedProject = {
 };
 
 function FeaturedProjects() {
+  const [mapRef, mapInView] = useInViewOnce<HTMLDivElement>();
+  const [mapVisible, setMapVisible] = useState(false);
   const projects = useQuery({
     queryKey: ['landing-featured-projects'],
     queryFn: async () => {
@@ -108,24 +108,66 @@ function FeaturedProjects() {
     },
   });
 
+  // Every geocoded project, not just the three featured cards — the point of the
+  // map is the density of the work across the city.
+  const pins = useQuery({
+    queryKey: ['landing-project-pins'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('pm_portfolio_entries')
+        .select('slug, title, project_type, latitude, longitude')
+        .eq('status', 'published')
+        .not('latitude', 'is', null);
+      if (error) throw error;
+      return (data ?? []) as PublicProjectPin[];
+    },
+  });
+
+  // The cards show the three most recent; the button needs the public portfolio
+  // handle and the real total so it never advertises more work than is published.
+  const portfolio = useQuery({
+    queryKey: ['landing-portfolio-link'],
+    queryFn: async () => {
+      const [profileResult, countResult] = await Promise.all([
+        supabase.from('public_profiles').select('handle').eq('is_public', true).limit(1).maybeSingle(),
+        supabase.from('pm_portfolio_entries').select('id', { count: 'exact', head: true }).eq('status', 'published'),
+      ]);
+      if (profileResult.error) throw profileResult.error;
+      return { handle: profileResult.data?.handle ?? null, total: countResult.count ?? 0 };
+    },
+  });
+
   const entries = projects.data ?? [];
+  const mapPins = pins.data ?? [];
+  const allProjectsHref = portfolio.data?.handle ? `/professionals/${portfolio.data.handle}` : null;
+  const totalPublished = portfolio.data?.total ?? 0;
 
-  return <section id="selected-projects" className="bg-[#071a33] px-5 py-16 text-white sm:px-8 sm:py-24">
+  return <section id="selected-projects" className="bg-[#071a33] px-5 py-14 text-white sm:px-8 sm:py-20">
     <div className="mx-auto max-w-7xl">
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="max-w-3xl"><p className="brand-kicker !text-[#dfc48e]">Selected project work</p><h2 className="brand-serif mt-3 text-4xl sm:text-5xl">See the work—not just the promise.</h2><p className="mt-5 max-w-2xl leading-7 text-slate-300">Published project photography and case studies from the TW Ventures team appear here as the portfolio grows.</p></div>
-        <Button variant="outline" className="w-fit border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => document.getElementById('model-comparison')?.scrollIntoView({ behavior: 'smooth' })}>How we manage projects</Button>
-      </div>
+      <div className="max-w-3xl"><p className="brand-kicker !text-[#dfc48e]">Selected project work</p><h2 className="brand-serif mt-3 text-4xl sm:text-5xl">See the work—not just the promise.</h2><p className="mt-4 max-w-2xl leading-7 text-slate-300">Real project photography, scope, and delivery stories from work across Philadelphia.</p></div>
 
-      {entries.length > 0 ? <div className="mt-10 grid gap-5 md:grid-cols-3">
+      {projects.isLoading ? <div className="mt-8 grid gap-5 md:grid-cols-3" aria-label="Loading project work">
+        {Array.from({ length: 3 }).map((_, index) => <div key={index} className="overflow-hidden rounded-lg border border-white/10 bg-white/[.05]"><div className="aspect-[4/3] animate-pulse bg-white/[.08]" /><div className="h-52 space-y-4 p-5"><div className="h-3 w-28 animate-pulse rounded bg-white/10" /><div className="h-7 w-4/5 animate-pulse rounded bg-white/10" /><div className="h-4 w-2/3 animate-pulse rounded bg-white/10" /><div className="h-4 w-full animate-pulse rounded bg-white/10" /></div></div>)}
+      </div> : entries.length > 0 ? <div className="mt-8 grid gap-5 md:grid-cols-3">
         {entries.map((entry) => <Link key={entry.id} to={`/work/${entry.slug}`} className="group overflow-hidden rounded-lg border border-white/15 bg-white/[.06] transition hover:-translate-y-1 hover:border-[#dfc48e]/60">
           <img src={entry.featured_image_url} alt={`${entry.title} project`} loading="lazy" className="aspect-[4/3] w-full object-cover" />
-          <div className="p-6"><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#dfc48e]">{entry.project_type}</p><h3 className="brand-serif mt-3 text-2xl">{entry.article_title || entry.title}</h3>{entry.location_public && <p className="mt-3 flex items-center gap-2 text-sm text-slate-400"><MapPin className="h-4 w-4" />{entry.location_public}</p>}<p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-300">{entry.article_excerpt || entry.summary}</p><span className="mt-5 inline-flex items-center text-sm font-semibold text-white">View project <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" /></span></div>
+          <div className="p-5"><p className="text-xs font-semibold uppercase tracking-[.18em] text-[#dfc48e]">{entry.project_type}</p><h3 className="brand-serif mt-3 text-2xl leading-tight">{entry.article_title || entry.title}</h3>{entry.location_public && <p className="mt-3 flex items-center gap-2 text-sm text-slate-400"><MapPin className="h-4 w-4 shrink-0" />{entry.location_public}</p>}<p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-300">{entry.article_excerpt || entry.summary}</p><span className="mt-4 inline-flex items-center text-sm font-semibold text-white">View project <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" /></span></div>
         </Link>)}
-      </div> : <div className="mt-10 grid gap-5 md:grid-cols-[1.35fr_.65fr]">
+      </div> : <div className="mt-8 grid gap-5 md:grid-cols-[1.35fr_.65fr]">
         <div className="flex min-h-72 items-center justify-center rounded-lg border border-dashed border-white/25 bg-gradient-to-br from-white/[.08] to-transparent p-8 text-center"><div><ImageIcon className="mx-auto h-9 w-9 text-[#dfc48e]" /><p className="brand-serif mt-5 text-2xl">Project photography is ready to publish here.</p><p className="mx-auto mt-3 max-w-lg text-sm leading-6 text-slate-300">Only real, approved portfolio images will be shown—never generic stock work presented as a TW Ventures project.</p></div></div>
         <div className="grid min-h-72 place-items-center rounded-lg border border-white/15 bg-white/[.05] p-8"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#dfc48e]">Portfolio-ready</p><p className="brand-serif mt-4 text-3xl">Photos, project facts, and the delivery story in one place.</p></div></div>
       </div>}
+
+      {entries.length > 0 && allProjectsHref && <div className="mt-8 flex justify-center">
+        <Button asChild size="lg" variant="outline" className="border-[#dfc48e]/50 bg-transparent text-white hover:bg-[#dfc48e]/10 hover:text-white">
+          <Link to={allProjectsHref}>{totalPublished > entries.length ? `View all ${totalPublished} projects` : 'View all projects'}<ArrowRight className="ml-2 h-4 w-4" /></Link>
+        </Button>
+      </div>}
+
+      <div ref={mapRef} className="mt-8">
+        {mapPins.length > 0 && <div className="border-t border-white/15 pt-6"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="brand-serif text-2xl">Where we work</h3><p className="mt-1 text-sm text-slate-400">{mapPins.length} completed {mapPins.length === 1 ? 'project' : 'projects'} across Philadelphia</p></div><Button type="button" variant="outline" className="gap-2 border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" aria-expanded={mapVisible} onClick={() => setMapVisible((visible) => !visible)}><Map className="h-4 w-4" />{mapVisible ? 'Hide project map' : 'View project map'}</Button></div>{mapVisible && <div className="mt-5"><Suspense fallback={<div className="h-[340px] rounded-lg border border-white/15 bg-white/[.04]" />}>{mapInView && <PublicProjectMap pins={mapPins} height="340px" />}</Suspense></div>}</div>}
+      </div>
+
       {projects.isError && <p className="mt-4 text-sm text-slate-400">Published projects are temporarily unavailable. The rest of the site remains available.</p>}
     </div>
   </section>;
@@ -155,30 +197,29 @@ export default function ClientOnboardingPage() {
     <main className="public-page">
       <PublicBrandHeader section="Investor Project Management" actions={<><Button aria-label="How it differs" variant="ghost" className="gap-2 text-[#071a33]" onClick={() => document.getElementById('model-comparison')?.scrollIntoView({ behavior: 'smooth' })}><HardHat className="h-4 w-4" /><span className="brand-nav-label">How it differs</span></Button><Button aria-label={user ? 'Open portal' : 'Portal sign in'} variant="ghost" className="gap-2 text-[#071a33]" onClick={enterPortal}><LogIn className="h-4 w-4" /><span className="brand-nav-label">{user ? 'Open portal' : 'Portal sign in'}</span></Button></>} />
 
-      <section className="brand-hero px-5 py-20 sm:px-8 sm:py-28">
-        <div className="relative mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-[1.1fr_.9fr]">
+      <section className="brand-hero px-5 py-16 sm:px-8 sm:py-20">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1.08fr_.92fr]">
           <div>
-            <p className="brand-kicker mb-5">Owner-side construction project management</p>
-            <h1 className="brand-serif max-w-3xl text-5xl leading-[1.02] sm:text-7xl">Build smarter. Protect your investment.</h1>
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300">Professional renovation and construction project management for real estate investors—built around cost visibility, contractor coordination, and accountable execution rather than a traditional full-service GC structure.</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+            <p className="brand-kicker mb-4">Owner-side construction project management</p>
+            <h1 className="brand-serif max-w-3xl text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">Build smarter. Protect your investment.</h1>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">Professional renovation and construction project management for real estate investors—built around cost visibility, contractor coordination, and accountable execution.</p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Button size="lg" className="gap-2 bg-white text-[#071a33] hover:bg-slate-100" onClick={() => user ? enterPortal() : navigate('/get-started')}>
                 {user ? 'View my projects' : 'Get a project consultation'} <ArrowRight className="h-4 w-4" />
               </Button>
-              <Button size="lg" variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" asChild>
-                <button type="button" onClick={() => document.getElementById('savings-estimator')?.scrollIntoView({ behavior: 'smooth' })}>Estimate potential difference</button>
+              <Button size="lg" variant="outline" className="border-white/30 bg-white/5 text-white hover:bg-white/10 hover:text-white" onClick={() => document.getElementById('savings-estimator')?.scrollIntoView({ behavior: 'smooth' })}>
+                Estimate potential difference
               </Button>
             </div>
-            <div className="mt-5 flex flex-col items-start gap-2 text-sm text-slate-400 sm:flex-row sm:items-center"><span>Already connected? Use the email on your invitation.</span><button type="button" className="font-semibold text-white underline underline-offset-4" onClick={() => navigate('/pm')}>Project Manager sign in</button></div>
           </div>
 
           <Card className="brand-card-dark text-white">
-            <CardContent className="p-7 sm:p-9">
-              <div className="mb-7 flex items-center gap-4">
-                <span className="grid h-12 w-12 place-items-center rounded-2xl bg-white text-[#071a33]"><Building2 className="h-6 w-6" /></span>
+            <CardContent className="p-6 sm:p-8">
+              <div className="mb-6 flex items-center gap-4">
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-white text-[#071a33]"><Building2 className="h-5 w-5" /></span>
                 <div><p className="font-semibold">Your project-management team</p><p className="text-sm text-slate-300">Owner-side coordination with clearly defined responsibilities</p></div>
               </div>
-              <ol className="space-y-5">
+              <ol className="space-y-4">
                 {['Define the scope, budget, schedule, and decision rights', 'Manage and file applicable permits; coordinate inspections as agreed', 'Track bids, changes, milestones, and project risks', 'Keep the investor informed through closeout'].map((step, index) => (
                   <li key={step} className="flex gap-4">
                     <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full border border-blue-300/40 bg-blue-300/10 text-xs font-semibold text-blue-100">{index + 1}</span>
@@ -191,46 +232,33 @@ export default function ClientOnboardingPage() {
         </div>
       </section>
 
-      <FeaturedProjects />
+      <section className="bg-[#f3f0e9] px-5 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-6xl"><div className="mb-8 max-w-3xl"><p className="brand-kicker !text-[#9a7b4f]">Explore the cost structure</p><h2 className="brand-serif mt-3 text-4xl text-[#071a33] sm:text-5xl">Model a potential difference—using your assumptions.</h2><p className="mt-4 leading-7 text-slate-600">Compare delivery fees on the same starting construction budget. This illustration is not a quote and does not assume every responsibility or risk is identical.</p></div><div id="savings-estimator" className="scroll-mt-24"><SavingsEstimator /></div></div>
+      </section>
 
-      <section id="model-comparison" className="scroll-mt-24 bg-white px-5 py-16 sm:px-8 sm:py-24">
+      <section id="model-comparison" className="scroll-mt-24 bg-white px-5 py-14 sm:px-8 sm:py-20">
         <div className="mx-auto max-w-7xl">
-          <div className="mx-auto max-w-3xl text-center"><p className="brand-kicker !text-[#9a7b4f]">Two different delivery models</p><h2 className="brand-serif mt-3 text-4xl text-[#071a33] sm:text-5xl">A project manager is not simply a lower-cost general contractor.</h2><p className="mt-5 text-base leading-7 text-slate-600">A traditional GC contracts to deliver construction. TW Ventures’ project-management model is designed to represent and coordinate the investor’s project. The final agreement defines who contracts with trades, carries each responsibility, and makes approvals.</p></div>
-          <div className="mt-12 overflow-hidden rounded-lg border border-slate-200" role="table" aria-label="Traditional general contractor and project management comparison">
+          <div className="mx-auto max-w-3xl text-center"><p className="brand-kicker !text-[#9a7b4f]">Two different delivery models</p><h2 className="brand-serif mt-3 text-4xl text-[#071a33] sm:text-5xl">A project manager is not simply a lower-cost general contractor.</h2><p className="mt-4 text-base leading-7 text-slate-600">A GC contracts to deliver construction. TW Ventures represents and coordinates the investor’s project. The engagement defines who contracts, approves, and carries each responsibility.</p></div>
+          <div className="mt-9 overflow-hidden rounded-lg border border-slate-200" role="table" aria-label="Traditional general contractor and project management comparison">
             <div className="hidden grid-cols-[.65fr_1fr_1fr] bg-[#071a33] text-white md:grid" role="row"><div className="p-5 text-xs font-semibold uppercase tracking-wider" role="columnheader">Project question</div><div className="border-l border-white/15 p-5" role="columnheader"><HardHat className="mb-2 h-5 w-5 text-slate-300" /><span className="font-semibold">Traditional general contractor</span></div><div className="border-l border-white/15 bg-white/5 p-5" role="columnheader"><Users className="mb-2 h-5 w-5 text-[#dfc48e]" /><span className="font-semibold">TW Ventures project management</span></div></div>
             {comparisonRows.map(([label, gc, pm]) => <div key={label} className="grid border-t border-slate-200 first:border-t-0 md:grid-cols-[.65fr_1fr_1fr]" role="row"><div className="bg-slate-50 p-4 text-sm font-semibold text-[#071a33] md:p-5" role="rowheader">{label}</div><div className="p-4 text-sm leading-6 text-slate-600 md:border-l md:p-5" role="cell"><span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-slate-400 md:hidden">Traditional GC</span>{gc}</div><div className="border-t border-slate-100 bg-[#faf8f3] p-4 text-sm leading-6 text-[#071a33] md:border-l md:border-t-0 md:p-5" role="cell"><span className="mb-1 block text-xs font-semibold uppercase tracking-wider text-[#9a7b4f] md:hidden">TW Ventures PM model</span><Check className="mr-2 inline h-4 w-4 text-[#9a7b4f]" />{pm}</div></div>)}
           </div>
-          <div className="mt-6 flex gap-4 rounded-lg border border-[#9a7b4f]/30 bg-[#faf8f3] p-6"><ShieldCheck className="mt-1 h-6 w-6 shrink-0 text-[#9a7b4f]" /><div><h3 className="font-semibold text-[#071a33]">Can TW Ventures pull permits?</h3><p className="mt-2 text-sm leading-6 text-slate-600">Yes—when included in the engagement, TW Ventures can manage and file applicable permit applications as the owner’s authorized agent. Some applications and regulated work must involve a licensed contractor, design professional, or expediter; TW Ventures coordinates those parties and requirements without claiming credentials it does not hold.</p></div></div>
-          <div className="mt-6 grid gap-4 sm:grid-cols-3"><ValuePoint icon={CircleDollarSign} title="Cost visibility" copy="See the assumptions, approved changes, and project-management fee." /><ValuePoint icon={FolderKanban} title="Investor control" copy="Keep the approvals and visibility defined in your engagement." /><ValuePoint icon={BellRing} title="Accountable reporting" copy="Follow schedule, decisions, risks, documents, and progress." /></div>
+          <div className="mt-5 flex gap-4 rounded-lg border border-[#9a7b4f]/30 bg-[#faf8f3] p-5"><ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[#9a7b4f]" /><div><h3 className="font-semibold text-[#071a33]">Can TW Ventures pull permits?</h3><p className="mt-1.5 text-sm leading-6 text-slate-600">When included in the engagement, TW Ventures can manage and file applicable permit applications as the owner’s authorized agent. Licensed or regulated work still involves the appropriate contractor, design professional, or expediter.</p></div></div>
         </div>
       </section>
 
-      <section id="savings-estimator" className="scroll-mt-24 bg-[#f3f0e9] px-5 py-16 sm:px-8 sm:py-24">
-        <div className="mx-auto max-w-6xl"><div className="mb-10 max-w-3xl"><p className="brand-kicker !text-[#9a7b4f]">Explore the cost structure</p><h2 className="brand-serif mt-3 text-4xl text-[#071a33] sm:text-5xl">Model a potential difference—using your assumptions.</h2><p className="mt-5 leading-7 text-slate-600">This itemized illustration helps investors compare delivery fees on the same starting construction budget. It does not assume every project, bid, responsibility, or risk is identical.</p></div><SavingsEstimator /></div>
-      </section>
+      <FeaturedProjects />
 
-      <section className="bg-[#f3f0e9] px-5 py-16 sm:px-8 sm:py-20">
-        <div className="mx-auto max-w-7xl">
-          <div className="max-w-2xl"><p className="brand-kicker !text-[#9a7b4f]">Built around the asset</p><h2 className="brand-serif mt-3 text-4xl sm:text-5xl">Professional oversight from planning through closeout.</h2><div className="brand-rule mt-6 w-36" /></div>
-          <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {portalFeatures.map(({ icon: Icon, title, description }) => (
-              <Card key={title} className="brand-card"><CardContent className="p-6"><Icon className="h-6 w-6 text-[#9a7b4f]" /><h3 className="brand-serif mt-5 text-xl">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{description}</p></CardContent></Card>
-            ))}
-          </div>
-          <div className="brand-card mt-12 flex flex-col items-start justify-between gap-6 p-7 sm:flex-row sm:items-center sm:p-9">
-            <div className="flex gap-4"><CheckCircle2 className="mt-1 h-6 w-6 shrink-0 text-[#9a7b4f]" /><div><h2 className="brand-serif text-2xl">Already working with TW Ventures?</h2><p className="mt-1 text-sm text-slate-600">Use the portal assigned to your role. Project Managers should open the dedicated PM sign-in.</p></div></div>
-            <div className="flex flex-wrap gap-3"><Button variant="outline" className="shrink-0" onClick={enterPortal}>{user ? 'Open my portal' : 'Investor / client sign in'}</Button><Button className="shrink-0 gap-2" onClick={() => navigate('/pm')}>Project Manager sign in <ArrowRight className="h-4 w-4" /></Button></div>
-          </div>
+      <section className="border-t border-slate-200 bg-white px-5 py-12 sm:px-8 sm:py-16">
+        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-7 sm:flex-row sm:items-center">
+          <div className="max-w-2xl"><p className="brand-kicker !text-[#9a7b4f]">Plan the next project</p><h2 className="brand-serif mt-3 text-3xl text-[#071a33] sm:text-4xl">Start with scope, fit, and clear responsibilities.</h2><p className="mt-3 leading-7 text-slate-600">Active clients can track milestones, documents, decisions, and updates in one secure portal.</p></div>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"><Button variant="outline" className="gap-2" onClick={enterPortal}><LogIn className="h-4 w-4" />{user ? 'Open my portal' : 'Open secure portal'}</Button><Button className="gap-2" onClick={() => navigate('/get-started')}>Discuss a project <ArrowRight className="h-4 w-4" /></Button></div>
         </div>
       </section>
 
-      <footer className="border-t border-slate-200 bg-white px-5 py-8 text-center text-sm text-slate-500">Ready to discuss a project? <button className="font-medium text-[#071a33] underline underline-offset-4" onClick={() => navigate('/get-started')}>Tell us what you need</button></footer>
+      <footer className="border-t border-slate-200 bg-[#fbfaf7] px-5 py-6 text-center text-xs text-slate-500">TW Ventures · Owner-side project management for Philadelphia real estate investors</footer>
 
       <AuthDialog open={authOpen} onOpenChange={setAuthOpen} onAuthSuccess={() => { setAuthOpen(false); setRouteAfterAuth(true); }} message="Use the email connected to your TW Ventures invitation. After sign-in, we will open the portal assigned to your account." />
     </main>
   );
-}
-
-function ValuePoint({ icon: Icon, title, copy }: { icon: typeof Building2; title: string; copy: string }) {
-  return <div className="brand-card p-5"><Icon className="h-5 w-5 text-[#9a7b4f]" /><h3 className="mt-4 font-semibold text-[#071a33]">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{copy}</p></div>;
 }

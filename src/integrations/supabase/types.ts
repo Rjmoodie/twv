@@ -1306,7 +1306,9 @@ export type Database = {
           completed_on: string | null
           created_at: string
           featured_image_url: string | null
-          gallery_urls: string[]
+          gallery: Json
+          latitude: number | null
+          longitude: number | null
           id: string
           location_public: string | null
           organization_id: string
@@ -1334,7 +1336,9 @@ export type Database = {
           completed_on?: string | null
           created_at?: string
           featured_image_url?: string | null
-          gallery_urls?: string[]
+          gallery?: Json
+          latitude?: number | null
+          longitude?: number | null
           id?: string
           location_public?: string | null
           organization_id: string
@@ -1362,7 +1366,9 @@ export type Database = {
           completed_on?: string | null
           created_at?: string
           featured_image_url?: string | null
-          gallery_urls?: string[]
+          gallery?: Json
+          latitude?: number | null
+          longitude?: number | null
           id?: string
           location_public?: string | null
           organization_id?: string

@@ -69,7 +69,7 @@ test('dark-mode sign-in dialog keeps its fixed-light content readable', async ({
   await page.goto('/');
   const essential = page.getByRole('button', { name: 'Essential only' });
   if (await essential.count()) await essential.click();
-  await page.getByRole('button', { name: 'Project access' }).click();
+  await page.getByRole('button', { name: 'Portal sign in' }).click();
 
   const email = await computedColors(page, '#auth-email');
   const title = await page.getByRole('heading', { name: 'Welcome to TW Ventures' }).evaluate((element) => getComputedStyle(element).color);

@@ -1,0 +1,268 @@
+{
+  "user_id": "e34c4906-9637-4dc3-b82c-93144959d88d",
+  "organization_id": "e874d1e7-b4fc-4b9d-b662-7f05637f0a7d",
+  "photo_dir": "/Users/user/Desktop/TW Ventures LLC Website Images",
+  "projects": [
+    {
+      "title": "1531 S Ringgold St",
+      "geocode_address": "1531 S Ringgold St, Philadelphia, PA",
+      "project_type": "Renovation",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Renovation"
+      ],
+      "summary": "A South Philadelphia rowhome taken through a full interior and exterior renovation. The finished home pairs a painted-brick facade and black-framed windows with a rebuilt kitchen and a fully finished lower level.",
+      "work_completed": "Managed the renovation from the facade through to the finished basement.\n\nExterior work included painted brick, new black-framed windows and entry door, exterior lighting, house numbers and new rear fencing.\n\nInside, the kitchen was rebuilt with white shaker cabinetry, quartz counters, a subway-tile backsplash, black hardware and a full stainless appliance package, with a glazed rear door opening to the yard.\n\nThe lower level was finished as usable living space with recessed lighting, plank flooring, a laundry area with utility sink, and rebuilt stairs with natural wood treads.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "1531 S Ringgold St Facade.jpg",
+          "caption": "Facade",
+          "alt": "Facade at 1531 S Ringgold St",
+          "featured": true
+        },
+        {
+          "file": "1531 S Ringgold St Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 1531 S Ringgold St"
+        },
+        {
+          "file": "1531 S Ringgold St Basement Renovation.jpg",
+          "caption": "1531 S Ringgold St",
+          "alt": "1531 S Ringgold St at 1531 S Ringgold St"
+        }
+      ]
+    },
+    {
+      "title": "1916 S 23rd St",
+      "geocode_address": "1916 S 23rd St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion"
+      ],
+      "summary": "A South Philadelphia rowhome converted into two units. The finished interiors pair new kitchens and baths with the building's original brick, kept exposed where it was worth showing.",
+      "work_completed": "Coordinated the duplex conversion and the fit-out of the finished units.\n\nThe kitchen was built with white shaker uppers over grey base cabinets, quartz counters, a herringbone tile backsplash and a stainless appliance package, under recessed lighting.\n\nThe bathroom was finished with large-format marble-look tile to the tub surround, a floating wood vanity, a round black-framed mirror, matte black fixtures and slate-tone floor tile.\n\nOriginal brick was retained and left exposed in the adjoining hallway rather than furred over.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "1916 S 23rd St Duplex Conversion Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 1916 S 23rd St",
+          "featured": true
+        },
+        {
+          "file": "1916 S 23rd St Duplex Conversion Bathroom.jpg",
+          "caption": "Bathroom",
+          "alt": "Bathroom at 1916 S 23rd St"
+        }
+      ]
+    },
+    {
+      "title": "24 S 54th St",
+      "geocode_address": "24 S 54th St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion"
+      ],
+      "summary": "A West Philadelphia rowhome converted into two units, finished so the original brick party wall reads as a feature of the stair hall rather than something to cover.",
+      "work_completed": "Coordinated the duplex conversion through to finished interiors.\n\nThe kitchen was built with white shaker uppers over grey base cabinets, quartz counters, a white subway-tile backsplash, black hardware and a stainless appliance package.\n\nThe bathroom was finished with marble-look tile to the tub surround, a floating wood vanity, a round black-framed mirror, matte black fixtures and dark floor tile.\n\nThe original brick wall running the length of the stair hall was cleaned and left exposed, with new stairs built in natural wood treads over dark risers.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "24 S 54th St Duplex Conersion Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 24 S 54th St",
+          "featured": true
+        },
+        {
+          "file": "24 S 54th St Duplex Conversion Bathroom.jpg",
+          "caption": "Bathroom",
+          "alt": "Bathroom at 24 S 54th St"
+        },
+        {
+          "file": "24 S 54th St Duplex Conversion Exposed Brick.jpg",
+          "caption": "Exposed Brick",
+          "alt": "Exposed Brick at 24 S 54th St"
+        }
+      ]
+    },
+    {
+      "title": "2408 Turner St",
+      "geocode_address": "2408 Turner St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion"
+      ],
+      "summary": "A South Philadelphia rowhome converted into two units, with the kitchen opened to the living space across a quartz peninsula.",
+      "work_completed": "Coordinated the duplex conversion and unit fit-out.\n\nThe kitchen was laid out as a peninsula so it opens onto the living space instead of closing off the floor, finished with white shaker cabinetry, a quartz counter and waterfall return, a grey subway-tile backsplash, a black spring-neck faucet and stainless appliances.\n\nA second run of cabinetry carries white uppers over grey bases with a full stainless package. Plank flooring and recessed lighting run continuously through the unit.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "2408 Turner St Duplex Conversion Kitchen 1.jpg",
+          "caption": "Kitchen 1",
+          "alt": "Kitchen 1 at 2408 Turner St",
+          "featured": true
+        },
+        {
+          "file": "2408 Turner St Duplex Conversion Kitchen 2.jpg",
+          "caption": "Kitchen 2",
+          "alt": "Kitchen 2 at 2408 Turner St"
+        }
+      ]
+    },
+    {
+      "title": "2603 Manton St",
+      "geocode_address": "2603 Manton St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion",
+        "Structural rebuild"
+      ],
+      "summary": "A South Philadelphia duplex conversion that included rebuilding the rear of the property. The before photograph shows the rear opened to the joists with the wall down and debris still on site; the after shows the finished two-storey rear elevation.",
+      "work_completed": "Coordinated the duplex conversion, including the rebuild of the rear elevation captured in the before-and-after photographs.\n\nThe rear of the property was taken back to structure \u2014 the rear wall removed, floor joists and roof framing exposed, and the yard excavated. It was rebuilt to a full two-storey rear elevation with a twelve-foot extension, clad in horizontal siding, with new windows to both floors, a new rear entry door, new gutters and downspouts.\n\nThe yard was finished with a poured concrete pad and new fencing.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "2603 Manton St Duplex Conersion Rear Exterior Before.jpg",
+          "caption": "Rear Exterior Before",
+          "alt": "Rear Exterior Before at 2603 Manton St"
+        },
+        {
+          "file": "2603 Manton St Duplex Conersion 12 Ft Rear Exterior After.jpg",
+          "caption": "12 Ft Rear Exterior After",
+          "alt": "12 Ft Rear Exterior After at 2603 Manton St",
+          "featured": true
+        }
+      ]
+    },
+    {
+      "title": "2648 Wilder St",
+      "geocode_address": "2648 Wilder St, Philadelphia, PA",
+      "project_type": "Full gut renovation",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Full gut renovation"
+      ],
+      "summary": "A South Philadelphia rowhome taken back to the studs and rebuilt, finished with an open kitchen that keeps the building's original brick in view.",
+      "work_completed": "Managed the full gut renovation through to finished interiors.\n\nThe kitchen was rebuilt as an open plan with a quartz peninsula fronted in vertical wood slats, white shaker cabinetry, a subway-tile backsplash with under-cabinet lighting, a pot filler over the gas range, a black spring-neck faucet and a stainless appliance package including a side-by-side refrigerator.\n\nBlack pendants hang over the peninsula, and a glazed rear door brings daylight down the plan. The original brick was left exposed alongside the new stair, which was finished with a black metal balustrade.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "2648 Wilder St Full Gut Renovation Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 2648 Wilder St",
+          "featured": true
+        }
+      ]
+    },
+    {
+      "title": "5006 Market St",
+      "geocode_address": "5006 Market St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion"
+      ],
+      "summary": "A West Philadelphia twin converted into two units. The before-and-after facade photographs show the change most directly: a dated single entry under a green awning replaced by a restored two-door elevation.",
+      "work_completed": "Coordinated the duplex conversion, including the facade work captured in the before-and-after photographs.\n\nThe original elevation carried a green metal awning, artificial turf to the porch, ornamental ironwork and a single entry. The rebuilt facade is painted brick with black trim, a reclad bay window in white siding with new black-framed windows, new exterior lighting, house numbers and a mailbox \u2014 and two separate entry doors serving the two finished units.\n\nInside, the kitchen was built with white shaker cabinetry, quartz counters, a navy stacked-tile backsplash and stainless appliances. The bathroom was finished with large-format marble-look tile and a recessed niche, a floating wood vanity, a round black-framed mirror and matte black fixtures.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "5006 Market St Duplex Conversion Facade Before.jpg",
+          "caption": "Facade Before",
+          "alt": "Facade Before at 5006 Market St"
+        },
+        {
+          "file": "5006 Market St Duplex Conversion Facade After.jpg",
+          "caption": "Facade After",
+          "alt": "Facade After at 5006 Market St"
+        },
+        {
+          "file": "5006 Market St Duplex Conversion Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 5006 Market St",
+          "featured": true
+        },
+        {
+          "file": "5006 Market St Duplex Conversion Bathrrom.jpg",
+          "caption": "Bathroom",
+          "alt": "Bathroom at 5006 Market St"
+        }
+      ]
+    },
+    {
+      "title": "5307 Chancellor St",
+      "geocode_address": "5307 Chancellor St, Philadelphia, PA",
+      "project_type": "Duplex conversion",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Duplex conversion"
+      ],
+      "summary": "A West Philadelphia rowhome converted into two units, with the two entries numbered on a rebuilt front elevation and a kitchen built around a veined quartz peninsula.",
+      "work_completed": "Coordinated the duplex conversion through to finished interiors and exterior.\n\nThe front elevation was finished in painted brick with a white-clad bay above, black trim and black-framed windows, a rebuilt porch and concrete steps, horizontal black railings, and two numbered entry doors serving the finished units.\n\nThe kitchen was built around a peninsula in heavily veined black-and-white quartz fronted with vertical wood slats, with white shaker cabinetry, a black stacked-tile backsplash, black pendants and a stainless appliance package.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "5307 Chancellor St Duplex Conersion Facade.jpg",
+          "caption": "Facade",
+          "alt": "Facade at 5307 Chancellor St"
+        },
+        {
+          "file": "5307 Chancellor St Duplex Conersion Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 5307 Chancellor St",
+          "featured": true
+        }
+      ]
+    },
+    {
+      "title": "619 Jackson St",
+      "geocode_address": "619 Jackson St, Philadelphia, PA 19148",
+      "project_type": "Renovation",
+      "completed_on": null,
+      "services": [
+        "Project management",
+        "Renovation"
+      ],
+      "summary": "A Philadelphia rowhome renovation finished with a long galley kitchen and a restored brick front elevation.",
+      "work_completed": "Managed the renovation through to finished interiors and exterior.\n\nThe front elevation retains its original red brick and decorative banding, with new white-trimmed windows, a new standing-seam porch roof, a new entry door with transom, a reclad bay window, black horizontal railings and rebuilt concrete steps.\n\nInside, the kitchen runs the length of the plan with grey and white shaker cabinetry, quartz counters, a herringbone tile backsplash, a stainless hood over the gas cooktop and a full stainless appliance package, under recessed lighting on plank flooring.",
+      "challenge": null,
+      "outcomes": null,
+      "photos": [
+        {
+          "file": "619 N Jackson St Facade.jpg",
+          "caption": "Facade",
+          "alt": "Facade at 619 Jackson St"
+        },
+        {
+          "file": "619 N Jackson St Kitchen.jpg",
+          "caption": "Kitchen",
+          "alt": "Kitchen at 619 Jackson St",
+          "featured": true
+        }
+      ],
+      "slug": "619-jackson-st",
+      "location_public": "South Philadelphia, Philadelphia, PA"
+    }
+  ]
+}
