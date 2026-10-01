@@ -57,12 +57,6 @@ export default defineConfig(({ mode }) => {
     host: '0.0.0.0',   // required for Capacitor live-reload on device
     port: 8081,
     historyApiFallback: true,
-    proxy: {
-      '/api/pdufa': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
   },
   define: {
     'process.env': process.env,

@@ -13,8 +13,6 @@ export default defineConfig({
         'src/types/subscription.ts',
         'src/config/moduleAccess.ts',
         'src/services/subscription.ts',
-        'src/pdufa/merge.ts',
-        'src/pdufa/ingest.ts',
       ],
     },
   },
