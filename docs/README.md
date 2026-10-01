@@ -25,14 +25,12 @@ on:
 - **Edge functions** — each `supabase/functions/*/index.ts` opens with what it
   does and why. `_shared/email-brand.ts` in particular carries the CAN-SPAM
   reasoning behind the mail variants.
-- **Database** — `supabase/migrations/README.md` explains why that directory is
-  empty and how to port a table from the parked somatech reference.
+- **Database** — `supabase/migrations/README.md` is the annotated ledger: what
+  each of the fifteen migrations does, and what has actually been replayed.
 - **Type gate** — `scripts/typecheck-gate.mjs` explains what it fails on and
   why the root tsconfig cannot be used for the check.
 
 ## Reference material
 
-`docs/archive/` holds design notes from the somatech codebase this platform was
-built from. It is kept as a historical record and is **not** maintained — it
-describes features that no longer exist here. Do not rebrand it; its value is
-that it records what somatech did.
+`docs/data/README.md` lists the source material kept for planning. Nothing in
+that directory is imported or built against.

@@ -15,15 +15,42 @@ Apply in timestamp order:
 4. `20260828130000_communications_and_account.sql` — account operations,
    feedback, consent, notification routing/outbox, delivery ledgers, and
    calendar/project reminder queue functions.
+5. `20260828140000_project_access_crm_portfolio.sql` — project-scoped access,
+   CRM, investor records, invitations, and the portfolio read model.
+6. `20260829100000_investor_inquiries.sql` — investor inquiry capture and
+   accreditation records.
+7. `20260829110000_project_collaboration.sql` — private project files, with
+   audience-aware metadata as the source of truth.
+8. `20260829120000_pm_public_portfolios.sql` — `pm_portfolio_entries`, the
+   published case-study table behind the public portfolio.
+9. `20260830100000_project_inquiries.sql` — public client-service intake.
+   Submitting does not create an account, project, membership, or contract.
+10. `20260830120000_single_tenant_scoping.sql` — corrects three places written
+    as though exactly one organization would ever exist. The schema stays
+    org-scoped.
+11. `20260830130000_project_inquiry_scoping.sql` — the companion fix to the
+    above, for `submit_project_inquiry`, which that migration missed.
+12. `20260830140000_dispatch_schedule.sql` — schedules the notification
+    dispatcher with pg_cron, after Vercel Hobby refused a 5-minute cron.
+13. `20260830150000_rls_initplan.sql` — wraps `auth.uid()` as
+    `(select auth.uid())` in policies so it is evaluated once per query
+    rather than once per candidate row.
+14. `20260903193000_services_project_manager_access.sql` — grants the Services
+    account the organization-level Project Manager persona used by `/pm`.
+    Project assignments stay explicit in `project_members`.
+15. `20260906120000_portfolio_gallery_and_geo.sql` — replaces the bare `text[]`
+    of photo URLs with an ordered array of objects carrying captions, plus
+    project geocoding.
 
 `../tests/20260828_backend_foundation.test.sql` is the RLS and lifecycle smoke
 suite for this foundation.
 
 ## Validation status
 
-The complete four-migration sequence applied successfully to a fresh local
-Supabase stack on 2026-08-28. This is local replay evidence only: the repository
-is not linked to a TW hosted project and no migration has been deployed.
+The first four migrations applied successfully to a fresh local Supabase stack
+on 2026-08-28. That is local replay evidence for the foundation only, and the
+eleven migrations added since have not been replayed from zero as a set. The
+repository is not linked to a hosted project from here.
 
 The first pgTAP run found three privilege-boundary gaps caused by inherited
 Supabase role grants. The migrations now explicitly revoke those defaults
