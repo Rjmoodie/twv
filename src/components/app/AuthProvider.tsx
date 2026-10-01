@@ -68,6 +68,9 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
   const [accessLoading, setAccessLoading] = useState(false);
   const activeUserIdRef = useRef<string | null>(null);
   const nullSessionHandledRef = useRef(false);
+  // Whether this tab has ever held an authenticated session, which is what
+  // decides if there is any user-scoped cache worth purging on sign-out.
+  const hasHeldSessionRef = useRef(false);
 
   /**
    * Authentication can disappear without going through the Account screen
@@ -80,7 +83,14 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
     nullSessionHandledRef.current = true;
 
     // React Query can otherwise retain user-scoped rows until their gcTime.
-    queryClient.clear();
+    //
+    // Only when this tab actually held a session. Supabase reports "no session"
+    // asynchronously on every anonymous page load, and the cache at that moment
+    // is milliseconds old — it holds nothing to protect, only the in-flight
+    // queries this page just started. Clearing it there removed a pending query
+    // that still had a live observer, so its result landed on a detached query
+    // and the public case-study and portfolio pages never left "Loading…".
+    if (hasHeldSessionRef.current) queryClient.clear();
 
     if (typeof window === 'undefined') return;
     try {
@@ -199,6 +209,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
           const nextUser = session?.user ?? null;
           activeUserIdRef.current = nextUser?.id ?? null;
           nullSessionHandledRef.current = false;
+          if (nextUser) hasHeldSessionRef.current = true;
           setUser(nextUser);
           if (session?.user) {
             setAccessLoading(true);
@@ -252,7 +263,7 @@ const AuthProviderComponent: React.FC<{ children: React.ReactNode }> = ({ childr
         }
 
         activeUserIdRef.current = nextUserId;
-        if (nextUserId) nullSessionHandledRef.current = false;
+        if (nextUserId) { nullSessionHandledRef.current = false; hasHeldSessionRef.current = true; }
         setUser(nextUser);
 
         if (nextUser) {
