@@ -97,11 +97,7 @@ export default defineConfig(({ mode }) => {
       'clsx',
       'tailwind-merge',
       'recharts',
-      'lodash',
       'mapbox-gl'
-    ],
-    exclude: [
-      'framer-motion'
     ]
   },
   build: {
@@ -130,70 +126,45 @@ export default defineConfig(({ mode }) => {
           
           // Radix UI components (grouped by usage)
           'radix-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-accordion',
             '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-avatar',
             '@radix-ui/react-checkbox',
             '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-hover-card',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
             '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
             '@radix-ui/react-progress',
             '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
+            '@radix-ui/react-select',
             '@radix-ui/react-separator',
             '@radix-ui/react-slider',
             '@radix-ui/react-slot',
             '@radix-ui/react-switch',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-aspect-ratio'
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-toast',
+            '@radix-ui/react-tooltip'
           ],
           
           // Data and state management
           'data-vendor': [
             '@tanstack/react-query',
-            '@supabase/supabase-js',
-            'react-hook-form',
-            '@hookform/resolvers'
+            '@supabase/supabase-js'
           ],
           
           // Heavy libraries (lazy loaded)
           'charts': ['recharts'],
           'maps': ['mapbox-gl'],
-          'animations': ['framer-motion'],
           
           // Utilities
           'utils': [
-            'lodash',
-            'date-fns',
             'sonner',
-            'vaul',
-            'embla-carousel-react',
-            'input-otp',
-            'react-day-picker',
-            'react-error-boundary',
             'react-helmet-async',
-            'react-resizable-panels',
             'next-themes',
             'tailwindcss-animate',
             'cmdk',
             'zod'
           ]
         },
-        chunkFileNames: (chunkInfo) => {
-          const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId.split('/').pop() : 'chunk';
-          return `js/[name]-[hash].js`;
-        },
+        chunkFileNames: 'js/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split('.');
           const ext = info[info.length - 1];
