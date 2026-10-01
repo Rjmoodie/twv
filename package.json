@@ -30,7 +30,6 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "preview": "vite preview",
-    "validate:config": "tsx -e \"import('./src/config.ts')\"",
     "security:audit": "npm audit --omit=dev --audit-level moderate",
     "security:audit:all": "npm audit --audit-level moderate",
     "test:e2e": "playwright test",
@@ -82,8 +81,7 @@
     "recharts": "^2.13.3",
     "sonner": "^1.7.4",
     "tailwind-merge": "^2.5.2",
-    "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.25.76"
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
@@ -103,7 +101,6 @@
     "postcss": "^8.5.26",
     "tailwindcss": "^3.4.11",
     "terser": "^5.43.1",
-    "tsx": "^4.20.4",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^5.4.1",

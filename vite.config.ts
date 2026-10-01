@@ -160,8 +160,7 @@ export default defineConfig(({ mode }) => {
             'react-helmet-async',
             'next-themes',
             'tailwindcss-animate',
-            'cmdk',
-            'zod'
+            'cmdk'
           ]
         },
         chunkFileNames: 'js/[name]-[hash].js',
