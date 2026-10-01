@@ -1,3 +1,5 @@
+// Drafts a portfolio case-study article (title, excerpt, body, SEO fields) from
+// project facts supplied by the PM, using Claude with a strict JSON schema.
 import Anthropic from 'npm:@anthropic-ai/sdk@0.124.0';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CORS_HEADERS } from '../_shared/cors.ts';

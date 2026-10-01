@@ -1,3 +1,5 @@
+// Emails a project invitation to the invited address via Resend, after checking
+// the caller is allowed to invite on that project.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { CORS_HEADERS } from '../_shared/cors.ts';
 import { renderEmail } from '../_shared/emailTemplates.ts';

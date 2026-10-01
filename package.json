@@ -33,12 +33,10 @@
     "validate:config": "tsx -e \"import('./src/config.ts')\"",
     "security:audit": "npm audit --omit=dev --audit-level moderate",
     "security:audit:all": "npm audit --audit-level moderate",
-    "security:check": "echo \"Running security checks...\" && npm run security:audit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "lighthouse": "lhci autorun",
-    "lighthouse:ci": "lhci autorun --collect.url=http://localhost:8081",
-    "typecheck:full": "tsc -p tsconfig.app.json --noEmit"
+    "lighthouse:ci": "lhci autorun --collect.url=http://localhost:8081"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",

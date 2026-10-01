@@ -1,3 +1,5 @@
+// Returns the Mapbox public token from the server so a client can load a map
+// without the token being baked into the bundle.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
 const corsHeaders = {
