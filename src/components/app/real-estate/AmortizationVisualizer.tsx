@@ -56,10 +56,17 @@ function buildSchedule(loanAmount: number, annualRate: number, termYears: number
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(n);
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+/** The subset of Recharts' tooltip payload this chart reads. */
+type TooltipSeries = { dataKey?: string | number; value?: number };
+
+const CustomTooltip = ({ active, payload, label }: {
+  active?: boolean;
+  payload?: TooltipSeries[];
+  label?: string | number;
+}) => {
   if (!active || !payload?.length) return null;
-  const principal = payload.find((p: any) => p.dataKey === "principal")?.value ?? 0;
-  const interest = payload.find((p: any) => p.dataKey === "interest")?.value ?? 0;
+  const principal = payload.find((p) => p.dataKey === "principal")?.value ?? 0;
+  const interest = payload.find((p) => p.dataKey === "interest")?.value ?? 0;
   const total = principal + interest;
   return (
     <div style={TOOLTIP_STYLE.contentStyle} className="p-3 space-y-1">

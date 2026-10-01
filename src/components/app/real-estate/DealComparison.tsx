@@ -5,7 +5,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { BarChart, GitCompare, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { SavedDeal } from "./brrrrCalculations";
+import { BRRRRResults, SavedDeal } from "./brrrrCalculations";
+
+/** Purchase price comes from the deal inputs; every other column is a result field. */
+type MetricKey = 'purchasePrice' | keyof BRRRRResults;
 import { formatCurrency, formatPercentage } from "./realEstateUtils";
 
 interface DealComparisonProps {
@@ -35,7 +38,7 @@ export const DealComparison = ({ savedDeals }: DealComparisonProps) => {
     return { icon: Minus, color: "text-muted-foreground" };
   };
 
-  const metrics = [
+  const metrics: { key: MetricKey; label: string; format: (n: number) => string }[] = [
     { key: 'purchasePrice', label: 'Purchase Price', format: formatCurrency },
     { key: 'totalInvestment', label: 'Total Investment', format: formatCurrency },
     { key: 'postRefinanceROI', label: 'Post-Refi ROI', format: formatPercentage },
@@ -44,9 +47,9 @@ export const DealComparison = ({ savedDeals }: DealComparisonProps) => {
     { key: 'equityCreated', label: 'Equity Created', format: formatCurrency },
   ];
 
-  const getMetricValue = (deal: SavedDeal, metricKey: string) => {
+  const getMetricValue = (deal: SavedDeal, metricKey: MetricKey): number => {
     if (metricKey === 'purchasePrice') return deal.inputs.purchasePrice;
-    return (deal.results as any)[metricKey];
+    return deal.results[metricKey];
   };
 
   return (

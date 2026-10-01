@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import type { Json, Tables } from '@/integrations/supabase/types';
 import { toast } from "@/hooks/use-toast";
 import { BRRRRInputs, BRRRRResults, SavedDeal } from './brrrrCalculations';
 
@@ -28,11 +29,14 @@ export const useBRRRROperations = (userId: string | undefined) => {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
     if (error) throw error;
-    return (data as any[])?.map(item => ({
+    return (data ?? []).map((item: Tables<'brrrr_deals'>) => ({
       ...item,
-      inputs: item.inputs as BRRRRInputs,
-      results: decodeResults(item.results as Record<string, unknown>)
-    })) || [];
+      inputs: item.inputs as unknown as BRRRRInputs,
+      results: decodeResults(item.results as Record<string, unknown>),
+      // The column is nullable; SavedDeal.notes is optional. Both are falsy at
+      // the only read site, so this narrows the type without changing display.
+      notes: item.notes ?? undefined,
+    }));
   };
 
   const query = useQuery({
@@ -74,8 +78,8 @@ export const useBRRRROperations = (userId: string | undefined) => {
           .from('brrrr_deals')
           .update({
             deal_name: dealName,
-            inputs: inputs as any,
-            results: encodeResults(results) as any,
+            inputs: inputs as unknown as Json,
+            results: encodeResults(results) as unknown as Json,
             notes: notes,
           })
           .eq('id', currentDealId)
@@ -99,8 +103,8 @@ export const useBRRRROperations = (userId: string | undefined) => {
           .insert([{
             user_id: user.id,
             deal_name: dealName,
-            inputs: inputs as any,
-            results: encodeResults(results) as any,
+            inputs: inputs as unknown as Json,
+            results: encodeResults(results) as unknown as Json,
             notes: notes,
           }] as never);
 
