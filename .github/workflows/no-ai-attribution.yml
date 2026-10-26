@@ -1,0 +1,29 @@
+# Copy to .github/workflows/no-ai-attribution.yml in a project (install/adopt.sh
+# does this). Fails a PR whose commits or description carry AI attribution.
+name: No AI attribution
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  attribution:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check commit messages and PR description
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          # The foundation repo is private, so adopt.sh vendors the script here.
+          git log --format='%B' "$BASE..$HEAD" > /tmp/commits.txt
+          printf '%s\n' "$PR_BODY" > /tmp/pr-body.txt
+          bash .github/scripts/check-no-ai-attribution.sh /tmp/commits.txt /tmp/pr-body.txt
